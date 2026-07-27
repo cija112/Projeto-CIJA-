@@ -75,9 +75,9 @@ A aplicação foi desenvolvida para funcionar corretamente em:
 ##  Segurança & Arquitetura
 
 O sistema utiliza:
-- Autenticação via Supabase
-- Controle de sessão e proteção de rotas
-- Validação rigorosa de dados de entrada
+- Autenticação via Supabase.
+- Controle de sessão e proteção de rotas.
+- Validação rigorosa de dados de entrada.
 - Processamento estruturado de respostas em JSON via IA
 
 ---
