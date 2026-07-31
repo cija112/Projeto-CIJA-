@@ -1,0 +1,125 @@
+/* Estilos completos para a interface do Currículo */
+.curriculo-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  background: #ffffff;
+  padding: 2.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #1f2937;
+  box-sizing: border-box;
+}
+
+.curriculo-header {
+  border-bottom: 2px solid #2563eb;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.curriculo-header h1 {
+  font-size: 1.8rem;
+  color: #111827;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.5rem 0;
+  font-weight: bold;
+}
+
+.curriculo-header p {
+  font-size: 0.95rem;
+  color: #4b5563;
+  margin: 0;
+}
+
+.curriculo-actions {
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-baixar-pdf {
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-baixar-pdf:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-baixar-docx {
+  background-color: #059669;
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-baixar-docx:hover {
+  background-color: #047857;
+}
+
+.curriculo-body .secao {
+  margin-bottom: 1.5rem;
+}
+
+.curriculo-body h2 {
+  font-size: 1.1rem;
+  color: #2563eb;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.3rem;
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: bold;
+}
+
+.curriculo-body h3 {
+  font-size: 1rem;
+  color: #111827;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+}
+
+.curriculo-body p {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #374151;
+  margin: 0 0 0.5rem 0;
+}
+
+.curriculo-body ul {
+  padding-left: 1.25rem;
+  margin: 0;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.curriculo-body li {
+  margin-bottom: 0.25rem;
+}
+
+.curriculo-body .periodo {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-style: italic;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.item-experiencia,
+.item-formacao {
+  margin-bottom: 1rem;
+}
