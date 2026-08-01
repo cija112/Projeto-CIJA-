@@ -1,171 +1,191 @@
-import React, { useState, useEffect } from "react";
-import styles from "./sidebarEmpresa.module.css";
+import React, { useEffect, useState, useCallback } from "react";
+// Import do CSS correto do seu projeto
+import styles from "./Sidebar.module.css";
 import cijaLogo from "../../assets/logo2.png";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 
-const DashboardIcon = () => (
+interface MenuItem {
+  label: string;
+  path: string;
+  icon: React.ReactNode;
+  badge?: number;
+}
+
+const HomeIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="3" y="3" width="7" height="9" rx="1" />
-    <rect x="14" y="3" width="7" height="5" rx="1" />
-    <rect x="14" y="12" width="7" height="9" rx="1" />
-    <rect x="3" y="16" width="7" height="5" rx="1" />
+    <path d="M3 10.5L12 3l9 7.5" />
+    <path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" />
   </svg>
 );
-const PlusIcon = () => (
+
+const BriefcaseIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <rect x="3" y="7" width="18" height="13" rx="2" />
-    <path d="M12 9v6M9 12h6" />
+    <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    <path d="M3 12h18" />
   </svg>
 );
+
 const UsersIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
     <circle cx="9" cy="7" r="4" />
-    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M23 21v-2a4 4 0 0 1 0 7.75" />
     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
   </svg>
 );
-const BriefcaseIcon = () => (
+
+const MailIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="2" y="7" width="20" height="14" rx="2" />
-    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-  </svg>
-);
-const MessageIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-  </svg>
-);
-const ChartIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M3 3v18h18" />
-    <path d="M18 17V9M13 17V5M8 17v-3" />
-  </svg>
-);
-const UserIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-);
-const SettingsIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06a1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 0 0 0-1.51 1z" />
-  </svg>
-);
-const LogoutIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-    <polyline points="16 17 21 12 16 7" />
-    <line x1="21" y1="12" x2="9" y2="12" />
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="M3 7l9 6 9-6" />
   </svg>
 );
 
-export const SidebarEmpresa: React.FC = () => {
+const UserIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M5 20a7 7 0 0 1 14 0" />
+  </svg>
+);
+
+const LogoutIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+    <path d="M10 17l5-5-5-5" />
+    <path d="M15 12H3" />
+  </svg>
+);
+
+const DocumentIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 19 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+    <polyline points="10 9 9 9 8 9" />
+  </svg>
+);
+
+const SidebarEmpresa: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
+  const [userId, setUserId] = useState("");
   const [naoLidas, setNaoLidas] = useState(0);
 
   useEffect(() => {
-    const loadBadge = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      const { count } = await supabase
-        .from("mensagens")
-        .select("*", { count: "exact", head: true })
-        .eq("id_destinatario", user.id)
-        .eq("lida", false);
-      setNaoLidas(count || 0);
+    const init = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        setUserId(data.user.id);
+      }
     };
-    loadBadge();
+    init();
   }, []);
 
-  useEffect(() => {
-    setIsOpen(false);
-  }, [location.pathname]);
+  const carregarNaoLidas = useCallback(async () => {
+    if (!userId) return;
 
-  const menuItems = [
-    { label: "Dashboard", path: "/menuEmpresa", icon: <DashboardIcon /> },
-    {
-      label: "Ver candidatos",
-      path: "/candidatosEmpresa",
-      icon: <UsersIcon />,
-    },
-    { label: "Minhas vagas", path: "/vagasEmpresa", icon: <BriefcaseIcon /> },
+    const { count, error } = await supabase
+      .from("mensagens")
+      .select("*", { count: "exact", head: true })
+      .eq("id_em", userId)
+      .eq("enviado_por_jovem", true)
+      .eq("lida", false);
+
+    if (!error) {
+      setNaoLidas(count || 0);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    carregarNaoLidas();
+
+    const channel = supabase
+      .channel(`sidebar-empresa-mensagens-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "mensagens",
+          filter: `id_em=eq.${userId}`,
+        },
+        () => {
+          carregarNaoLidas();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, carregarNaoLidas]);
+
+  const menuItems: MenuItem[] = [
+    { label: "Início", path: "/menuEmpresa", icon: <HomeIcon /> },
+    { label: "Minhas Vagas", path: "/vagasEmpresa", icon: <BriefcaseIcon /> },
+    { label: "Candidatos", path: "/candidatosEmpresa", icon: <UsersIcon /> },
+    { label: "Pré-Entrevistas", path: "/preEntrevista", icon: <DocumentIcon /> },
     {
       label: "Mensagens",
-      path: "/mensagensEmpresa",
-      icon: <MessageIcon />,
+      path: "/mensagemEmpresa",
+      icon: <MailIcon />,
       badge: naoLidas,
     },
-    { label: "Relatórios", path: "/relatorios", icon: <ChartIcon /> },
-    { label: "Meu Perfil", path: "/perfilEmpresa", icon: <UserIcon /> },
-    { label: "Configurações", path: "/configuracoes", icon: <SettingsIcon /> },
+    { label: "Perfil Empresa", path: "/perfilEmpresa", icon: <UserIcon /> },
   ];
 
-  const handleNav = (path: string) => {
-    navigate(path);
-    setIsOpen(false);
-  };
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate("/loginEmpresa");
+    localStorage.clear();
+    navigate("/", { replace: true });
   };
 
   return (
-    <>
-      <button
-        className={styles.hamburger}
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Menu"
-      >
-        <span className={`${styles.bar} ${isOpen ? styles.bar1 : ""}`} />
-        <span className={`${styles.bar} ${isOpen ? styles.bar2 : ""}`} />
-        <span className={`${styles.bar} ${isOpen ? styles.bar3 : ""}`} />
-      </button>
-      {isOpen && (
-        <div className={styles.overlay} onClick={() => setIsOpen(false)} />
-      )}
+    <aside className={styles.sidebar}>
+      <div className={styles.topContent}>
+        <div className={styles.logoContainer}>
+          <img src={cijaLogo} alt="CIJA" className={styles.logo} />
+          <p className={styles.subtitle}>Centro de Integração</p>
 
-      <aside className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
-        <div className={styles.top}>
-          <div className={styles.logoBox}>
-            <div className={styles.logoBg}>
-              <img src={cijaLogo} alt="CIJA" />
-            </div>
-            <p className={styles.logoSub}>CENTRO DE INTEGRAÇÃO</p>
-            <p className={styles.logoTitle}>Jovem Aprendiz</p>
-          </div>
-
-          <nav className={styles.nav}>
-            {menuItems.map((item) => (
-              <button
-                key={item.path}
-                onClick={() => handleNav(item.path)}
-                className={`${styles.item} ${location.pathname === item.path ? styles.active : ""}`}
-              >
-                <span className={styles.icon}>{item.icon}</span>
-                <span>{item.label}</span>
-                {item.badge ? (
-                  <span className={styles.badge}>{item.badge}</span>
-                ) : null}
-              </button>
-            ))}
-          </nav>
         </div>
 
-        <div className={styles.bottom}>
-          <button className={styles.logout} onClick={handleLogout}>
+        <nav className={styles.menu}>
+          {menuItems.map((item) => (
+            <button
+              key={item.path}
+              className={`${styles.menuItem} ${
+                location.pathname === item.path ? styles.active : ""
+              }`}
+              onClick={() => navigate(item.path)}
+            >
+              <span className={styles.iconWrapper}>{item.icon}</span>
+              <span className={styles.menuLabel}>{item.label}</span>
+              {item.badge ? (
+                <span className={styles.badge}>
+                  {item.badge > 99 ? "99+" : item.badge}
+                </span>
+              ) : null}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      <div className={styles.bottomContent}>
+        <button className={styles.logout} onClick={handleLogout}>
+          <span className={styles.iconWrapper}>
             <LogoutIcon />
-            <span>Sair</span>
-          </button>
-        </div>
-      </aside>
-    </>
+          </span>
+          <span>Sair</span>
+        </button>
+      </div>
+    </aside>
   );
 };
+
+export { SidebarEmpresa };
+export default SidebarEmpresa;

@@ -23,29 +23,23 @@ import Ajuda from "routes/ajudaSystem";
 import Favoritos from "pages/app/cliente/favoritos";
 import Candidaturas from "pages/app/cliente/candidaturas";
 import RevisarCurriculo from "pages/app/cliente/vagas/revisarCurriculo";
+import PreEntrevistaEmpresa from "./pages/app/empresa/preEntrevista";
 
 function App() {
   return (
     <AnimatePresence mode="wait">
       <Routes>
-        {/* =========================================================
-             ROTAS PÚBLICAS
-           ========================================================= */}
+        {/* ROTAS PÚBLICAS */}
         <Route path="/" element={<Login />} />
-        <Route path="*" element={<Page404 />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/recuperar-senha" element={<RecuperarSenha />} />
         <Route path="/criar-senha" element={<CriarNovaSenha />} />
         <Route path="/ajuda" element={<Ajuda />} />
         <Route path="/loginEmpresa" element={<LoginEmpresa />} />
         <Route path="/cadastroEmpresa" element={<CadastroEmpresa />} />
-
-        {/* Rota de confirmação livre de validação rígida de tipo para não trancar o fluxo */}
         <Route path="/confirmar-email" element={<ConfirmarEmail />} />
 
-        {/* =========================================================
-             ROTAS DO JOVEM APRENDIZ
-           ========================================================= */}
+        {/* ROTAS DO JOVEM APRENDIZ */}
         <Route
           path="/clientDashboard"
           element={
@@ -62,7 +56,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/vagas"
           element={
@@ -79,7 +72,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/mensagens"
           element={
@@ -112,21 +104,16 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-        {/* rota para perfil chat  */}
-
         <Route
-          path="/perfil/:idJa"
+          path="/perfilEmpresa/:id_em?"
           element={
-            <ProtectedRoute tipoEsperado="empresa">
-              <Perfil />
+            <ProtectedRoute tipoEsperado="jovem_aprendiz">
+              <PerfilEmpresa />
             </ProtectedRoute>
           }
         />
 
-        {/* =========================================================
-            ROTAS DA EMPRESA
-           ========================================================= */}
+        {/* ROTAS DA EMPRESA */}
         <Route
           path="/menuEmpresa"
           element={
@@ -135,9 +122,18 @@ function App() {
             </ProtectedRoute>
           }
         />
-
+        
+        {/* Aceita tanto /mensagensEmpresa quanto /mensagemEmpresa */}
         <Route
           path="/mensagensEmpresa"
+          element={
+            <ProtectedRoute tipoEsperado="empresa">
+              <MensagemEmpresa />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mensagemEmpresa"
           element={
             <ProtectedRoute tipoEsperado="empresa">
               <MensagemEmpresa />
@@ -153,16 +149,14 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {/*  ver perfil empresa */}
         <Route
-          path="/perfilEmpresa/:id_em?"
+          path="/perfil/:idJa"
           element={
-            <ProtectedRoute tipoEsperado="jovem_aprendiz">
-              <PerfilEmpresa />
+            <ProtectedRoute tipoEsperado="empresa">
+              <Perfil />
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/vagasEmpresa"
           element={
@@ -171,7 +165,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/candidatosEmpresa"
           element={
@@ -180,6 +173,27 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* Aceita /preEntrevista e /preEntrevisas */}
+        <Route
+          path="/preEntrevista"
+          element={
+            <ProtectedRoute tipoEsperado="empresa">
+              <PreEntrevistaEmpresa />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/preEntrevisas"
+          element={
+            <ProtectedRoute tipoEsperado="empresa">
+              <PreEntrevistaEmpresa />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ROTA CATCH-ALL (DEVE FICAR SEMPRE POR ÚLTIMO) */}
+        <Route path="*" element={<Page404 />} />
       </Routes>
     </AnimatePresence>
   );
