@@ -40,10 +40,6 @@
   transition: background 0.2s;
 }
 
-.backButton:hover {
-  background: #1b1733;
-}
-
 .item {
   display: flex;
   gap: 12px;
