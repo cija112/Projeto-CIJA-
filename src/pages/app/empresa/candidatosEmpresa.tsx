@@ -4,6 +4,7 @@ import { SidebarEmpresa } from "../../../components/sideBar/sideBarEmpresa";
 import { supabase } from "../../../supabaseClient";
 import { useDocumentTitle } from "Hooks/useDocumentTitle";
 import { useNavigate } from "react-router-dom";
+import ModalEnviarPreEntrevista from "../../../components/modalEnviarPreEntrevista";
 
 interface Candidatura {
   id_candidatura: string;
@@ -25,14 +26,16 @@ interface Candidatura {
   };
 }
 
-const CandidatosEmpresa: React.FC = () => {
+export const CandidatosEmpresa: React.FC = () => {
   const [candidaturas, setCandidaturas] = useState<Candidatura[]>([]);
   const [loading, setLoading] = useState(true);
-  const [candidaturaSelecionada, setCandidaturaSelecionada] =
-    useState<Candidatura | null>(null);
+  const [candidaturaSelecionada, setCandidaturaSelecionada] = useState<Candidatura | null>(null);
+
+  // Estados do Modal de Pré-Entrevista
+  const [modalPreEntrevistaAberto, setModalPreEntrevistaAberto] = useState(false);
+  const [candidatoParaEnviar, setCandidatoParaEnviar] = useState<{ id: string; nome: string } | null>(null);
 
   const navigate = useNavigate();
-
   useDocumentTitle("CIJA - Candidatos às suas Vagas");
 
   useEffect(() => {
@@ -41,637 +44,338 @@ const CandidatosEmpresa: React.FC = () => {
 
   async function buscarCandidatos() {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
+      setLoading(true);
 
-      // 1. Busca as candidaturas das vagas desta empresa
-      const { data: dadosCandidaturas, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      // 1. Busca as vagas criadas por esta empresa
+      const { data: vagasData, error: vagasError } = await supabase
+        .from("vaga")
+        .select("id_vaga, titulo, id_em")
+        .eq("id_em", user.id);
+
+      if (vagasError) throw vagasError;
+
+      if (!vagasData || vagasData.length === 0) {
+        setCandidaturas([]);
+        setLoading(false);
+        return;
+      }
+
+      const idsVagas = vagasData.map((v) => v.id_vaga);
+
+      // 2. Busca as candidaturas associadas a essas vagas
+      const { data: candData, error: candError } = await supabase
         .from("candidaturas")
-        .select(
-          `
-          id_candidatura,
-          data_candidatura,
-          id_candidato,
-          vaga!inner(titulo, id_em)
-        `,
-        )
-        .eq("vaga.id_em", user.id)
+        .select("id_candidatura, data_candidatura, id_candidato, id_vaga")
+        .in("id_vaga", idsVagas)
         .order("data_candidatura", { ascending: false });
 
-      if (error) throw error;
+      if (candError) throw candError;
 
-      // 2. Mescla os dados de 'jovem_aprendiz' e 'curriculo'
-      const candidaturasComCurriculo = await Promise.all(
-        (dadosCandidaturas || []).map(async (cand: any) => {
-          const { data: dadosUsuario } = await supabase
-            .from("jovem_aprendiz")
-            .select("nome, telefone, endereco, email")
-            .eq("id_ja", cand.id_candidato)
-            .maybeSingle();
+      if (!candData || candData.length === 0) {
+        setCandidaturas([]);
+        setLoading(false);
+        return;
+      }
 
-          const { data: dadosCv } = await supabase
-            .from("curriculo")
-            .select("descricao, competencias, experiencias, curso")
-            .eq("id_ja", cand.id_candidato)
-            .maybeSingle();
+      const idsCandidatos = candData.map((c) => c.id_candidato);
 
-          return {
-            ...cand,
-            curriculo:
-              dadosUsuario || dadosCv
-                ? {
-                    nome: dadosUsuario?.nome || "",
-                    telefone: dadosUsuario?.telefone || "",
-                    endereco: dadosUsuario?.endereco || "",
-                    email: dadosUsuario?.email || "",
-                    descricao: dadosCv?.descricao || "",
-                    competencias: dadosCv?.competencias || "",
-                    experiencias: dadosCv?.experiencias || "",
-                    curso: dadosCv?.curso || "",
-                  }
-                : undefined,
-          };
-        }),
-      );
+      // 3. Busca currículos cadastrados
+      const { data: currData } = await supabase
+        .from("curriculos")
+        .select("*")
+        .in("id_ja", idsCandidatos);
 
-      setCandidaturas(candidaturasComCurriculo);
-    } catch (err) {
-      console.error("Erro ao carregar candidatos:", err);
+      // 4. Junta as informações (exibe o candidato mesmo sem currículo preenchido)
+      const listaFormatada: Candidatura[] = candData.map((c) => {
+        const vagaInfo = vagasData.find((v) => v.id_vaga === c.id_vaga);
+        const currInfo = currData?.find((curr) => curr.id_ja === c.id_candidato);
+
+        return {
+          id_candidatura: c.id_candidatura,
+          data_candidatura: c.data_candidatura,
+          id_candidato: c.id_candidato,
+          vaga: {
+            titulo: vagaInfo?.titulo || "Vaga não encontrada",
+            id_em: vagaInfo?.id_em || "",
+          },
+          curriculo: currInfo
+            ? {
+                nome: currInfo.nome || "Candidato sem nome",
+                telefone: currInfo.telefone || "Não informado",
+                endereco: currInfo.endereco || "Não informado",
+                email: currInfo.email || "Não informado",
+                descricao: currInfo.descricao || "",
+                competencias: currInfo.competencias || "",
+                experiencias: currInfo.experiencias || "",
+                curso: currInfo.curso || "Não informado",
+              }
+            : {
+                nome: "Jovem Aprendiz (Sem Currículo)",
+                telefone: "Não informado",
+                endereco: "Não informado",
+                email: "Não informado",
+                descricao: "",
+                competencias: "",
+                experiencias: "",
+                curso: "Não informado",
+              },
+        };
+      });
+
+      setCandidaturas(listaFormatada);
+    } catch (error) {
+      console.error("Erro ao buscar candidatos:", error);
     } finally {
       setLoading(false);
     }
   }
 
-  function abrirCurriculo(candidatura: Candidatura) {
-    if (!candidatura.curriculo) {
-      alert("Este candidato não possui informações de currículo preenchidas.");
-      return;
-    }
-    setCandidaturaSelecionada(candidatura);
-  }
+  const abrirChatComJovem = (idJovem: string) => {
+    navigate("/mensagensEmpresa", { state: { idJovemSelecionado: idJovem } });
+  };
 
-  async function iniciarConversa(idCandidato: string) {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+  const abrirModalPreEntrevista = (idJovem: string, nomeJovem: string) => {
+    setCandidatoParaEnviar({ id: idJovem, nome: nomeJovem });
+    setModalPreEntrevistaAberto(true);
+  };
 
-      if (!user) {
-        alert("Usuário não autenticado.");
-        return;
-      }
-
-      const { data: conversaExistente, error: erroBusca } = await supabase
-        .from("mensagens")
-        .select("id_msg")
-        .eq("id_em", user.id)
-        .eq("id_ja", idCandidato)
-        .limit(1);
-
-      if (erroBusca) throw erroBusca;
-
-      if (!conversaExistente || conversaExistente.length === 0) {
-        const { error: erroCriacao } = await supabase.from("mensagens").insert({
-          id_ja: idCandidato,
-          id_em: user.id,
-          enviado_por_jovem: false,
-          conteudo: "Conversa iniciada",
-          lida: false,
-          data_envio: new Date().toISOString(),
-        });
-
-        if (erroCriacao) throw erroCriacao;
-      }
-
-      navigate("/mensagensEmpresa");
-    } catch (error) {
-      console.error("Erro ao iniciar conversa:", error);
-      alert("Não foi possível iniciar a conversa.");
-    }
-  }
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
-    <div
-      className={styles.container}
-      style={{
-        display: "flex",
-        width: "100vw",
-        minHeight: "100vh",
-        backgroundColor: "#09090b",
-      }}
-    >
-      <SidebarEmpresa />
+    <div className={styles.container}>
+      <div className="no-print">
+        <SidebarEmpresa />
+      </div>
 
-      <main
-        className={styles.main}
-        style={{
-          marginLeft: "260px",
-          padding: "2rem",
-          flex: 1,
-          boxSizing: "border-box",
-        }}
-      >
-        <div style={{ marginBottom: "2rem" }}>
-          <h1 style={{ color: "#fff", fontSize: "28px", margin: 0 }}>
-            Candidatos às suas Vagas
-          </h1>
-          <p style={{ color: "#94a3b8", marginTop: "0.5rem" }}>
-            Acompanhe os jovens que demonstraram interesse nas suas
-            oportunidades.
-          </p>
-        </div>
+      <div className={`${styles.mainContent} no-print`}>
+        <header className={styles.header}>
+          <h1>Candidatos às Suas Vagas</h1>
+          <p>Gerencie os Jovens Aprendizes que se candidataram às suas oportunidades</p>
+        </header>
 
         {loading ? (
-          <p style={{ color: "#a855f7" }}>Carregando dados...</p>
+          <p style={{ color: "#a78bfa" }}>Carregando candidaturas...</p>
         ) : candidaturas.length === 0 ? (
-          <p style={{ color: "#94a3b8" }}>
-            Ainda não recebeu candidaturas para as suas vagas.
-          </p>
+          <div className={styles.emptyState}>
+            <h3>Nenhum candidato encontrado</h3>
+            <p>Assim que os jovens se candidatarem às suas vagas, os perfis aparecerão aqui.</p>
+          </div>
         ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-              gap: "1.5rem",
-            }}
-          >
-            {candidaturas.map((candidatura) => (
-              <div
-                key={candidatura.id_candidatura}
-                style={{
-                  background: "#131129",
-                  padding: "1.5rem",
-                  borderRadius: "8px",
-                  border: "1px solid #262147",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                }}
-              >
-                <div>
-                  <h3 style={{ color: "#a855f7", margin: "0 0 1rem 0" }}>
-                    Vaga: {candidatura.vaga.titulo}
-                  </h3>
-
-                  {candidatura.curriculo ? (
-                    <div
-                      style={{
-                        color: "#f1f5f9",
-                        fontSize: "14px",
-                        lineHeight: "1.6",
-                      }}
-                    >
-                      <p>
-                        <strong>Nome:</strong> {candidatura.curriculo.nome}
-                      </p>
-                      <p>
-                        <strong>Telefone:</strong>{" "}
-                        {candidatura.curriculo.telefone || "Não informado"}
-                      </p>
-                      <p
-                        style={{
-                          color: "#94a3b8",
-                          fontSize: "13px",
-                          fontStyle: "italic",
-                          marginTop: "0.5rem",
-                        }}
-                      >
-                        {candidatura.curriculo.descricao ||
-                          "Sem resumo profissional"}
-                      </p>
-                    </div>
-                  ) : (
-                    <div style={{ color: "#f1f5f9", fontSize: "14px" }}>
-                      <p>
-                        Perfil detalhado pendente de preenchimento pelo
-                        candidato.
-                      </p>
-                    </div>
-                  )}
+          <div className={styles.gridCandidatos}>
+            {candidaturas.map((cand) => (
+              <div key={cand.id_candidatura} className={styles.cardCandidato}>
+                <div className={styles.cardHeader}>
+                  <span className={styles.tagVaga}>{cand.vaga.titulo}</span>
+                  <span className={styles.dataTag}>
+                    {new Date(cand.data_candidatura).toLocaleDateString("pt-BR")}
+                  </span>
                 </div>
 
-                <div>
-                  <p
-                    style={{
-                      color: "#64748b",
-                      fontSize: "12px",
-                      marginTop: "1rem",
-                    }}
-                  >
-                    Aplicado em:{" "}
-                    {new Date(candidatura.data_candidatura).toLocaleDateString(
-                      "pt-BR",
-                    )}
+                <div className={styles.cardBody}>
+                  <h2>{cand.curriculo?.nome}</h2>
+                  <p className={styles.infoText}>
+                    <strong>Curso:</strong> {cand.curriculo?.curso}
                   </p>
-                  <div className={styles.botoesAcao}>
-                    <button
-                      onClick={() => abrirCurriculo(candidatura)}
-                      className={styles.btnCurriculo}
-                    >
-                      Ver Currículo
-                    </button>
+                  <p className={styles.infoText}>
+                    <strong>Email:</strong> {cand.curriculo?.email}
+                  </p>
+                  <p className={styles.infoText}>
+                    <strong>Telefone:</strong> {cand.curriculo?.telefone}
+                  </p>
+                </div>
 
-                    <button
-                      onClick={() => iniciarConversa(candidatura.id_candidato)}
-                      className={styles.btnConversa}
-                    >
-                      Conversar
-                    </button>
-                  </div>
+                <div className={styles.cardFooter}>
+                  <button
+                    className={styles.btnChat}
+                    onClick={() => abrirChatComJovem(cand.id_candidato)}
+                  >
+                    💬 Chat
+                  </button>
+
+                  <button
+                    className={styles.btnVisualizar}
+                    style={{ background: "linear-gradient(90deg, #9333ea, #7c3aed)" }}
+                    onClick={() =>
+                      abrirModalPreEntrevista(
+                        cand.id_candidato,
+                        cand.curriculo?.nome || "Candidato"
+                      )
+                    }
+                  >
+                    📝 Pré-Entrevista
+                  </button>
+
+                  <button
+                    className={styles.btnVisualizar}
+                    onClick={() => setCandidaturaSelecionada(cand)}
+                  >
+                    Ver Currículo
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </main>
+      </div>
 
-      {/* MODAL SEGURO DE VISUALIZAÇÃO E IMPRESSÃO DO CURRÍCULO (XSS-Safe com JSX) */}
-      {candidaturaSelecionada && candidaturaSelecionada.curriculo && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.85)",
-            zIndex: 1000,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            padding: "20px",
-            overflowY: "auto",
-          }}
-        >
-          {/* Controles Flutuantes (Não saem na impressão) */}
-          <div
-            style={{
-              position: "fixed",
-              top: "20px",
-              right: "20px",
-              display: "flex",
-              gap: "10px",
-              zIndex: 1001,
-            }}
-            className="no-print"
-          >
-            <button
-              onClick={() => window.print()}
-              style={{
-                backgroundColor: "#9333ea",
-                color: "#fff",
-                border: "none",
-                padding: "10px 20px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
-              Imprimir / Salvar PDF
-            </button>
-            <button
-              onClick={() => setCandidaturaSelecionada(null)}
-              style={{
-                backgroundColor: "#ef4444",
-                color: "#fff",
-                border: "none",
-                padding: "10px 20px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
-              Fechar
-            </button>
-          </div>
-
-          {/* Folha A4 do Currículo */}
-          <div
-            className="cv-print-area"
-            style={{
-              background: "#ffffff",
-              color: "#2D3748",
-              width: "210mm",
-              minHeight: "297mm",
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-              display: "flex",
-              position: "relative",
-              boxSizing: "border-box",
-              fontFamily: "'Segoe UI', Arial, sans-serif",
-            }}
-          >
-            {/* Coluna da Esquerda */}
+      {/* MODAL DE VISUALIZAÇÃO DE CURRÍCULO E IMPRESSÃO */}
+      {candidaturaSelecionada && (
+        <div className={styles.modalOverlay}>
+          <div className={`${styles.modalContent} cv-print-area`}>
             <div
+              className="no-print"
               style={{
-                width: "33%",
-                backgroundColor: "#1A1D24",
-                color: "#FFFFFF",
-                padding: "25mm 12mm",
-                boxSizing: "border-box",
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "20px",
+                paddingBottom: "10px",
+                borderBottom: "1px solid #e2e8f0",
               }}
             >
-              <h3
+              <button
+                onClick={handlePrint}
                 style={{
-                  fontSize: "13px",
-                  textTransform: "uppercase",
-                  letterSpacing: "1.5px",
-                  color: "#A855F7",
-                  marginTop: "25px",
-                  marginBottom: "10px",
-                  borderBottom: "1px solid #3A3F4D",
-                  paddingBottom: "5px",
+                  padding: "8px 16px",
+                  backgroundColor: "#2563eb",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
                 }}
               >
-                Contato
-              </h3>
-              <p
-                style={{
-                  fontSize: "12px",
-                  lineHeight: "1.6",
-                  color: "#E2E8F0",
-                  margin: "0 0 12px 0",
-                }}
-              >
-                <strong
-                  style={{
-                    color: "#FFFFFF",
-                    display: "block",
-                    fontSize: "10px",
-                    textTransform: "uppercase",
-                    marginBottom: "2px",
-                  }}
-                >
-                  Telefone
-                </strong>
-                {candidaturaSelecionada.curriculo.telefone || "Não informado"}
-              </p>
-              <p
-                style={{
-                  fontSize: "12px",
-                  lineHeight: "1.6",
-                  color: "#E2E8F0",
-                  margin: "0 0 12px 0",
-                }}
-              >
-                <strong
-                  style={{
-                    color: "#FFFFFF",
-                    display: "block",
-                    fontSize: "10px",
-                    textTransform: "uppercase",
-                    marginBottom: "2px",
-                  }}
-                >
-                  E-mail
-                </strong>
-                {candidaturaSelecionada.curriculo.email || "Não informado"}
-              </p>
-              <p
-                style={{
-                  fontSize: "12px",
-                  lineHeight: "1.6",
-                  color: "#E2E8F0",
-                  margin: "0 0 12px 0",
-                }}
-              >
-                <strong
-                  style={{
-                    color: "#FFFFFF",
-                    display: "block",
-                    fontSize: "10px",
-                    textTransform: "uppercase",
-                    marginBottom: "2px",
-                  }}
-                >
-                  Localização
-                </strong>
-                {candidaturaSelecionada.curriculo.endereco || "Não informado"}
-              </p>
+                🖨️ Imprimir / Salvar PDF
+              </button>
 
-              <h3
-                style={{
-                  fontSize: "13px",
-                  textTransform: "uppercase",
-                  letterSpacing: "1.5px",
-                  color: "#A855F7",
-                  marginTop: "25px",
-                  marginBottom: "10px",
-                  borderBottom: "1px solid #3A3F4D",
-                  paddingBottom: "5px",
-                }}
-              >
-                Formação
-              </h3>
-              <p
-                style={{
-                  fontSize: "12px",
-                  lineHeight: "1.6",
-                  color: "#E2E8F0",
-                  margin: "0 0 12px 0",
-                }}
-              >
-                <strong
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  onClick={() =>
+                    abrirModalPreEntrevista(
+                      candidaturaSelecionada.id_candidato,
+                      candidaturaSelecionada.curriculo?.nome || "Candidato"
+                    )
+                  }
                   style={{
-                    color: "#FFFFFF",
-                    display: "block",
-                    fontSize: "10px",
-                    textTransform: "uppercase",
-                    marginBottom: "2px",
+                    padding: "8px 16px",
+                    backgroundColor: "#7c3aed",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
                   }}
                 >
-                  Curso Atual
-                </strong>
-                {candidaturaSelecionada.curriculo.curso || "Não informado"}
-              </p>
-              <p
-                style={{
-                  fontSize: "12px",
-                  lineHeight: "1.6",
-                  color: "#E2E8F0",
-                  margin: "0 0 12px 0",
-                }}
-              >
-                <strong
-                  style={{
-                    color: "#FFFFFF",
-                    display: "block",
-                    fontSize: "10px",
-                    textTransform: "uppercase",
-                    marginBottom: "2px",
-                  }}
-                >
-                  Instituição
-                </strong>
-                Centro de Integração Jovem Aprendiz (CIJA)
-              </p>
+                  📝 Enviar Pré-Entrevista
+                </button>
 
-              <h3
-                style={{
-                  fontSize: "13px",
-                  textTransform: "uppercase",
-                  letterSpacing: "1.5px",
-                  color: "#A855F7",
-                  marginTop: "25px",
-                  marginBottom: "10px",
-                  borderBottom: "1px solid #3A3F4D",
-                  paddingBottom: "5px",
-                }}
-              >
-                Competências
-              </h3>
-              <ul style={{ paddingLeft: "14px", margin: 0, color: "#E2E8F0" }}>
-                {candidaturaSelecionada.curriculo.competencias ? (
-                  candidaturaSelecionada.curriculo.competencias
-                    .split(",")
-                    .map((s, idx) => (
-                      <li
-                        key={idx}
-                        style={{ fontSize: "12px", marginBottom: "5px" }}
-                      >
-                        {s.trim()}
-                      </li>
-                    ))
-                ) : (
-                  <li style={{ fontSize: "12px", marginBottom: "5px" }}>
-                    Qualificação Profissional
-                  </li>
-                )}
-              </ul>
+                <button
+                  onClick={() => setCandidaturaSelecionada(null)}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: "#ef4444",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Fechar
+                </button>
+              </div>
             </div>
 
-            {/* Coluna da Direita */}
-            <div
-              style={{
-                width: "67%",
-                padding: "25mm 18mm",
-                boxSizing: "border-box",
-              }}
-            >
-              <div style={{ marginBottom: "30px" }}>
-                <h1
-                  style={{
-                    fontSize: "32px",
-                    fontWeight: 700,
-                    color: "#1A1D24",
-                    margin: "0 0 5px 0",
-                  }}
-                >
-                  {candidaturaSelecionada.curriculo.nome || "Nome do Candidato"}
-                </h1>
-                <div
-                  style={{
-                    fontSize: "13px",
-                    color: "#64748B",
-                    textTransform: "uppercase",
-                    letterSpacing: "2px",
-                    fontWeight: 600,
-                  }}
-                >
-                  Jovem Aprendiz / Perfil Técnico
-                </div>
+            <header style={{ borderBottom: "2px solid #0f172a", paddingBottom: "12px", marginBottom: "20px" }}>
+              <h1 style={{ fontSize: "24px", color: "#0f172a", margin: "0 0 6px 0", fontWeight: "bold", textTransform: "uppercase" }}>
+                {candidaturaSelecionada.curriculo?.nome}
+              </h1>
+              <p style={{ fontSize: "14px", color: "#475569", margin: "0 0 4px 0" }}>
+                <strong>Vaga Pretendida:</strong> {candidaturaSelecionada.vaga.titulo}
+              </p>
+              <div style={{ fontSize: "12px", color: "#64748b", display: "flex", gap: "15px", flexWrap: "wrap" }}>
+                <span><strong>Email:</strong> {candidaturaSelecionada.curriculo?.email}</span>
+                <span><strong>Tel:</strong> {candidaturaSelecionada.curriculo?.telefone}</span>
+                <span><strong>Endereço:</strong> {candidaturaSelecionada.curriculo?.endereco}</span>
               </div>
+            </header>
 
-              <div
-                style={{
-                  fontSize: "15px",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  color: "#1A1D24",
-                  letterSpacing: "1px",
-                  margin: "25px 0 10px 0",
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                Resumo Profissional
-              </div>
-              <div
-                style={{
-                  fontSize: "13px",
-                  lineHeight: "1.6",
-                  color: "#475569",
-                  textAlign: "justify",
-                  margin: "0 0 15px 0",
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                {candidaturaSelecionada.curriculo.descricao ||
-                  "Sem resumo profissional preenchido."}
-              </div>
+            {candidaturaSelecionada.curriculo?.descricao && (
+              <section style={{ marginBottom: "20px" }}>
+                <h3 style={{ fontSize: "14px", color: "#1e293b", borderBottom: "1px solid #cbd5e1", paddingBottom: "4px", marginBottom: "8px", textTransform: "uppercase" }}>
+                  Resumo Profissional
+                </h3>
+                <p style={{ fontSize: "13px", color: "#334155", lineHeight: "1.5", margin: 0 }}>
+                  {candidaturaSelecionada.curriculo.descricao}
+                </p>
+              </section>
+            )}
 
-              <div
-                style={{
-                  fontSize: "15px",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  color: "#1A1D24",
-                  letterSpacing: "1px",
-                  margin: "25px 0 10px 0",
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                Experiência e Projetos
-              </div>
-              <div
-                style={{
-                  fontWeight: 600,
-                  color: "#1A1D24",
-                  marginBottom: "2px",
-                  fontSize: "13.5px",
-                }}
-              >
-                Desenvolvimento Prático —{" "}
-                {candidaturaSelecionada.curriculo.experiencias ||
-                  "Projetos Acadêmicos"}
-              </div>
-              <div
-                style={{
-                  fontSize: "11.5px",
-                  color: "#64748B",
-                  marginBottom: "8px",
-                }}
-              >
+            {candidaturaSelecionada.curriculo?.curso && (
+              <section style={{ marginBottom: "20px" }}>
+                <h3 style={{ fontSize: "14px", color: "#1e293b", borderBottom: "1px solid #cbd5e1", paddingBottom: "4px", marginBottom: "8px", textTransform: "uppercase" }}>
+                  Formação / Curso
+                </h3>
+                <p style={{ fontSize: "13px", color: "#334155", margin: 0, fontWeight: 500 }}>
+                  {candidaturaSelecionada.curriculo.curso}
+                </p>
+              </section>
+            )}
+
+            {candidaturaSelecionada.curriculo?.competencias && (
+              <section style={{ marginBottom: "20px" }}>
+                <h3 style={{ fontSize: "14px", color: "#1e293b", borderBottom: "1px solid #cbd5e1", paddingBottom: "4px", marginBottom: "8px", textTransform: "uppercase" }}>
+                  Competências & Habilidades
+                </h3>
+                <p style={{ fontSize: "13px", color: "#334155", lineHeight: "1.5", margin: 0, whiteSpace: "pre-wrap" }}>
+                  {candidaturaSelecionada.curriculo.competencias}
+                </p>
+              </section>
+            )}
+
+            {candidaturaSelecionada.curriculo?.experiencias && (
+              <section style={{ marginBottom: "20px" }}>
+                <h3 style={{ fontSize: "14px", color: "#1e293b", borderBottom: "1px solid #cbd5e1", paddingBottom: "4px", marginBottom: "8px", textTransform: "uppercase" }}>
+                  Experiências Anteriores
+                </h3>
+                <p style={{ fontSize: "13px", color: "#334155", lineHeight: "1.5", margin: 0, whiteSpace: "pre-wrap" }}>
+                  {candidaturaSelecionada.curriculo.experiencias}
+                </p>
+              </section>
+            )}
+
+            <div style={{ marginTop: "30px", paddingTop: "12px", borderTop: "1px solid #e2e8f0", textAlign: "center" }}>
+              <div style={{ fontWeight: "bold", fontSize: "11.5px", color: "#64748B", marginBottom: "8px" }}>
                 CIJA — Centro de Integração Jovem Aprendiz
-              </div>
-              <div
-                style={{
-                  fontSize: "13px",
-                  lineHeight: "1.6",
-                  color: "#475569",
-                  textAlign: "justify",
-                  margin: 0,
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                Atuação ativa e prática em atividades de capacitação corporativa
-                voltadas ao mercado de trabalho, com foco no desenvolvimento de
-                competências técnicas, autonomia operacional e resolução de
-                problemas práticos.
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Regras CSS para Otimização da Impressão */}
+      {/* MODAL DE ENVIO DA PRÉ-ENTREVISTA */}
+      {candidatoParaEnviar && (
+        <ModalEnviarPreEntrevista
+          isOpen={modalPreEntrevistaAberto}
+          onClose={() => setModalPreEntrevistaAberto(false)}
+          idJovemAprendiz={candidatoParaEnviar.id}
+          nomeCandidato={candidatoParaEnviar.nome}
+        />
+      )}
+
       <style>{`
         @media print {
-          body * {
-            visibility: hidden;
-          }
-          .cv-print-area, .cv-print-area * {
-            visibility: visible;
-          }
-          .cv-print-area {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100% !important;
-            box-shadow: none !important;
-          }
-          .no-print {
-            display: none !important;
-          }
+          body * { visibility: hidden; }
+          .cv-print-area, .cv-print-area * { visibility: visible; }
+          .cv-print-area { position: absolute; left: 0; top: 0; width: 100% !important; box-shadow: none !important; }
+          .no-print { display: none !important; }
         }
       `}</style>
     </div>
