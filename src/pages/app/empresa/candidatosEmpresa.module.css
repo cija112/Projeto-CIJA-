@@ -203,7 +203,7 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
 }
 
-/* RESPONSIVIDADE AQUI */
+/* RESPONSIVIDADE AQUI!! */
 @media (max-width: 768px) {
   .mainContent {
     padding: 16px;
