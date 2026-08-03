@@ -44,7 +44,7 @@ function App() {
         <Route path="/confirmar-email" element={<ConfirmarEmail />} />
 
         {/* =========================================================
-             ROTAS DO JOVEM APRENDIZ
+             ROTAS DO JOVEM APRENDIZ!!!
            ========================================================= */}
         <Route
           path="/clientDashboard"
