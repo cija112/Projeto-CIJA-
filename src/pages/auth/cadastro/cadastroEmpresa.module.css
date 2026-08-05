@@ -39,34 +39,6 @@ body {
   position: relative;
   overflow: hidden;
 }
-.backgroundBlobs {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-}
-.blob1,
-.blob2 {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(120px);
-}
-.blob1 {
-  width: 34vw;
-  height: 34vw;
-  min-width: 320px;
-  top: -12%;
-  right: -10%;
-  background: rgba(147, 51, 234, 0.34);
-}
-.blob2 {
-  width: 38vw;
-  height: 38vw;
-  min-width: 360px;
-  bottom: -18%;
-  left: -10%;
-  background: rgba(88, 28, 135, 0.32);
-}
 
 .desktopLogo {
   position: fixed;
@@ -126,7 +98,7 @@ body {
   text-shadow: 0 0 40px rgba(147, 51, 234, 0.12);
 }
 .left h1 span {
-  background: linear-gradient(180deg, #5705af 0%, #6a0ac4 100%);
+  background: linear-gradient(180deg, #6f14cf 0%, #8e24f1 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -344,17 +316,14 @@ form {
   border: none;
   border-radius: 18px;
   margin-top: 6px;
-  background: linear-gradient(135deg, #44047c, #480983);
+  background: linear-gradient(135deg, #952cf1, #6615b3);
   color: white;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
   transition: 0.25s;
 }
-.actionButton:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.06);
-}
+
 .actionButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;

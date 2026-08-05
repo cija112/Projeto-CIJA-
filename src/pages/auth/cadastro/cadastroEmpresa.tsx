@@ -187,10 +187,7 @@ export default function CadastroEmpresa() {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.backgroundBlobs}>
-        <div className={styles.blob1}></div>
-        <div className={styles.blob2}></div>
-      </div>
+      
 
       {globalMessage && <div className={styles.alert}>{globalMessage}</div>}
       <img src={cija_logo} alt="CIJA" className={styles.desktopLogo} />

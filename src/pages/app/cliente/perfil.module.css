@@ -1,9 +1,9 @@
 :root {
-  --bg: #121215;
-  --bg-2: #18181b;
-  --card: #202026;
-  --line: #2f2f38;
-  --line-2: #424250;
+  --bg: #15131d;
+  --bg-2: #1b1824;
+  --card: #201c2c;
+  --line: #2f2a40;
+  --line-2: #453c5e;
   --txt: #f4f4f5;
   --txt-2: #a1a1aa;
   --txt-3: #71717a;
@@ -140,6 +140,12 @@
 .headerInfo {
   flex: 1;
   z-index: 1;
+}
+
+.headerTopRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .headerInfo h1 {
@@ -324,6 +330,33 @@
 .cardHead button:hover {
   border-color: var(--line-2);
   color: white;
+}
+
+/* Botão Editar Dados Pessoais com Ícone SVG Profissional */
+.editPersonalBtn {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--txt);
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.editPersonalBtn svg {
+  width: 13px;
+  height: 13px;
+  color: var(--primary-2);
+}
+
+.editPersonalBtn:hover {
+  border-color: var(--primary);
+  background: var(--card);
 }
 
 .about {
@@ -550,17 +583,16 @@
   font-size: 12px;
 }
 
-.errorMsg {
+.errorText {
   color: var(--danger);
-  font-size: 12px;
+  font-size: 13px;
   margin-bottom: 8px;
 }
 
-.successMsg {
+.successText {
   color: var(--success);
-  font-size: 12px;
+  font-size: 13px;
   margin-bottom: 8px;
-  font-weight: 500;
 }
 
 .voltar {
@@ -578,7 +610,7 @@
   border-color: var(--line-2);
 }
 
-/* PASSWORD WRAPPER CORRIGIDO COM POSICIONAMENTO ABSOLUTO */
+/* PASSWORD WRAPPER - OLHINHO À DIREITA */
 .passwordWrapper {
   position: relative;
   width: 100%;
@@ -606,27 +638,80 @@
 
 .eyeBtn {
   position: absolute;
-  top: 2%;
+  top: 50%;
   right: 6px;
-  transform: translateY(-2%);
-  background: transparent;
-  border: none;
+  transform: translateY(-50%);
+  background: var(--card);
+  border: 1px solid var(--line);
   color: var(--txt-2);
   cursor: pointer;
-  width: 10px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  transition:
-    color 0.2s,
-    background 0.2s;
+  transition: all 0.2s;
 }
 
 .eyeBtn:hover {
   color: white;
   background: var(--bg-2);
+  border-color: var(--line-2);
+}
+
+.eyeBtn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Classes Auxiliares para Substituição de Estilos Inline */
+.mt10 {
+  margin-top: 10px;
+}
+
+.flexGap10 {
+  display: flex;
+  gap: 10px;
+}
+
+.span2Column {
+  grid-column: span 2;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.spanFull {
+  grid-column: 1 / -1;
+}
+
+.mb14 {
+  margin-bottom: 14px;
+}
+
+.itemDesc {
+  margin-top: 4px;
+  color: var(--txt-2);
+  font-size: 12px;
+}
+
+.textCenter {
+  color: var(--txt-2);
+  text-align: center;
+}
+
+.pdfActions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.cursorPointer {
+  cursor: pointer;
+  display: inline-block;
 }
 
 @media (max-width: 1280px) {

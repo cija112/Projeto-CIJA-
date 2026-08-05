@@ -89,58 +89,6 @@ body {
     #05010b;
 }
 
-/* BLOBS */
-
-.backgroundBlobs {
-  position: absolute;
-
-  inset: 0;
-
-  overflow: hidden;
-
-  z-index: 0;
-
-  pointer-events: none;
-}
-
-.purpleBlob1,
-.purpleBlob2 {
-  position: absolute;
-
-  border-radius: 50%;
-
-  filter: blur(150px);
-
-  will-change: transform;
-}
-
-.purpleBlob1 {
-  width: clamp(280px, 35vw, 560px);
-
-  height: clamp(280px, 35vw, 560px);
-
-  background: #5b21b6;
-
-  top: -140px;
-
-  left: -120px;
-
-  opacity: 0.34;
-}
-
-.purpleBlob2 {
-  width: clamp(300px, 38vw, 650px);
-
-  height: clamp(300px, 38vw, 650px);
-
-  background: #9333ea;
-
-  right: -180px;
-
-  bottom: -180px;
-
-  opacity: 0.25;
-}
 
 /* LOGOS */
 
@@ -281,7 +229,7 @@ body {
 }
 
 .left h1 span {
-  background-color: #750ddd;
+  background-color: #9a38fc;
 
   -webkit-background-clip: text;
 
@@ -300,55 +248,6 @@ body {
   font-size: 1.08rem;
 }
 
-/* STATS */
-
-.stats {
-  display: flex;
-
-  gap: 18px;
-
-  flex-wrap: wrap;
-
-  margin-top: 45px;
-}
-
-.statBox {
-  min-width: 165px;
-
-  padding: 24px;
-
-  border-radius: 26px;
-
-  background: rgba(255, 255, 255, 0.03);
-
-  border: 1px solid rgba(255, 255, 255, 0.06);
-
-  backdrop-filter: blur(20px);
-
-  transition: 0.25s ease;
-}
-
-.statBox:hover {
-  transform: translateY(-4px);
-
-  border-color: rgba(168, 85, 247, 0.22);
-
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.statBox h3 {
-  color: white;
-
-  font-size: 2rem;
-
-  margin-bottom: 4px;
-}
-
-.statBox p {
-  color: var(--muted);
-
-  font-size: 0.92rem;
-}
 
 /* CARD */
 
@@ -554,7 +453,7 @@ body {
 
   margin-top: 8px;
 
-  background: linear-gradient(135deg, #7e22ce 0%, #a855f7 100%);
+  background: linear-gradient(135deg, #7e22ce 0%, #6218a8 100%);
 
   color: white;
 
@@ -566,16 +465,9 @@ body {
 
   transition: 0.25s ease;
 
-  box-shadow: 0 16px 35px rgba(147, 51, 234, 0.32);
+
 }
 
-.actionButton:hover:not(:disabled) {
-  transform: translateY(-2px);
-
-  filter: brightness(1.06);
-
-  box-shadow: 0 20px 45px rgba(147, 51, 234, 0.42);
-}
 
 .actionButton:disabled {
   opacity: 0.6;

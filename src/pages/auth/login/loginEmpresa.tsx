@@ -140,10 +140,7 @@ export default function LoginEmpresa() {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.backgroundBlobs}>
-        <div className={styles.purpleBlob1}></div>
-        <div className={styles.purpleBlob2}></div>
-      </div>
+
 
       {globalNotificacao && (
         <div className={styles.alert}>{globalNotificacao}</div>
@@ -167,22 +164,7 @@ export default function LoginEmpresa() {
             carreira na área da tecnologia.
           </p>
 
-          <div className={styles.stats}>
-            <div className={styles.statBox}>
-              <h3>+500</h3>
-              <p>Candidatos</p>
-            </div>
-
-            <div className={styles.statBox}>
-              <h3>+120</h3>
-              <p>Empresas</p>
-            </div>
-
-            <div className={styles.statBox}>
-              <h3>24h</h3>
-              <p>Suporte</p>
-            </div>
-          </div>
+         
         </div>
 
         <div className={cardClasses}>

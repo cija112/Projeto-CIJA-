@@ -134,31 +134,7 @@ export default function ProtectedRoute({
           fontFamily: "'Poppins', system-ui, sans-serif",
         }}
       >
-        {/* Blobs */}
-        <div
-          style={{
-            position: "absolute",
-            width: 420,
-            height: 420,
-            top: "-15%",
-            right: "-10%",
-            background: "rgba(147,51,234,0.18)",
-            filter: "blur(110px)",
-            borderRadius: "50%",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            width: 380,
-            height: 380,
-            bottom: "-15%",
-            left: "-10%",
-            background: "rgba(88,28,135,0.16)",
-            filter: "blur(110px)",
-            borderRadius: "50%",
-          }}
-        />
+        
 
         <div
           style={{
@@ -172,9 +148,7 @@ export default function ProtectedRoute({
             borderRadius: 28,
             padding: "44px 32px",
             backdropFilter: "blur(24px)",
-            boxShadow:
-              "0 30px 100px rgba(0,0,0,0.6), 0 0 40px rgba(147,51,234,0.1)",
-            textAlign: "center",
+            
           }}
         >
           {/* Spinner */}

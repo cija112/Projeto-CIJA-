@@ -180,7 +180,9 @@ export default function CadastroCliente() {
       if (authError || !authData?.user)
         throw authError || new Error("Erro ao criar conta.");
       if (authData.user.identities && authData.user.identities.length === 0) {
-        setGlobalMessage("Não foi possível concluir o cadastro. Tente novamente em alguns minutos.");
+        setGlobalMessage(
+          "Não foi possível concluir o cadastro. Tente novamente em alguns minutos.",
+        );
         triggerError();
         setLoading(false);
         return;
@@ -223,10 +225,6 @@ export default function CadastroCliente() {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.backgroundBlobs}>
-        <div className={styles.blobTop} />
-        <div className={styles.blobBottom} />
-      </div>
       <img src={cija_logo} alt="Logo" className={styles.desktopLogo} />
       {globalMessage && <div className={styles.alert}>{globalMessage}</div>}
       <div className={styles.loginContainer}>

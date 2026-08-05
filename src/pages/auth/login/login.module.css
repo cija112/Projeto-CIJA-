@@ -1,8 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap");
 
 :root {
-  --bg: #1e0e3f;
-  --card: rgba(17, 12, 28, 0.82);
+  --bg: #0a031a;
+  --card: rgba(18, 6, 41, 0.82);
   --white: #ffffff;
   --muted: #a9a3b8;
   --purple: #9333ea;
@@ -20,16 +20,25 @@
   padding: 0;
   box-sizing: border-box;
 }
-html {
+
+html,
+body {
+  width: 100%;
+  min-height: 100vh;
+  height: auto;
   scroll-behavior: smooth;
 }
+
 body {
   font-family: "Poppins", sans-serif;
   background: var(--bg);
   overflow-x: hidden;
+  overflow-y: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  position: relative;
 }
+
 body::before {
   content: "";
   position: fixed;
@@ -37,16 +46,55 @@ body::before {
   background:
     radial-gradient(
       circle at top left,
-      rgba(147, 51, 234, 0.12),
-      transparent 35%
+      rgba(147, 51, 234, 0.15),
+      transparent 40%
     ),
     radial-gradient(
       circle at top right,
       rgba(168, 85, 247, 0.1),
-      transparent 35%
+      transparent 40%
     );
   pointer-events: none;
   z-index: -3;
+}
+
+/* ========================= BACKGROUND DECORATIONS ========================= */
+.bgDecorations {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.bgArc1 {
+  position: absolute;
+  top: -150px;
+  left: 15%;
+  width: 650px;
+  height: 650px;
+  border: 1px solid rgba(168, 85, 247, 0.12);
+  border-radius: 50%;
+}
+
+.bgArc2 {
+  position: absolute;
+  top: -60px;
+  left: 32%;
+  width: 500px;
+  height: 500px;
+  border: 1px solid rgba(147, 51, 234, 0.08);
+  border-radius: 50%;
+}
+
+.bgArcBottom {
+  position: absolute;
+  bottom: -120px;
+  left: -100px;
+  width: 450px;
+  height: 450px;
+  border: 1px solid rgba(168, 85, 247, 0.1);
+  border-radius: 50%;
 }
 
 /* ========================= WRAPPER ========================= */
@@ -61,55 +109,15 @@ body::before {
   overflow: hidden;
 }
 
-/* ========================= BACKGROUND ========================= */
-.backgroundBlobs {
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-}
-.purpleBlob1,
-.purpleBlob2 {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  opacity: 1;
-}
-.purpleBlob1 {
-  width: 520px;
-  height: 520px;
-  top: 650px;
-  right: -200px;
-  background: radial-gradient(
-    circle,
-    rgba(168, 85, 247, 0.38) 0%,
-    rgba(147, 51, 234, 0.22) 75%,
-    transparent 40%
-  );
-  filter: blur(110px);
-}
-.purpleBlob2 {
-  width: 560px;
-  height: 560px;
-  bottom: 600px;
-  left: -240px;
-  background: radial-gradient(
-    circle,
-    rgba(88, 28, 135, 0.4) 0%,
-    rgba(126, 34, 206, 0.22) 90%,
-    transparent 90%
-  );
-  filter: blur(80px);
-}
-
 /* ========================= LOGOS ========================= */
 .desktopLogo {
-  position: fixed;
+  position: absolute;
   top: 28px;
   left: 28px;
-  width: 72px;
+  width: 64px;
+  height: auto;
   z-index: 30;
+  object-fit: contain;
 }
 .mobileLogo {
   display: none;
@@ -145,182 +153,141 @@ body::before {
 /* ========================= CONTAINER ========================= */
 .loginContainer {
   width: 100%;
-  max-width: 1500px;
+  max-width: 1400px;
   position: relative;
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 80px;
+  gap: 60px;
+  margin: auto;
 }
 
 /* ========================= LEFT ========================= */
 .left {
   flex: 1;
+  position: relative;
+  padding-left: 22px;
 }
-.badge {
-  display: inline-flex;
-  padding: 10px 18px;
-  border-radius: 999px;
-  border: 1px solid rgba(147, 51, 234, 0.35);
-  background: rgba(147, 51, 234, 0.09);
-  color: #d8b4fe;
-  font-size: 0.9rem;
-  font-weight: 600;
-  margin-bottom: 50px;
-  backdrop-filter: blur(12px);
+
+.leftIndicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 10px;
 }
+
+.purpleDot {
+  width: 10px;
+  height: 10px;
+  background-color: var(--purple-light);
+  border-radius: 50%;
+  box-shadow: 0 0 12px var(--purple-light);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.leftIndicatorLine {
+  width: 2px;
+  flex: 1;
+  background: linear-gradient(
+    180deg,
+    var(--purple-light) 0%,
+    rgba(147, 51, 234, 0.25) 50%,
+    transparent 100%
+  );
+  margin-top: 8px;
+}
+
 .left h1 {
-  font-size: clamp(4rem, 12vw, 12rem);
-  margin-top: -2px;
-  line-height: 0.6;
-  letter-spacing: -4px;
+  font-size: clamp(3rem, 6vw, 6.5rem);
+  line-height: 0.92;
+  letter-spacing: -3px;
   font-weight: 800;
   color: white;
+  margin-bottom: 24px;
 }
 .left h1 span {
-  color: var(--purple);
+  background: linear-gradient(135deg, #a855f7, #9333ea);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   display: inline-block;
 }
 .tagline {
-  margin-top: 40px;
   color: var(--muted);
-  max-width: 620px;
-  line-height: 1.75;
+  max-width: 560px;
+  line-height: 1.7;
   font-size: 1.05rem;
+  margin-bottom: 36px;
 }
 
-/* ========================= STATS ========================= */
-.stats {
+.leftFooterText {
   display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  margin-top: 50px;
-}
-.statBox {
-  min-width: 150px;
-  box-shadow:
-    0 10px 40px rgba(139, 39, 231, 0.2),
-    0 0 2px rgba(168, 85, 247, 0.08);
-  padding: 24px;
-  border-radius: 24px;
-  position: relative;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(25px);
-  transition:
-    transform 0.4s ease,
-    border-color 0.4s ease,
-    box-shadow 0.4s ease;
-}
-.statBox::before {
-  content: "";
-  position: absolute;
-  box-shadow:
-    0 10px 40px rgba(139, 39, 231, 0.2),
-    0 0 25px rgba(168, 85, 247, 0.08);
-  width: 240%;
-  height: 240%;
-  top: -70%;
-  left: -70%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    rgba(168, 85, 247, 0.18) 60deg,
-    transparent 120deg,
-    transparent 360deg
-  );
-  animation: rotateGlow 5s linear infinite;
-  z-index: 0;
-}
-.statBox::after {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  border-radius: 23px;
-  background: rgba(20, 12, 35, 0.95);
-  z-index: 1;
-}
-.statBox h3,
-.statBox p {
-  position: relative;
-  z-index: 2;
-}
-.statBox:hover {
-  transform: translateY(-5px);
-  border-color: rgba(168, 85, 247, 0.3);
-  box-shadow:
-    0 10px 40px rgba(147, 51, 234, 0.2),
-    0 0 25px rgba(168, 85, 247, 0.08);
-}
-.statBox h3 {
-  color: white;
-  background-color: transparent;
-  font-size: 2rem;
-  animation: pulseNumber 2.2s ease-in-out infinite;
-}
-@keyframes pulseNumber {
-  0% {
-    transform: scale(1);
-    text-shadow: 0 0 0 rgba(168, 85, 247, 0);
-  }
-  50% {
-    transform: scale(1.12);
-    text-shadow: 0 0 18px rgba(168, 85, 247, 0.45);
-  }
-  100% {
-    transform: scale(1);
-    text-shadow: 0 0 0 rgba(168, 85, 247, 0);
-  }
-}
-.statBox p {
+  align-items: center;
+  gap: 10px;
   color: var(--muted);
-  margin-top: 4px;
+  font-size: 0.95rem;
 }
-@keyframes rotateGlow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+
+.leftFooterBar {
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  background-color: var(--purple-light);
+}
+
+.leftFooterText span {
+  color: #c084fc;
+  font-weight: 500;
 }
 
 /* ========================= LOGIN CARD ========================= */
 .loginCard {
   width: 100%;
-  max-width: 467px;
-  min-height: 620px;
+  max-width: 460px;
+  min-height: 580px;
   background: linear-gradient(
     180deg,
-    rgba(25, 16, 42, 0.88),
-    rgba(15, 10, 28, 0.92)
+    rgba(25, 16, 42, 0.92),
+    rgba(15, 10, 28, 0.96)
   );
   border: 1px solid var(--border);
   border-radius: 34px;
-  padding: 42px;
+  padding: 40px;
   backdrop-filter: blur(35px);
   box-shadow: var(--shadow);
   position: relative;
   overflow: hidden;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
 }
 .cardContent {
   width: 100%;
 }
+
+.welcomeText {
+  color: #a855f7 !important;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
 .cardContent h2 {
   color: white;
-  font-size: 3rem;
-  letter-spacing: -2px;
-  margin-bottom: 10px;
+  font-size: 2.4rem;
+  letter-spacing: -1.5px;
+  margin-bottom: 6px;
 }
 .cardContent > p {
   color: var(--muted);
-  margin-bottom: 35px;
-  line-height: 1.6;
+  margin-bottom: 24px;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 /* ========================= INPUTS ========================= */
@@ -328,37 +295,22 @@ body::before {
   margin-bottom: 16px;
   position: relative;
 }
-.inputGroup input {
-  padding: 0 48px 0 16px;
-}
-
-.inputIcon {
-  position: absolute;
-  left: 88%;
-  top: 60%;
-  transform: translateY(-50%);
-  color: #7f7a8d;
-  pointer-events: none;
-  z-index: 2;
-  width: clamp(20px, 2.5vw, 24px); /*  min 20px, max 24px */
-  height: clamp(20px, 2.5vw, 24px);
-}
-inputGroup label {
+.inputGroup label {
   display: block;
   color: white;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .input {
   width: 100%;
-  height: 62px;
-  padding: 0 18px;
-  border-radius: 18px;
+  height: 54px;
+  padding: 0 48px 0 16px;
+  border-radius: 14px;
   background: var(--input);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: white;
-  font-size: 1rem;
+  font-size: 0.95rem;
   outline: none;
   transition: 0.2s ease;
 }
@@ -374,9 +326,20 @@ inputGroup label {
 }
 .errorMessage {
   color: var(--danger);
-  margin-top: 8px;
-  font-size: 0.85rem;
+  margin-top: 6px;
+  font-size: 0.82rem;
   font-weight: 600;
+}
+
+.inputIcon {
+  position: absolute;
+  right: 16px;
+  top: 65%;
+  transform: translateY(-50%);
+  color: #7f7a8d;
+  pointer-events: none;
+  width: 20px;
+  height: 20px;
 }
 
 /* ========================= SENHA ========================= */
@@ -386,10 +349,10 @@ inputGroup label {
 .toggleSenha {
   position: absolute;
   top: 50%;
-  right: 5px;
+  right: 6px;
   transform: translateY(-50%);
-  width: 60px;
-  height: 60px;
+  width: 42px;
+  height: 42px;
   border: none;
   background: none;
   cursor: pointer;
@@ -397,72 +360,139 @@ inputGroup label {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 14px;
+  border-radius: 10px;
   transition: 0.2s ease;
 }
 .toggleSenha:hover {
   background: rgba(255, 255, 255, 0.05);
-  transform: translateY(-52%);
   color: white;
 }
 .toggleSenha svg {
-  width: 21px;
-  height: 21px;
+  width: 18px;
+  height: 18px;
 }
 
-/* ========================= BUTTON ========================= */
+/* ========================= OPTIONS ROW ========================= */
+.optionsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  font-size: 0.88rem;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  accent-color: var(--purple);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.forgotLink {
+  color: #c084fc;
+  text-decoration: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.forgotLink:hover {
+  color: white;
+  text-decoration: underline;
+}
+
+/* ========================= BUTTONS ========================= */
 .actionButton {
   width: 100%;
-  height: 62px;
+  height: 54px;
   border: none;
-  border-radius: 18px;
-  margin-top: 10px;
+  border-radius: 14px;
   background: linear-gradient(135deg, #7e22ce, #9333ea);
   color: white;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  transition: 0.25s ease;
-  box-shadow: 0 14px 35px rgba(126, 34, 206, 0.3);
+  transition:
+    opacity 0.2s,
+    transform 0.1s;
 }
 .actionButton:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.05);
+  opacity: 0.92;
+}
+.actionButton:active {
+  transform: scale(0.99);
 }
 .actionButton:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
+/* Google Button */
+.googleButton {
+  width: 100%;
+  height: 52px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  color: white;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: 0.2s ease;
+  margin-top: 14px;
+}
+.googleButton:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.googleIcon {
+  width: 18px;
+  height: 18px;
+}
+
 /* ========================= FOOTER ========================= */
 .footerActions {
-  margin-top: 32px;
+  margin-top: 20px;
+  text-align: center;
 }
 .subLink {
-  text-align: center;
   color: var(--muted);
-  margin-top: 14px;
-  line-height: 1.6;
+  margin-top: 8px;
+  font-size: 0.9rem;
 }
 .subLink a {
   color: #c084fc;
-  font-weight: 700;
-  margin-left: 6px;
+  font-weight: 600;
+  margin-left: 4px;
   cursor: pointer;
+  text-decoration: none;
   transition: 0.2s;
 }
 .subLink a:hover {
   color: white;
+  text-decoration: underline;
 }
 
 /* ========================= SEPARATOR ========================= */
 .separator {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #8d889a;
-  margin-top: 18px;
-  font-size: 0.9rem;
+  gap: 12px;
+  color: #7f7a8d;
+  margin: 16px 0 4px 0;
+  font-size: 0.85rem;
 }
 .separator::before,
 .separator::after {
@@ -494,32 +524,39 @@ inputGroup label {
   }
 }
 
-/* ========================================= SUCCESS - CHECKMARK RESPONSIVO ========================================= */
+/* ========================= SUCCESS ANIMATION ========================= */
 .successAnimation {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
   padding: 30px;
-  background: rgba(10, 6, 18, 0.96);
+  background: rgba(16, 10, 30, 0.98);
   backdrop-filter: blur(20px);
+  border-radius: inherit;
+  z-index: 20;
   animation: fadeScale 0.4s ease;
 }
+
 .checkmark {
-  width: 110px;
-  height: 110px;
+  width: 90px;
+  height: 90px;
   margin-bottom: 20px;
 }
+
 .checkmarkCircle {
   stroke: var(--success);
   stroke-width: 3;
   stroke-dasharray: 166;
   stroke-dashoffset: 166;
-  animation: stroke 0.6s forwards;
+  animation: strokeCircle 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
 }
+
 .checkmarkCheck {
   stroke: white;
   stroke-width: 4;
@@ -527,20 +564,32 @@ inputGroup label {
   stroke-linejoin: round;
   stroke-dasharray: 48;
   stroke-dashoffset: 48;
-  animation: stroke 0.35s 0.55s forwards;
+  animation: strokeCheck 0.35s 0.5s cubic-bezier(0.65, 0, 0.45, 1) forwards;
 }
+
 .successAnimation h2 {
   font-size: 2rem;
-  margin-bottom: 10px;
+  color: white;
+  margin-bottom: 8px;
 }
+
 .successAnimation p {
   color: var(--muted);
+  font-size: 0.95rem;
 }
-@keyframes stroke {
+
+@keyframes strokeCircle {
   to {
     stroke-dashoffset: 0;
   }
 }
+
+@keyframes strokeCheck {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 @keyframes fadeScale {
   from {
     opacity: 0;
@@ -552,173 +601,72 @@ inputGroup label {
   }
 }
 
-/* ========================= TABLET ========================= */
+/* ========================= RESPONSIVIDADE ========================= */
 @media (max-width: 1100px) {
   .loginContainer {
     flex-direction: column;
     text-align: center;
-    gap: 50px;
-  }
-  .leftContent {
-    max-width: 100%;
-  }
-  .subtitle {
-    margin: 0 auto;
+    gap: 40px;
+    padding-top: 20px;
   }
   .desktopLogo {
     display: none;
   }
   .mobileLogo {
     display: block;
-    width: 72px;
-    margin: 0 auto 26px;
+    width: 60px;
+    margin: 0 auto 16px;
+    object-fit: contain;
+  }
+  .left {
+    padding-left: 0;
+  }
+  .leftIndicator {
+    position: relative;
+    flex-direction: row;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 16px;
+    height: auto;
+  }
+  .leftIndicatorLine {
+    width: 60px;
+    height: 2px;
+    margin-top: 0;
+  }
+  .tagline,
+  .leftFooterText {
+    margin-left: auto;
+    margin-right: auto;
+    justify-content: center;
   }
 }
 
-/* ========================= MOBILE - AJUSTES DO PRINT ========================= */
 @media (max-width: 768px) {
   .wrapper {
     padding: 20px 16px;
+    align-items: center;
   }
   .left h1 {
-    font-size: clamp(4.5rem, 14vw, 6.5rem);
-    margin-bottom: 32px;
-    letter-spacing: -3px;
-  } /* MAIOR E AFASTADO */
-  .subtitle {
-    font-size: 0.95rem;
-    margin-bottom: 40px;
+    font-size: clamp(2.5rem, 9vw, 3.8rem);
+    letter-spacing: -2px;
   }
-  .card {
-    padding: 30px 22px;
-  }
-  .card h2 {
-    font-size: 1.7rem;
-  }
-  .otpInputGroup {
-    gap: 6px;
-  }
-  .otpInput {
-    width: 46px;
-    height: 50px;
-    border-radius: 12px;
-    font-size: 1rem;
-  }
-  .actionButton {
-    height: 54px;
-  }
-  .blobTop {
-    top: -120px;
-    left: -120px;
-    width: 260px;
-    height: 260px;
-  }
-  .blobBottom {
-    right: -140px;
-    bottom: -160px;
-    width: 280px;
-    height: 280px;
-  }
-
-  /* STATS EMPILHADOS IGUAL PRINT */
-  .stats {
-    flex-direction: column;
-    gap: 16px;
-    width: 100%;
-    max-width: 340px;
-    margin: 0 auto;
-  }
-  .statBox {
-    width: 100%;
-    padding: 26px 20px;
-  }
-  .statBox h3 {
-    font-size: 2.2rem;
-  }
-  .statBox p {
-    font-size: 0.9rem;
-  }
-  .inputIcon {
-    position: absolute;
-    left: 88%;
-    top: 60%;
-    transform: translateY(-50%);
-    color: #7f7a8d;
-    pointer-events: none;
-    z-index: 2;
-    width: clamp(20px, 2.5vw, 24px); /*  min 20px, max 24px */
-    height: clamp(20px, 2.5vw, 24px);
-  }
-
-  /* CHECKMARK RESPONSIVO */
-  .checkmark {
-    width: 90px;
-    height: 90px;
+  .loginCard {
+    max-width: 100%;
+    min-height: 540px;
+    padding: 30px 20px;
+    border-radius: 26px;
   }
 }
 
 @media (max-width: 480px) {
   .left h1 {
-    font-size: clamp(4rem, 16vw, 5.5rem);
-    margin-bottom: 28px;
-  } /* AINDA MAIOR NO MOBILE PEQUENO */
-  .subtitle {
-    font-size: 0.95rem;
-    margin-bottom: 36px;
+    font-size: 2.3rem;
   }
-  .inputIcon {
-    position: absolute;
-    left: 84%;
-    top: 60%;
-    transform: translateY(-50%);
-    color: #7f7a8d;
-    pointer-events: none;
-    z-index: 2;
-    width: clamp(25px, 3.5vw, 25px); /*  min 20px, max 24px */
-    height: clamp(20px, 2.5vw, 24px);
+  .tagline {
+    font-size: 0.88rem;
   }
-  .card {
-    padding: 26px 16px;
-    border-radius: 24px;
-  }
-  .card h2 {
-    font-size: 1.7rem;
-  }
-  .otpInputGroup {
-    gap: 6px;
-  }
-  .otpInput {
-    width: 46px;
-    height: 50px;
-    border-radius: 12px;
-    font-size: 1rem;
-  }
-  .actionButton {
-    height: 54px;
-  }
-  .blobTop {
-    top: -120px;
-    left: -120px;
-    width: 260px;
-    height: 260px;
-  }
-  .blobBottom {
-    right: -140px;
-    bottom: -160px;
-    width: 280px;
-    height: 280px;
-  }
-  .checkmark {
-    width: 80px;
-    height: 80px;
-  }
-  .stats {
-    gap: 14px;
-  }
-  .statBox {
-    padding: 22px 18px;
-  }
-  .statBox h3 {
-    font-size: 2rem;
+  .cardContent h2 {
+    font-size: 1.9rem;
   }
 }

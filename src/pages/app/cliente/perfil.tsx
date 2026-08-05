@@ -13,18 +13,31 @@ const phone = (v: string) => {
     : v;
 };
 
+const cpfMask = (v: string) => {
+  if (!v) return "—";
+  const d = v.replace(/\D/g, "");
+  if (d.length <= 11) {
+    return d
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  }
+  return v;
+};
+
 const calc = (user: any, cv: any) => {
-  const hasAvatar = !!user.avatar;
-  const hasNome = (user.nome || "").trim().length > 2;
+  const hasAvatar = !!(user.avatar || user.avatar_url || user.foto);
+  const hasNome = (user.nome || "").trim().length > 3;
   const hasEmail = !!user.email;
   const hasTel = (user.tel || "").replace(/\D/g, "").length >= 10;
+  const hasCpf = (user.cpf || "").replace(/\D/g, "").length >= 11;
 
   const descLen = (cv.descricao || "").trim().length;
   const desc =
     descLen >= 100
       ? 20
       : descLen >= 50
-        ? 25
+        ? 15
         : descLen >= 20
           ? 8
           : descLen > 0
@@ -47,7 +60,7 @@ const calc = (user: any, cv: any) => {
   try {
     const exp = JSON.parse(cv.experiencias || "{}");
     const list = exp.experiencias || [];
-    experiencia = list.length >= 2 ? 20 : list.length === 1 ? 12 : 0;
+    experiencia = list.length >= 2 ? 15 : list.length === 1 ? 10 : 0;
   } catch {}
 
   const percent = Math.min(
@@ -55,6 +68,7 @@ const calc = (user: any, cv: any) => {
       (hasNome ? 5 : 0) +
       (hasEmail ? 5 : 0) +
       (hasTel ? 5 : 0) +
+      (hasCpf ? 5 : 0) +
       desc +
       skills +
       formacao +
@@ -75,6 +89,7 @@ export default function Perfil() {
     nome: "",
     email: "",
     tel: "",
+    cpf: "",
     cidade: "São Paulo, Brasil",
     avatar: "",
     titulo: "Jovem Aprendiz",
@@ -90,6 +105,14 @@ export default function Perfil() {
 
   const [editingSummary, setEditingSummary] = useState(false);
   const [summary, setSummary] = useState("");
+
+  // Edição de dados pessoais (Nome, Telefone, CPF)
+  const [editingPersonal, setEditingPersonal] = useState(false);
+  const [editNome, setEditNome] = useState("");
+  const [editTel, setEditTel] = useState("");
+  const [editCpf, setEditCpf] = useState("");
+  const [savingPersonal, setSavingPersonal] = useState(false);
+
   const [saving, setSaving] = useState(false);
   const [avatarVersion, setAvatarVersion] = useState(0);
   const [vagasCount, setVagasCount] = useState(0);
@@ -192,11 +215,15 @@ export default function Perfil() {
         setProfile({
           nome: p.data.nome || "",
           email: p.data.email || userEmail,
-          tel: (p.data.telefone || "").replace(/\D/g, "+"),
+          tel: p.data.telefone || "",
+          cpf: p.data.cpf || "",
           cidade: p.data.cidade || "São Paulo, Brasil",
           avatar: avatarUrl,
           titulo: "Jovem Aprendiz",
         });
+        setEditNome(p.data.nome || "");
+        setEditTel(p.data.telefone || "");
+        setEditCpf(p.data.cpf || "");
       }
 
       if (c.data) {
@@ -303,6 +330,30 @@ export default function Perfil() {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const savePersonalData = async () => {
+    if (!uid) return;
+    setSavingPersonal(true);
+    const { error } = await supabase
+      .from("jovem_aprendiz")
+      .update({
+        nome: editNome,
+        telefone: editTel,
+        cpf: editCpf,
+      })
+      .eq("id_ja", uid);
+
+    if (!error) {
+      setProfile((p) => ({
+        ...p,
+        nome: editNome,
+        tel: editTel,
+        cpf: editCpf,
+      }));
+      setEditingPersonal(false);
+    }
+    setSavingPersonal(false);
   };
 
   const saveSummary = async () => {
@@ -507,19 +558,11 @@ export default function Perfil() {
         setPasswordError(updateErr.message);
       } else {
         if (uid) {
-          const { error: dbErr } = await supabase
+          await supabase
             .from("jovem_aprendiz")
             .update({ senha: newPassword })
             .eq("id_ja", uid);
-
-          if (dbErr) {
-            console.error(
-              "Erro ao atualizar senha na tabela jovem_aprendiz:",
-              dbErr,
-            );
-          }
         }
-
         setPasswordSuccess("Senha alterada com sucesso!");
         setOldPassword("");
         setNewPassword("");
@@ -591,11 +634,67 @@ export default function Perfil() {
               )}
             </div>
             <div className={styles.headerInfo}>
-              <h1>{profile.nome || "Seu Nome"}</h1>
+              <div className={styles.headerTopRow}>
+                <h1>{profile.nome || "Seu Nome"}</h1>
+                {!visualizacaoEmpresa && (
+                  <button
+                    onClick={() => setEditingPersonal(!editingPersonal)}
+                    className={styles.editPersonalBtn}
+                  >
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                    {editingPersonal ? "Cancelar" : "Editar Dados Pessoais"}
+                  </button>
+                )}
+              </div>
               <span className={styles.badge}>Jovem Aprendiz</span>
-              <p className={styles.bio}>
-                {cv.desc || "Adicione uma descrição sobre você."}
-              </p>
+
+              {editingPersonal ? (
+                <div className={`${styles.formBox} ${styles.mt10}`}>
+                  <input
+                    type="text"
+                    placeholder="Nome completo"
+                    value={editNome}
+                    onChange={(e) => setEditNome(e.target.value)}
+                    className={styles.input}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Telefone (WhatsApp)"
+                    value={editTel}
+                    onChange={(e) => setEditTel(e.target.value)}
+                    className={styles.input}
+                  />
+                  <input
+                    type="text"
+                    placeholder="CPF (ex: 000.000.000-00)"
+                    value={editCpf}
+                    onChange={(e) => setEditCpf(e.target.value)}
+                    className={styles.input}
+                  />
+                  <button
+                    className={styles.save}
+                    onClick={savePersonalData}
+                    disabled={savingPersonal}
+                  >
+                    {savingPersonal ? "Salvando..." : "Salvar Dados Pessoais"}
+                  </button>
+                </div>
+              ) : (
+                <p className={styles.bio}>
+                  {cv.desc || "Adicione uma descrição sobre você."}
+                </p>
+              )}
+
               <div className={styles.contacts}>
                 <span>
                   <svg
@@ -623,6 +722,20 @@ export default function Perfil() {
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                   </svg>
                   {phone(profile.tel)}
+                </span>
+                <span>
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  CPF: {cpfMask(profile.cpf)}
                 </span>
                 <span>
                   <svg
@@ -683,14 +796,7 @@ export default function Perfil() {
         <div className={styles.grid}>
           {activeTab === "visao" && (
             <>
-              <div
-                style={{
-                  gridColumn: "span 2",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "20px",
-                }}
-              >
+              <div className={styles.span2Column}>
                 <section className={`${styles.card} ${styles.about}`}>
                   <div className={styles.cardHead}>
                     <h3>
@@ -783,7 +889,7 @@ export default function Perfil() {
                         onChange={(e) => setNewInstituicao(e.target.value)}
                         className={styles.input}
                       />
-                      <div style={{ display: "flex", gap: "10px" }}>
+                      <div className={styles.flexGap10}>
                         <input
                           type="text"
                           placeholder="Início (ex: 2022)"
@@ -899,7 +1005,7 @@ export default function Perfil() {
                         </div>
                       ))
                     ) : (
-                      <p style={{ color: "var(--txt-2)", fontSize: "13px" }}>
+                      <p className={styles.textCenter}>
                         Nenhuma competência cadastrada
                       </p>
                     )}
@@ -973,74 +1079,40 @@ export default function Perfil() {
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                       </svg>
                     </span>
-                    {showPasswordSection ? " Alterar Senha" : "Alterar Senha"}
+                    Alterar Senha
                   </button>
 
                   {showPasswordSection && (
-                    <div
-                      className={styles.formBox}
-                      style={{
-                        marginTop: "15px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "12px",
-                      }}
-                    >
-                      <form
-                        onSubmit={handleChangePassword}
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "12px",
-                        }}
-                      >
+                    <div className={styles.formBox}>
+                      <form onSubmit={handleChangePassword}>
                         {passwordError && (
-                          <div
-                            className={styles.errorMsg}
-                            style={{ color: "#ff5252", fontSize: "13px" }}
-                          >
+                          <div className={styles.errorText}>
                             {passwordError}
                           </div>
                         )}
                         {passwordSuccess && (
-                          <div
-                            className={styles.successMsg}
-                            style={{ color: "#4caf50", fontSize: "13px" }}
-                          >
+                          <div className={styles.successText}>
                             {passwordSuccess}
                           </div>
                         )}
 
+                        {/* Senha Anterior */}
                         <div className={styles.passwordWrapper}>
                           <input
                             type={showOld ? "text" : "password"}
                             placeholder="Senha anterior"
                             value={oldPassword}
                             onChange={(e) => setOldPassword(e.target.value)}
-                            className={styles.input}
                             required
                           />
                           <button
                             type="button"
                             className={styles.eyeBtn}
                             onClick={() => setShowOld(!showOld)}
+                            title={showOld ? "Ocultar senha" : "Ver senha"}
                           >
                             {showOld ? (
                               <svg
-                                width="18"
-                                height="18"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                              >
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                              </svg>
-                            ) : (
-                              <svg
-                                width="18"
-                                height="18"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -1049,40 +1121,37 @@ export default function Perfil() {
                                 <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                                 <line x1="1" y1="1" x2="23" y2="23"></line>
                               </svg>
+                            ) : (
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                              </svg>
                             )}
                           </button>
                         </div>
 
+                        {/* Nova Senha */}
                         <div className={styles.passwordWrapper}>
                           <input
                             type={showNew ? "text" : "password"}
-                            placeholder="Nova senha"
+                            placeholder="Nova senha (mín. 6 caracteres)"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
-                            className={styles.input}
                             required
                           />
                           <button
                             type="button"
                             className={styles.eyeBtn}
                             onClick={() => setShowNew(!showNew)}
+                            title={showNew ? "Ocultar senha" : "Ver senha"}
                           >
                             {showNew ? (
                               <svg
-                                width="18"
-                                height="18"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                              >
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                              </svg>
-                            ) : (
-                              <svg
-                                width="18"
-                                height="18"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -1091,40 +1160,37 @@ export default function Perfil() {
                                 <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                                 <line x1="1" y1="1" x2="23" y2="23"></line>
                               </svg>
+                            ) : (
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                              </svg>
                             )}
                           </button>
                         </div>
 
+                        {/* Confirmar Nova Senha */}
                         <div className={styles.passwordWrapper}>
                           <input
                             type={showConfirm ? "text" : "password"}
                             placeholder="Confirmar nova senha"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            className={styles.input}
                             required
                           />
                           <button
                             type="button"
                             className={styles.eyeBtn}
                             onClick={() => setShowConfirm(!showConfirm)}
+                            title={showConfirm ? "Ocultar senha" : "Ver senha"}
                           >
                             {showConfirm ? (
                               <svg
-                                width="18"
-                                height="18"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                              >
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                              </svg>
-                            ) : (
-                              <svg
-                                width="18"
-                                height="18"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -1133,18 +1199,21 @@ export default function Perfil() {
                                 <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                                 <line x1="1" y1="1" x2="23" y2="23"></line>
                               </svg>
+                            ) : (
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                              </svg>
                             )}
                           </button>
                         </div>
 
-                        <div
-                          className={styles.formActions}
-                          style={{
-                            display: "flex",
-                            gap: "10px",
-                            marginTop: "4px",
-                          }}
-                        >
+                        <div className={styles.formActions}>
                           <button
                             type="submit"
                             className={styles.save}
@@ -1155,7 +1224,14 @@ export default function Perfil() {
                           <button
                             type="button"
                             className={styles.cancelBtn}
-                            onClick={() => setShowPasswordSection(false)}
+                            onClick={() => {
+                              setShowPasswordSection(false);
+                              setPasswordError("");
+                              setPasswordSuccess("");
+                              setOldPassword("");
+                              setNewPassword("");
+                              setConfirmPassword("");
+                            }}
                           >
                             Cancelar
                           </button>
@@ -1171,6 +1247,7 @@ export default function Perfil() {
           {activeTab === "formacao" && (
             <section
               className={`${styles.card} ${styles.formacao}`}
+       
               style={{ gridColumn: "1 / -1" }}
             >
               <div className={styles.cardHead}>
@@ -1181,7 +1258,6 @@ export default function Perfil() {
                   </button>
                 )}
               </div>
-
               {showAddFormacao && (
                 <div className={styles.formBox}>
                   <input
@@ -1198,7 +1274,7 @@ export default function Perfil() {
                     onChange={(e) => setNewInstituicao(e.target.value)}
                     className={styles.input}
                   />
-                  <div style={{ display: "flex", gap: "10px" }}>
+                  <div className={styles.flexGap10}>
                     <input
                       type="text"
                       placeholder="Início"
@@ -1227,14 +1303,9 @@ export default function Perfil() {
                   </div>
                 </div>
               )}
-
               {curList.length ? (
                 curList.map((c: any, i: number) => (
-                  <div
-                    key={i}
-                    className={styles.item}
-                    style={{ marginBottom: "14px" }}
-                  >
+                  <div key={i} className={`${styles.item} ${styles.mb14}`}>
                     <div className={styles.dot} />
                     <div>
                       <strong>{c.curso}</strong>
@@ -1248,7 +1319,7 @@ export default function Perfil() {
                   </div>
                 ))
               ) : (
-                <p style={{ color: "var(--txt-2)", textAlign: "center" }}>
+                <p className={styles.textCenter}>
                   Nenhuma formação cadastrada.
                 </p>
               )}
@@ -1270,7 +1341,6 @@ export default function Perfil() {
                   </button>
                 )}
               </div>
-
               {showAddCompetencia && (
                 <div className={styles.formBox}>
                   <input
@@ -1296,7 +1366,6 @@ export default function Perfil() {
                   </div>
                 </div>
               )}
-
               <div className={styles.skillsContainer}>
                 {skillsList.length ? (
                   skillsList.map((s) => (
@@ -1305,7 +1374,7 @@ export default function Perfil() {
                     </div>
                   ))
                 ) : (
-                  <p style={{ color: "var(--txt-2)" }}>
+                  <p className={styles.textCenter}>
                     Nenhuma competência cadastrada
                   </p>
                 )}
@@ -1325,7 +1394,6 @@ export default function Perfil() {
                   </button>
                 )}
               </div>
-
               {showAddExperiencia && (
                 <div className={styles.formBox}>
                   <input
@@ -1342,7 +1410,7 @@ export default function Perfil() {
                     onChange={(e) => setNewEmpresa(e.target.value)}
                     className={styles.input}
                   />
-                  <div style={{ display: "flex", gap: "10px" }}>
+                  <div className={styles.flexGap10}>
                     <input
                       type="text"
                       placeholder="Início"
@@ -1380,14 +1448,9 @@ export default function Perfil() {
                   </div>
                 </div>
               )}
-
               {expList.length ? (
                 expList.map((e: any, i: number) => (
-                  <div
-                    key={i}
-                    className={styles.item}
-                    style={{ marginBottom: "14px" }}
-                  >
+                  <div key={i} className={`${styles.item} ${styles.mb14}`}>
                     <div className={styles.dot} />
                     <div>
                       <strong>{e.cargo}</strong>
@@ -1398,9 +1461,7 @@ export default function Perfil() {
                         </small>
                       )}
                       {e.descricao && (
-                        <p style={{ marginTop: "4px", color: "var(--txt-2)" }}>
-                          {e.descricao}
-                        </p>
+                        <p className={styles.itemDesc}>{e.descricao}</p>
                       )}
                     </div>
                   </div>
@@ -1425,26 +1486,11 @@ export default function Perfil() {
                       Seu currículo em PDF está cadastrado e visível para
                       empresas.
                     </p>
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "10px",
-                        justifyContent: "center",
-                        marginTop: "12px",
-                        flexWrap: "wrap",
-                      }}
-                    >
+                    <div className={styles.pdfActions}>
                       <button
                         type="button"
                         onClick={openPdfViewer}
                         className={styles.save}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          cursor: "pointer",
-                          border: "none",
-                        }}
                       >
                         Visualizar PDF em Nova Aba
                       </button>
@@ -1453,13 +1499,9 @@ export default function Perfil() {
                 ) : (
                   <p>Nenhum currículo em PDF enviado ainda.</p>
                 )}
-
                 {!visualizacaoEmpresa && (
-                  <div style={{ marginTop: "16px" }}>
-                    <label
-                      className={styles.save}
-                      style={{ cursor: "pointer", display: "inline-block" }}
-                    >
+                  <div className={styles.mt10}>
+                    <label className={`${styles.save} ${styles.cursorPointer}`}>
                       {uploadingPdf ? "Enviando..." : "Enviar / Atualizar PDF"}
                       <input
                         type="file"
