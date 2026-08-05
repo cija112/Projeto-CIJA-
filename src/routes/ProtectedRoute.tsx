@@ -66,21 +66,29 @@ export default function ProtectedRoute({
         if (!jovem && tipoEsperado === "jovem_aprendiz" && emailAuth) {
           const { data: novoJovem, error: insertError } = await supabase
             .from("jovem_aprendiz")
-            .insert([
+            .upsert([
               {
-                id_ja: userId, // Chave correta do seu banco
+                id_ja: userId, 
                 email: emailAuth,
                 nome: nomeAuth,
                 email_confirmado: true,
               },
-            ])
+            ],
+            { onConflict: "id_ja" }
+          )
             .select()
             .single();
 
           if (!insertError && novoJovem) {
             jovem = novoJovem;
           } else if (insertError) {
-            console.error("Erro ao inserir jovem via Google:", insertError);
+           console.error("Erro detalhado do Supabase:", {
+              mensagem: insertError.message,
+              detalhes: insertError.details,
+              dica: insertError.hint,
+              codigo: insertError.code
+            });
+          
           }
         }
 
