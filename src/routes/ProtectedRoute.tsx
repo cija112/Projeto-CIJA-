@@ -26,7 +26,7 @@ export default function ProtectedRoute({
     async function checarIdentidade() {
       try {
         const dadosSessionPromise = supabase.auth.getSession();
-        const delayPromise = aguardarTempo(2500);
+        const delayPromise = aguardarTempo(1500); // Reduzido levemente para agilizar o OAuth
 
         const [sessionResult] = await Promise.all([
           dadosSessionPromise,
@@ -41,8 +41,12 @@ export default function ProtectedRoute({
 
         const userId = session.user.id;
         const emailAuth = session.user.email?.trim().toLowerCase();
+        const nomeAuth =
+          session.user.user_metadata?.full_name ||
+          session.user.user_metadata?.name ||
+          "Usuário Google";
 
-        // 1. Jovem (Busca segura por user_id e fallback seguro por email no servidor)
+        // 1. Jovem (Busca segura por user_id e fallback seguro por email)
         let { data: jovem } = await supabase
           .from("jovem_aprendiz")
           .select("*")
@@ -58,6 +62,26 @@ export default function ProtectedRoute({
           jovem = jovemPorEmail || null;
         }
 
+        // Se o usuário logou  via Google tem sessão válida, mas ainda não tem registro na tabela jovem_aprendiz
+        if (!jovem && tipoEsperado === "jovem_aprendiz" && emailAuth) {
+          const { data: novoJovem, error: insertError } = await supabase
+            .from("jovem_aprendiz")
+            .insert([
+              {
+                user_id: userId,
+                email: emailAuth,
+                nome: nomeAuth,
+                email_confirmado: true, // Google já valida o email por padrão
+              },
+            ])
+            .select()
+            .single();
+
+          if (!insertError && novoJovem) {
+            jovem = novoJovem;
+          }
+        }
+
         if (jovem) {
           if (mounted) {
             setIsJovem(true);
@@ -70,7 +94,7 @@ export default function ProtectedRoute({
           return;
         }
 
-        // 2. Empresa (Busca segura por id_em e fallback seguro por email no servidor)
+        // 2. Empresa (Busca segura por id_em e fallback seguro por email)
         let { data: empresa } = await supabase
           .from("empresa")
           .select("*")
@@ -105,7 +129,7 @@ export default function ProtectedRoute({
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [tipoEsperado]);
 
   const temAcesso =
     (tipoEsperado === "jovem_aprendiz" && isJovem) ||
@@ -134,8 +158,6 @@ export default function ProtectedRoute({
           fontFamily: "'Poppins', system-ui, sans-serif",
         }}
       >
-        
-
         <div
           style={{
             position: "relative",
@@ -148,7 +170,6 @@ export default function ProtectedRoute({
             borderRadius: 28,
             padding: "44px 32px",
             backdropFilter: "blur(24px)",
-            
           }}
         >
           {/* Spinner */}
@@ -199,7 +220,7 @@ export default function ProtectedRoute({
               letterSpacing: "-0.3px",
             }}
           >
-            Verificando acesso
+            Autenticando via Google
           </h2>
           <p
             style={{
@@ -209,7 +230,7 @@ export default function ProtectedRoute({
               lineHeight: 1.5,
             }}
           >
-            Sincronizando seu ambiente seguro CIJA...
+            Sincronizando suas credenciais CIJA...
           </p>
 
           {/* Barra de progresso */}
