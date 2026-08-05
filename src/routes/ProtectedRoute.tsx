@@ -26,7 +26,7 @@ export default function ProtectedRoute({
     async function checarIdentidade() {
       try {
         const dadosSessionPromise = supabase.auth.getSession();
-        const delayPromise = aguardarTempo(1500); // Reduzido levemente para agilizar o OAuth
+        const delayPromise = aguardarTempo(1500);
 
         const [sessionResult] = await Promise.all([
           dadosSessionPromise,
@@ -46,11 +46,11 @@ export default function ProtectedRoute({
           session.user.user_metadata?.name ||
           "Usuário Google";
 
-        // 1. Jovem (Busca segura por user_id e fallback seguro por email)
+        // 1. Jovem (Buscando pela coluna correta 'id_ja')
         let { data: jovem } = await supabase
           .from("jovem_aprendiz")
           .select("*")
-          .eq("user_id", userId)
+          .eq("id_ja", userId)
           .maybeSingle();
 
         if (!jovem && emailAuth) {
@@ -62,16 +62,16 @@ export default function ProtectedRoute({
           jovem = jovemPorEmail || null;
         }
 
-        // Se o usuário logou  via Google tem sessão válida, mas ainda não tem registro na tabela jovem_aprendiz
+        // Se logou via Google mas ainda não tem linha na tabela, cria automaticamente usando 'id_ja'
         if (!jovem && tipoEsperado === "jovem_aprendiz" && emailAuth) {
           const { data: novoJovem, error: insertError } = await supabase
             .from("jovem_aprendiz")
             .insert([
               {
-                user_id: userId,
+                id_ja: userId, // Chave correta do seu banco
                 email: emailAuth,
                 nome: nomeAuth,
-                email_confirmado: true, // Google já valida o email por padrão
+                email_confirmado: true,
               },
             ])
             .select()
@@ -79,6 +79,8 @@ export default function ProtectedRoute({
 
           if (!insertError && novoJovem) {
             jovem = novoJovem;
+          } else if (insertError) {
+            console.error("Erro ao inserir jovem via Google:", insertError);
           }
         }
 
@@ -94,7 +96,7 @@ export default function ProtectedRoute({
           return;
         }
 
-        // 2. Empresa (Busca segura por id_em e fallback seguro por email)
+        // 2. Empresa (Busca por id_em)
         let { data: empresa } = await supabase
           .from("empresa")
           .select("*")
