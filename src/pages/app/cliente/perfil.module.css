@@ -332,7 +332,6 @@
   color: white;
 }
 
-/* Botão Editar Dados Pessoais com Ícone SVG Profissional */
 .editPersonalBtn {
   background: var(--bg-2);
   border: 1px solid var(--line);
@@ -610,19 +609,19 @@
   border-color: var(--line-2);
 }
 
-/* PASSWORD WRAPPER - OLHINHO À DIREITA */
 .passwordWrapper {
   position: relative;
   width: 100%;
-  margin-bottom: 10px;
+  display: flex;
+  margin-bottom: 12px;
 }
 
 .passwordWrapper input {
   width: 100%;
   background: var(--bg);
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 10px 42px 10px 12px;
+  border-radius: 5px;
+  padding: 15px 45px 10px 12px !important;
   color: white;
   font-family: inherit;
   font-size: 13px;
@@ -639,33 +638,30 @@
 .eyeBtn {
   position: absolute;
   top: 50%;
-  right: 6px;
+  right: 2px;
   transform: translateY(-50%);
-  background: var(--card);
-  border: 1px solid var(--line);
+  background-color: transparent !important;
+  border: none;
   color: var(--txt-2);
   cursor: pointer;
-  width: 30px;
-  height: 30px;
+  width: 45px  !important;
+  height: 45px !important;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: 12px !important;
   transition: all 0.2s;
 }
-
 .eyeBtn:hover {
   color: white;
-  background: var(--bg-2);
-  border-color: var(--line-2);
+  background-color: #201c2c !important;
 }
 
 .eyeBtn svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 
-/* Classes Auxiliares para Substituição de Estilos Inline */
 .mt10 {
   margin-top: 10px;
 }
@@ -749,4 +745,36 @@
   .contacts {
     justify-content: center;
   }
+}
+/*separator * /
+*/
+.separator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #7f7a8d;
+  margin: 2px 0 4px 0;
+  font-size: 0.85rem;
+}
+.separator::before,
+.separator::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+
+.forgotLink {
+  color: #c084fc;
+  text-decoration: none;
+  cursor: pointer;
+  text-align: center;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.forgotLink:hover {
+  color: white;
+  text-decoration: underline;
 }

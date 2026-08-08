@@ -90,9 +90,7 @@ export default function RecuperarSenha() {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.blob1} />
-      <div className={styles.blob2} />
-
+    
       <img src={cija_logo} className={styles["desktop-logo"]} alt="CIJA Logo" />
 
       <div className={cardClasses.trim()}>
@@ -161,7 +159,7 @@ export default function RecuperarSenha() {
 
             <p className={styles["back-link"]}>
               Lembrou a senha?{" "}
-              <a onClick={() => navigate("/")}>Voltar para o login</a>
+              <a onClick={() => navigate(-1)}>Voltar</a>
             </p>
           </div>
         )}

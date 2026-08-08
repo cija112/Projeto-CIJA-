@@ -25,6 +25,39 @@ const cpfMask = (v: string) => {
   return v;
 };
 
+const validateCpf = (cpf: string) => {
+  const cleanCpf = cpf.replace(/\D/g, "");
+  if (cleanCpf.length !== 11) return false;
+  if (/^(\d)\1+$/.test(cleanCpf)) return false;
+
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cleanCpf.charAt(i), 10) * (10 - i);
+  }
+  let rev = 11 - (sum % 11);
+  if (rev === 10 || rev === 11) rev = 0;
+  if (rev !== parseInt(cleanCpf.charAt(9), 10)) return false;
+
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cleanCpf.charAt(i), 10) * (11 - i);
+  }
+  rev = 11 - (sum % 11);
+  if (rev === 10 || rev === 11) rev = 0;
+  if (rev !== parseInt(cleanCpf.charAt(10), 10)) return false;
+
+  return true;
+};
+
+const validatePhoneBrazil = (phoneStr: string) => {
+  const cleanPhone = phoneStr.replace(/\D/g, "");
+  if (cleanPhone.length !== 10 && cleanPhone.length !== 11) return false;
+  const ddd = parseInt(cleanPhone.slice(0, 2), 10);
+  if (ddd < 11 || ddd > 99) return false;
+  if (cleanPhone.length === 11 && cleanPhone.charAt(2) !== "9") return false;
+  return true;
+};
+
 const calc = (user: any, cv: any) => {
   const hasAvatar = !!(user.avatar || user.avatar_url || user.foto);
   const hasNome = (user.nome || "").trim().length > 3;
@@ -81,7 +114,10 @@ const calc = (user: any, cv: any) => {
 
 export default function Perfil() {
   const navigate = useNavigate();
-  const { idJa } = useParams<{ idJa?: string }>();
+
+  const params = useParams<{ idJa?: string; id?: string; id_ja?: string }>();
+  const paramId = params.idJa || params.id || params.id_ja;
+
   const [loading, setLoading] = useState(true);
   const [uid, setUid] = useState<string | null>(null);
 
@@ -106,12 +142,12 @@ export default function Perfil() {
   const [editingSummary, setEditingSummary] = useState(false);
   const [summary, setSummary] = useState("");
 
-  // Edição de dados pessoais (Nome, Telefone, CPF)
   const [editingPersonal, setEditingPersonal] = useState(false);
   const [editNome, setEditNome] = useState("");
   const [editTel, setEditTel] = useState("");
   const [editCpf, setEditCpf] = useState("");
   const [savingPersonal, setSavingPersonal] = useState(false);
+  const [personalError, setPersonalError] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [avatarVersion, setAvatarVersion] = useState(0);
@@ -119,7 +155,6 @@ export default function Perfil() {
   const [candidaturasCount, setCandidaturasCount] = useState(0);
   const [activeTab, setActiveTab] = useState("visao");
 
-  // Inline Form States
   const [showAddFormacao, setShowAddFormacao] = useState(false);
   const [newCurso, setNewCurso] = useState("");
   const [newInstituicao, setNewInstituicao] = useState("");
@@ -136,7 +171,6 @@ export default function Perfil() {
   const [newExpFim, setNewExpFim] = useState("");
   const [newExpDesc, setNewExpDesc] = useState("");
 
-  // Password Change States
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -148,11 +182,11 @@ export default function Perfil() {
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
 
-  // PDF Upload state
   const [uploadingPdf, setUploadingPdf] = useState(false);
 
   useDocumentTitle("CIJA - Perfil");
-  const visualizacaoEmpresa = !!idJa;
+
+  const visualizacaoEmpresa = !!paramId;
 
   const tabs = [
     { id: "visao", label: "Visão geral" },
@@ -164,17 +198,17 @@ export default function Perfil() {
 
   useEffect(() => {
     init();
-  }, [idJa]);
+  }, [paramId]);
 
   const init = async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user && !idJa) {
+    if (!user && !paramId) {
       setLoading(false);
       return;
     }
-    const perfilId = idJa ?? user?.id ?? null;
+    const perfilId = paramId ?? user?.id ?? null;
     if (!perfilId) {
       setLoading(false);
       return;
@@ -328,12 +362,31 @@ export default function Perfil() {
       }));
       setAvatarVersion((v) => v + 1);
     } catch (err) {
-      console.error(err);
+      setPersonalError("Erro ao atualizar foto de perfil.");
     }
   };
 
   const savePersonalData = async () => {
     if (!uid) return;
+    setPersonalError("");
+
+    if (!editNome.trim()) {
+      setPersonalError("Por favor, preencha o nome completo.");
+      return;
+    }
+
+    if (!validatePhoneBrazil(editTel)) {
+      setPersonalError(
+        "Número de telefone inválido. Informe um número válido do Brasil.",
+      );
+      return;
+    }
+
+    if (!validateCpf(editCpf)) {
+      setPersonalError("CPF inválido. Verifique os dígitos informados.");
+      return;
+    }
+
     setSavingPersonal(true);
     const { error } = await supabase
       .from("jovem_aprendiz")
@@ -344,7 +397,9 @@ export default function Perfil() {
       })
       .eq("id_ja", uid);
 
-    if (!error) {
+    if (error) {
+      setPersonalError("Erro ao salvar dados pessoais no banco de dados.");
+    } else {
       setProfile((p) => ({
         ...p,
         nome: editNome,
@@ -483,7 +538,6 @@ export default function Perfil() {
       };
       reader.readAsDataURL(file);
     } catch (err) {
-      console.error(err);
       setUploadingPdf(false);
     }
   };
@@ -507,7 +561,6 @@ export default function Perfil() {
         window.open(cv.pdfUrl, "_blank");
       }
     } catch (err) {
-      console.error(err);
       window.open(cv.pdfUrl, "_blank");
     }
   };
@@ -638,7 +691,10 @@ export default function Perfil() {
                 <h1>{profile.nome || "Seu Nome"}</h1>
                 {!visualizacaoEmpresa && (
                   <button
-                    onClick={() => setEditingPersonal(!editingPersonal)}
+                    onClick={() => {
+                      setEditingPersonal(!editingPersonal);
+                      setPersonalError("");
+                    }}
                     className={styles.editPersonalBtn}
                   >
                     <svg
@@ -660,6 +716,18 @@ export default function Perfil() {
 
               {editingPersonal ? (
                 <div className={`${styles.formBox} ${styles.mt10}`}>
+                  {personalError && (
+                    <div
+                      style={{
+                        color: "#ef4444",
+                        fontSize: "13px",
+                        fontWeight: "500",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      {personalError}
+                    </div>
+                  )}
                   <input
                     type="text"
                     placeholder="Nome completo"
@@ -669,7 +737,7 @@ export default function Perfil() {
                   />
                   <input
                     type="text"
-                    placeholder="Telefone (WhatsApp)"
+                    placeholder="Telefone (WhatsApp com DDD)"
                     value={editTel}
                     onChange={(e) => setEditTel(e.target.value)}
                     className={styles.input}
@@ -723,20 +791,24 @@ export default function Perfil() {
                   </svg>
                   {phone(profile.tel)}
                 </span>
-                <span>
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                  CPF: {cpfMask(profile.cpf)}
-                </span>
+
+                {!visualizacaoEmpresa && (
+                  <span>
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    CPF: {cpfMask(profile.cpf)}
+                  </span>
+                )}
+
                 <span>
                   <svg
                     width="13"
@@ -1096,7 +1168,6 @@ export default function Perfil() {
                           </div>
                         )}
 
-                        {/* Senha Anterior */}
                         <div className={styles.passwordWrapper}>
                           <input
                             type={showOld ? "text" : "password"}
@@ -1104,17 +1175,19 @@ export default function Perfil() {
                             value={oldPassword}
                             onChange={(e) => setOldPassword(e.target.value)}
                             required
+                            className={styles.input}
                           />
                           <button
                             type="button"
                             className={styles.eyeBtn}
                             onClick={() => setShowOld(!showOld)}
-                            title={showOld ? "Ocultar senha" : "Ver senha"}
                           >
                             {showOld ? (
                               <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
+                                width="18"
+                                height="11"
                                 stroke="currentColor"
                                 strokeWidth="2"
                               >
@@ -1125,6 +1198,8 @@ export default function Perfil() {
                               <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
+                                width="18"
+                                height="11"
                                 stroke="currentColor"
                                 strokeWidth="2"
                               >
@@ -1135,7 +1210,6 @@ export default function Perfil() {
                           </button>
                         </div>
 
-                        {/* Nova Senha */}
                         <div className={styles.passwordWrapper}>
                           <input
                             type={showNew ? "text" : "password"}
@@ -1143,12 +1217,12 @@ export default function Perfil() {
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             required
+                            className={styles.input}
                           />
                           <button
                             type="button"
                             className={styles.eyeBtn}
                             onClick={() => setShowNew(!showNew)}
-                            title={showNew ? "Ocultar senha" : "Ver senha"}
                           >
                             {showNew ? (
                               <svg
@@ -1174,7 +1248,6 @@ export default function Perfil() {
                           </button>
                         </div>
 
-                        {/* Confirmar Nova Senha */}
                         <div className={styles.passwordWrapper}>
                           <input
                             type={showConfirm ? "text" : "password"}
@@ -1182,12 +1255,12 @@ export default function Perfil() {
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             required
+                            className={styles.input}
                           />
                           <button
                             type="button"
                             className={styles.eyeBtn}
                             onClick={() => setShowConfirm(!showConfirm)}
-                            title={showConfirm ? "Ocultar senha" : "Ver senha"}
                           >
                             {showConfirm ? (
                               <svg
@@ -1211,6 +1284,16 @@ export default function Perfil() {
                               </svg>
                             )}
                           </button>
+                        </div>
+                        <div className={styles.separator}>ou</div>
+
+                        <div className={styles.options}>
+                          <a
+                            className={styles.forgotLink}
+                            onClick={() => navigate("/recuperar-senha")}
+                          >
+                            Esqueci minha senha
+                          </a>
                         </div>
 
                         <div className={styles.formActions}>
@@ -1247,7 +1330,6 @@ export default function Perfil() {
           {activeTab === "formacao" && (
             <section
               className={`${styles.card} ${styles.formacao}`}
-       
               style={{ gridColumn: "1 / -1" }}
             >
               <div className={styles.cardHead}>

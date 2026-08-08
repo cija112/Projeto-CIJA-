@@ -40,31 +40,8 @@ html, body {
   justify-content: center;
 }
 
-.blob1, .blob2 {
-  position: absolute;
-  border-radius: 100%;
-  width: 400px;
-  filter: blur(50px);
-  z-index: 0;
-}
 
-.blob1 {
-  width: 250px;
-  height: 250px;
-  background: var(--purple-deep);
-  opacity: 0.4;
-  top: -50px;
-  left: -80px;
-}
 
-.blob2 {
-  width: 300px;
-  height: 300px;
-  background: var(--purple-logo);
-  opacity: 0.25;
-  bottom: -60px;
-  right: -100px;
-}
 
 .recuperar-card {
   position: relative;

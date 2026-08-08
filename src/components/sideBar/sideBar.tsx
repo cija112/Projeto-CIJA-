@@ -111,7 +111,7 @@ export const Sidebar: React.FC = () => {
         if ((ja?.nome || "").trim().length > 3) pts += 5;
         if (ja?.email) pts += 5;
         if ((ja?.telefone || "").replace(/\D/g, "").length >= 10) pts += 5;
-        if ((ja?.cpf || "").replace(/\D/g, "").length >= 11) pts += 5; // CPF adicionado
+        if ((ja?.cpf || "").replace(/\D/g, "").length >= 11) pts += 5;
 
         const desc = (curr?.descricao || "").trim().length;
         if (desc >= 100) pts += 20;
@@ -182,16 +182,20 @@ export const Sidebar: React.FC = () => {
 
   const menuItems: MenuItem[] = [
     { label: "Dashboard", path: "/clientDashboard", icon: <HomeIcon /> },
-    { label: "Vagas", path: "/vagas", icon: <SearchIcon /> },
+    ...(percent >= 100
+      ? [
+          { label: "Vagas", path: "/vagas", icon: <SearchIcon /> },
+          {
+            label: "Pré-Entrevistas",
+            path: "/preEntrevista",
+            icon: <DocumentIcon />,
+          },
+        ]
+      : []),
     {
       label: "Candidaturas",
       path: "/candidaturas",
       icon: <ClipboardCheckIcon />,
-    },
-    {
-      label: "Pré-Entrevistas",
-      path: "/preEntrevista",
-      icon: <DocumentIcon />,
     },
     { label: "Favoritos", path: "/favoritos", icon: <HeartIcon /> },
     {

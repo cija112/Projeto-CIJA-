@@ -82,7 +82,7 @@ export default function ProtectedRoute({
           if (!insertError && novoJovem) {
             jovem = novoJovem;
           } else if (insertError) {
-           console.error("Erro detalhado do Supabase:", {
+           console.error("Erro:", {
               mensagem: insertError.message,
               detalhes: insertError.details,
               dica: insertError.hint,
@@ -223,20 +223,21 @@ export default function ProtectedRoute({
 
           <h2
             style={{
-              margin: 0,
+              margin:"auto",
               color: "white",
               fontSize: 20,
+              textAlign:"center",
               fontWeight: 700,
               letterSpacing: "-0.3px",
             }}
           >
-            Autenticando via Google
+            Autenticando aguarde
           </h2>
           <p
             style={{
               margin: "8px 0 0",
               color: "#a8a3b7",
-              fontSize: 14,
+              fontSize: 14, textAlign:"center",
               lineHeight: 1.5,
             }}
           >
