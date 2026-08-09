@@ -51,11 +51,13 @@ async function bootstrap() {
 
   const port = Number(process.env.PORT || 3001);
 
+  await app.listen(port, '0.0.0.0');
+
+  Logger.log(`[Backend] Rodando na porta ${port}`, 'Bootstrap');
+
   // ============================================================
   // INICIA O SERVIDOR
   // ============================================================
-
-  await app.listen(port, '0.0.0.0');
 
   // ============================================================
   // LOGS
