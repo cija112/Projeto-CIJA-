@@ -935,9 +935,10 @@ export function renderHtmlCurriculo(d: any): string {
   const linkedin = escapar(d?.linkedin || "");
   const github = escapar(d?.github || "");
 
+  // CORREÇÃO: Utilizando o caractere unicode " • " em vez de "&bull;" para evitar o texto literal no PDF[cite: 16]
   const contatos = [cidade, telefone, email, linkedin, github]
     .filter(Boolean)
-    .join(" &bull; ");
+    .join(" • ");
 
   const experiencias = Array.isArray(d?.experiencias) ? d.experiencias : [];
   const formacao = Array.isArray(d?.formacao) ? d.formacao : [];
