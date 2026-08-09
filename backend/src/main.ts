@@ -6,9 +6,15 @@ import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+
   app.use(cookieParser());
-  app.enableCors();
+
+  // Configuração correta de CORS para aceitar conexões do seu Front e local
+  app.enableCors({
+    origin: '*', // Se você usa cookies/auth, substitua '*' pela URL do seu frontend (ex: 'https://seu-front.onrender.com')
+    credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -18,8 +24,10 @@ async function bootstrap() {
   );
 
   const port = Number(process.env.PORT || 3001);
-  await app.listen(port);
 
-  console.log(`Servidor rodando em http://localhost:${port}`);
+  //  garantir que o servidor aceite conexões externas no Render
+  await app.listen(port, '0.0.0.0');
+
+  console.log(`Servidor rodando na porta ${port}`);
 }
 bootstrap();

@@ -1276,7 +1276,7 @@ export async function baixarCurriculoPDF(
 
   let usouBackend = false;
   try {
-    const response = await fetch("http://localhost:3001/pdf/curriculo", {
+    const response = await fetch("https://cija-backend.onrender.com/pdf/curriculo", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ html }),
