@@ -1348,6 +1348,14 @@ async function gerarPdfFrontend(html: string, nomeBase: string): Promise<void> {
     throw new Error("HTML do currículo está vazio ou inválido.");
   }
 
+  const container = document.createElement("div");
+  container.innerHTML = html;
+  container.style.position = "absolute";
+  container.style.left = "-9999px";
+  container.style.top = "0";
+  container.style.width = "800px";
+  document.body.appendChild(container);
+
   const opt = {
     margin: [14, 16, 14, 16],
     filename: `curriculo-${nomeBase}.pdf`,
@@ -1360,11 +1368,20 @@ async function gerarPdfFrontend(html: string, nomeBase: string): Promise<void> {
       windowWidth: 800,
     },
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-    pagebreak: { mode: ["avoid-all", "css", "legacy"], avoid: ".item-experiencia, .item-formacao, .secao" },
+    pagebreak: {
+      mode: ["css", "legacy"],
+      avoid: [".item-experiencia", ".item-formacao", ".secao"],
+    },
   };
 
-  // @ts-ignore
-  await html2pdf().set(opt).from(html).save();
+  try {
+    // @ts-ignore
+    await html2pdf().set(opt).from(container).save();
+  } finally {
+    if (container.parentNode) {
+      container.parentNode.removeChild(container);
+    }
+  }
 }
 
 export async function baixarCurriculoPDF(
@@ -1385,7 +1402,6 @@ export async function baixarCurriculoPDF(
 
   let usouBackend = false;
   try {
-   
     const { fetchComTimeoutETentativa } = await import("./apiHelpers");
     const response = await fetchComTimeoutETentativa(
       `${API_BASE_URL}/pdf/curriculo`,
@@ -1394,7 +1410,7 @@ export async function baixarCurriculoPDF(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ html }),
       },
-      60_000, // 60s para gerar PDF
+      60_000,
       2,
     );
 

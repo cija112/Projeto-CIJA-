@@ -104,7 +104,6 @@ export const Curriculo: React.FC<CurriculoProps> = ({
 
   const dadosRender = extrairDadosCurriculo(curriculoObjIA);
 
-  // Objeto formatado corretamente para atender à tipagem de exportação (PDF/DOCX)
   const payloadExportacao = {
     curriculoEstruturado: curriculoObjIA,
     curriculoOtimizadoText:
@@ -114,24 +113,9 @@ export const Curriculo: React.FC<CurriculoProps> = ({
 
   return (
     <div className="curriculo-container">
-      <div className="curriculo-header">
-        <h1>{dadosRender.dp.nome || "Meu Currículo"}</h1>
-        <p>
-          {[
-            dadosRender.dp.email,
-            dadosRender.dp.telefone,
-            dadosRender.dp.cidade,
-          ]
-            .filter(Boolean)
-            .join(" • ")}
-        </p>
-      </div>
-
       <div className="curriculo-actions">
         <button
-          onClick={() =>
-            baixarCurriculoPDF(payloadExportacao, jovemData, undefined)
-          }
+          onClick={() => baixarCurriculoPDF("curriculo-conteudo-pdf")}
           className="btn-baixar-pdf"
         >
           Baixar PDF
@@ -146,76 +130,91 @@ export const Curriculo: React.FC<CurriculoProps> = ({
         </button>
       </div>
 
-      <div className="curriculo-body">
-        {dadosRender.resumo && (
-          <section className="secao">
-            <h2>Sobre Mim</h2>
-            <p>{dadosRender.resumo}</p>
-          </section>
-        )}
+      <div id="curriculo-conteudo-pdf">
+        <div className="curriculo-header">
+          <h1>{dadosRender.dp.nome || "Meu Currículo"}</h1>
+          <p>
+            {[
+              dadosRender.dp.email,
+              dadosRender.dp.telefone,
+              dadosRender.dp.cidade,
+            ]
+              .filter(Boolean)
+              .join(" • ")}
+          </p>
+        </div>
 
-        {Array.isArray(dadosRender.experiencias) &&
-          dadosRender.experiencias.length > 0 && (
+        <div className="curriculo-body">
+          {dadosRender.resumo && (
             <section className="secao">
-              <h2>Experiência</h2>
-              {dadosRender.experiencias.map((exp: any, idx: number) => (
-                <div key={idx} className="item-experiencia">
-                  <h3>
-                    {exp.cargo || exp.titulo}{" "}
-                    {exp.empresa ? `— ${exp.empresa}` : ""}
-                  </h3>
-                  {exp.periodo && (
-                    <span className="periodo">{exp.periodo}</span>
-                  )}
-                  <p>{exp.descricao || exp.detalhes}</p>
-                </div>
-              ))}
+              <h2>Sobre Mim</h2>
+              <p>{dadosRender.resumo}</p>
             </section>
           )}
 
-        {Array.isArray(dadosRender.formacao) &&
-          dadosRender.formacao.length > 0 && (
-            <section className="secao">
-              <h2>Formação</h2>
-              {dadosRender.formacao.map((form: any, idx: number) => (
-                <div key={idx} className="item-formacao">
-                  <h3>{form.curso}</h3>
-                  {form.instituicao && (
-                    <p>
-                      <strong>{form.instituicao}</strong>
-                    </p>
-                  )}
-                  {form.periodo && (
-                    <span className="periodo">{form.periodo}</span>
-                  )}
-                </div>
-              ))}
-            </section>
-          )}
-
-        {Array.isArray(dadosRender.idiomas) &&
-          dadosRender.idiomas.length > 0 && (
-            <section className="secao">
-              <h2>Idiomas / Cursos</h2>
-              <ul>
-                {dadosRender.idiomas.map((item: any, idx: number) => (
-                  <li key={idx}>
-                    {typeof item === "string"
-                      ? item
-                      : `${item.idioma || item.nome} ${item.nivel ? `(${item.nivel})` : ""}`}
-                  </li>
+          {Array.isArray(dadosRender.experiencias) &&
+            dadosRender.experiencias.length > 0 && (
+              <section className="secao">
+                <h2>Experiência</h2>
+                {dadosRender.experiencias.map((exp: any, idx: number) => (
+                  <div key={idx} className="item-experiencia">
+                    <h3>
+                      {exp.cargo || exp.titulo}{" "}
+                      {exp.empresa ? `— ${exp.empresa}` : ""}
+                    </h3>
+                    {exp.periodo && (
+                      <span className="periodo">{exp.periodo}</span>
+                    )}
+                    <p>{exp.descricao || exp.detalhes}</p>
+                  </div>
                 ))}
-              </ul>
-            </section>
-          )}
+              </section>
+            )}
 
-        {Array.isArray(dadosRender.habilidades) &&
-          dadosRender.habilidades.length > 0 && (
-            <section className="secao">
-              <h2>Habilidades</h2>
-              <p>{dadosRender.habilidades.join(", ")}</p>
-            </section>
-          )}
+          {Array.isArray(dadosRender.formacao) &&
+            dadosRender.formacao.length > 0 && (
+              <section className="secao">
+                <h2>Formação</h2>
+                {dadosRender.formacao.map((form: any, idx: number) => (
+                  <div key={idx} className="item-formacao">
+                    <h3>{form.curso}</h3>
+                    {form.instituicao && (
+                      <p>
+                        <strong>{form.instituicao}</strong>
+                      </p>
+                    )}
+                    {form.periodo && (
+                      <span className="periodo">{form.periodo}</span>
+                    )}
+                  </div>
+                ))}
+              </section>
+            )}
+
+          {Array.isArray(dadosRender.idiomas) &&
+            dadosRender.idiomas.length > 0 && (
+              <section className="secao">
+                <h2>Idiomas / Cursos</h2>
+                <ul>
+                  {dadosRender.idiomas.map((item: any, idx: number) => (
+                    <li key={idx}>
+                      {typeof item === "string"
+                        ? item
+                        : `${item.idioma || item.nome} ${item.nivel ? `(${item.nivel})` : ""}`}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+          {Array.isArray(dadosRender.habilidades) &&
+            dadosRender.habilidades.length > 0 && (
+              <section className="secao">
+                <h2>Habilidades</h2>
+                <p>{dadosRender.habilidades.join(", ")}</p>
+              </section>
+            )}
+        </div>
       </div>
     </div>
   );

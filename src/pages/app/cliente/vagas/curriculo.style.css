@@ -73,6 +73,7 @@
 
 .curriculo-body .secao {
   margin-bottom: 1.5rem;
+  page-break-inside: avoid;
 }
 
 .curriculo-body h2 {
@@ -122,4 +123,11 @@
 .item-experiencia,
 .item-formacao {
   margin-bottom: 1rem;
+  page-break-inside: avoid;
+}
+
+@media print {
+  .curriculo-actions {
+    display: none !important;
+  }
 }
