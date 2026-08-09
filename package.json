@@ -49,6 +49,7 @@
     ]
   },
   "devDependencies": {
+    "@nestjs/cli": "^11.0.24",
     "@types/cookie-parser": "^1.4.10",
     "@types/jest": "^30.0.0",
     "@types/mocha": "^10.0.10",
