@@ -970,13 +970,12 @@
   align-items: center;
   gap: 12px;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+ 
 }
 
 .downloadPrimaryBtn:hover {
   transform: translateY(-2px);
-  filter: brightness(1.1);
-  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.5);
+
 }
 
 .downloadPrimaryBtn:active {
