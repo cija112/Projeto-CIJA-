@@ -11,6 +11,7 @@ import {
   extrairDadosCurriculo,
 } from "../../../../utils/geradorCurriculo";
 import { fetchSeguro } from "../../../../utils/apiHelpers";
+import API_BASE_URL from "../../../../config/api";
 
 interface Empresa {
   id_em: string;
@@ -639,7 +640,7 @@ const RevisarCurriculo: React.FC = () => {
       // fetchSeguro: timeout + retry em 502/503/504 + parsing seguro de HTML/JSON
       const { ok, status, data: resultado, htmlRecebido, erroRede } =
         await fetchSeguro<any>(
-          "https://cija-backend.onrender.com/ia/revisar",
+          `${API_BASE_URL}/ia/revisar`,
           {
             method: "POST",
             body: dadosEnviar,

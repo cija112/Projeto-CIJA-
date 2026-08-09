@@ -12,6 +12,7 @@ import {
 // @ts-ignore - html2pdf.js não tem tipos oficiais
 import html2pdf from "html2pdf.js";
 import { fetchSeguro } from "./apiHelpers";
+import API_BASE_URL from "../config/api";
 
 /* ============================================================
    DICIONÁRIO LÉXICO PARA O SCORE REAL
@@ -1280,7 +1281,7 @@ export async function baixarCurriculoPDF(
    
     const { fetchComTimeoutETentativa } = await import("./apiHelpers");
     const response = await fetchComTimeoutETentativa(
-      "https://cija-backend.onrender.com/pdf/curriculo",
+      `${API_BASE_URL}/pdf/curriculo`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
