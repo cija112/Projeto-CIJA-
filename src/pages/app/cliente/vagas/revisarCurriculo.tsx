@@ -856,7 +856,7 @@ const RevisarCurriculo: React.FC = () => {
 
       const mensagemErro =
         error.message?.includes("Failed to fetch") || error.name === "TypeError"
-          ? "Não foi possível conectar ao servidor de IA em localhost:3001. Verifique se o backend está rodando."
+          ? "Não foi possível conectar ao servidor de IA."
           : error.message ||
             "Falha ao processar o currículo com a inteligência artificial.";
 
