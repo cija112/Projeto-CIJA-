@@ -1,7 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap");
 
 :root {
-  --bg: #07010f;
+  --bg: #240947;
   --card: rgba(18, 10, 34, 0.88);
   --white: #ffffff;
   --muted: #9f9fb4;
@@ -122,10 +122,10 @@ body {
   width: 100%;
   display: flex;
   flex-direction: column;
-  font-size: clamp(5.7rem, 8vw, 9rem);
+  font-size: clamp(5.7rem, 7vw, 7rem);
   line-height: 0.92;
   font-weight: 800;
-  letter-spacing: -4px;
+  letter-spacing: -5px;
   color: white;
   text-align: left;
   white-space: normal;
@@ -145,7 +145,7 @@ body {
 .titleHighlight {
   position: relative;
   display: inline-block;
-  padding-bottom: 10px;
+  padding-bottom: 29px;
   background: linear-gradient(180deg, #d8b4fe 0%, #a855f7 50%, #7e22ce 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -153,17 +153,7 @@ body {
     0 0 10px rgba(139, 47, 224, 0.25),
     0 0 20px rgba(126, 34, 206, 0.18);
 }
-.titleHighlight::after {
-  content: "";
-  position: absolute;
-  display: inline-block;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 4px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #9333ea, #7e22ce);
-}
+
 
 .titleExclamation {
   color: white;

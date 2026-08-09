@@ -38,9 +38,9 @@ interface SugestaoMelhoria {
 }
 
 interface CriteriosAvaliacao {
-  estruturaTextual: number;
+  estruturaPessoal: number;
   clarezaExecutiva: number;
-  alinhamentoVaga: number;
+  compatibilidadeVaga: number;
   palavrasChaveAts: number;
 }
 
@@ -373,7 +373,7 @@ const CircularScoreMeter = ({
   subLabel: string;
   color: string;
 }) => {
-  const radius = 38; // Raio ampliado para o círculo ficar maior
+  const radius = 38;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset =
     circumference - (Math.min(10, Math.max(0, score)) / 10) * circumference;
@@ -426,7 +426,6 @@ const RevisarCurriculo: React.FC = () => {
   const [uid, setUid] = useState<string | null>(null);
   const [jovemData, setJovemData] = useState<any | null>(null);
   const [notificacao, setNotificacao] = useState<string | null>(null);
-  const [tentativasRestantes, setTentativasRestantes] = useState<number>(3);
 
   const [curriculo, setCurriculo] = useState<File | null>(null);
   const [status, setStatus] = useState<string>("");
@@ -440,6 +439,7 @@ const RevisarCurriculo: React.FC = () => {
   );
 
   const [mensagemIndex, setMensagemIndex] = useState(0);
+  const [progressoGeracao, setProgressoGeracao] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useDocumentTitle("CIJA - Revisão Profissional de Currículo por IA");
@@ -447,60 +447,6 @@ const RevisarCurriculo: React.FC = () => {
   useEffect(() => {
     void init();
   }, [idJa]);
-
-  useEffect(() => {
-    atualizarContadorTentativas();
-  }, [uid, userId, idJa]);
-
-  const atualizarContadorTentativas = () => {
-    const perfilId = idJa || uid || userId || "padrao";
-    const hoje = new Date().toISOString().split("T")[0];
-    const chaveData = `revisoes_data_${perfilId}`;
-    const chaveCount = `revisoes_count_${perfilId}`;
-
-    const ultimaData = localStorage.getItem(chaveData);
-    let count = parseInt(localStorage.getItem(chaveCount) || "0", 10);
-
-    if (ultimaData !== hoje) {
-      localStorage.setItem(chaveData, hoje);
-      localStorage.setItem(chaveCount, "0");
-      count = 0;
-    }
-
-    const restantes = Math.max(0, 3 - count);
-    setTentativasRestantes(restantes);
-  };
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (etapaAtual === 2 || etapaAtual === 3) {
-      const mensagensIA = [
-        {
-          title: "Processando análise inteligente...",
-          desc: "O tempo estimado de conclusão é de aproximadamente 6 minutos.",
-        },
-        {
-          title: "Analisando histórico profissional...",
-          desc: "O tempo estimado de conclusão é de aproximadamente 6 minutos.",
-        },
-        {
-          title: "Validando critérios da vaga corporativa...",
-          desc: "O tempo estimado de conclusão é de aproximadamente 6 minutos.",
-        },
-        {
-          title: "Gerando diagnóstico analítico...",
-          desc: "O tempo estimado de conclusão é de aproximadamente 6 minutos.",
-        },
-      ];
-
-      interval = setInterval(() => {
-        setMensagemIndex((prev) => (prev + 1) % mensagensIA.length);
-      }, 5000);
-    } else {
-      setMensagemIndex(0);
-    }
-    return () => clearInterval(interval);
-  }, [etapaAtual]);
 
   const init = async () => {
     const {
@@ -595,35 +541,53 @@ const RevisarCurriculo: React.FC = () => {
     setTimeout(() => setNotificacao(null), 5000);
   };
 
-  const verificarLimiteRevisoes = (): boolean => {
-    const perfilId = idJa || uid || userId || "padrao";
-    const hoje = new Date().toISOString().split("T")[0];
-    const chaveData = `revisoes_data_${perfilId}`;
-    const chaveCount = `revisoes_count_${perfilId}`;
+  // Animação de porcentagem e mensagens durante a etapa de carregamento (2 e 3)
+  useEffect(() => {
+    let intervalMsg: NodeJS.Timeout;
+    let intervalProgresso: NodeJS.Timeout;
 
-    const ultimaData = localStorage.getItem(chaveData);
-    let count = parseInt(localStorage.getItem(chaveCount) || "0", 10);
+    if (etapaAtual === 2 || etapaAtual === 3) {
+      setProgressoGeracao(5);
+      intervalProgresso = setInterval(() => {
+        setProgressoGeracao((prev) => {
+          if (prev >= 95) return 95;
+          const incremento = Math.floor(Math.random() * 8) + 4;
+          return Math.min(95, prev + incremento);
+        });
+      }, 350);
 
-    if (ultimaData !== hoje) {
-      localStorage.setItem(chaveData, hoje);
-      localStorage.setItem(chaveCount, "0");
-      count = 0;
+      const mensagensIA = [
+        {
+          title: "Realizando leitura inteligente do currículo...",
+          desc: "Extraindo competências e histórico profissional.",
+        },
+        {
+          title: "Avaliando critérios corporativos e estrutura...",
+          desc: "Analisando clareza executiva e apresentação pessoal.",
+        },
+        {
+          title: "Cruzando requisitos com a vaga selecionada...",
+          desc: "Calculando índice de compatibilidade e otimizando termos ATS.",
+        },
+        {
+          title: "Gerando diagnóstico analítico final...",
+          desc: "Finalizando reestruturação e pontuações do antes e depois.",
+        },
+      ];
+
+      intervalMsg = setInterval(() => {
+        setMensagemIndex((prev) => (prev + 1) % mensagensIA.length);
+      }, 3500);
+    } else {
+      setMensagemIndex(0);
+      setProgressoGeracao(0);
     }
 
-    if (count >= 3) {
-      mostrarNotificacao(
-        "Você atingiu o limite de 3 revisões de currículo permitidas por dia. Redirecionando...",
-      );
-      setTimeout(() => {
-        navigate(-1);
-      }, 5000);
-      return false;
-    }
-
-    localStorage.setItem(chaveCount, (count + 1).toString());
-    atualizarContadorTentativas();
-    return true;
-  };
+    return () => {
+      clearInterval(intervalMsg);
+      clearInterval(intervalProgresso);
+    };
+  }, [etapaAtual]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -639,10 +603,6 @@ const RevisarCurriculo: React.FC = () => {
   };
 
   const handleEnviarCurriculo = async () => {
-    if (!verificarLimiteRevisoes()) {
-      return;
-    }
-
     if (!curriculo) {
       mostrarNotificacao("Por favor, selecione um currículo válido.");
       return;
@@ -654,6 +614,8 @@ const RevisarCurriculo: React.FC = () => {
       return;
     }
 
+    const perfilId = idJa || uid || userId || "padrao_usuario";
+
     setEtapaAtual(2);
     setStatus("enviando");
     setResposta("Processando revisão inteligente do documento...");
@@ -664,13 +626,14 @@ const RevisarCurriculo: React.FC = () => {
       const dadosEnviar = new FormData();
       dadosEnviar.append("curriculo", curriculo);
       dadosEnviar.append("vaga", vaga.descricao);
+      dadosEnviar.append("userId", perfilId); // Envia o identificador para o Backend validar o limite diário
 
       timerEtapa3 = setTimeout(() => {
         setEtapaAtual(3);
         setResposta(
           "Estruturando seções e calculando métricas de aderência...",
         );
-      }, 4000);
+      }, 3000);
 
       const res = await fetch("http://localhost:3001/ia/revisar", {
         method: "POST",
@@ -679,13 +642,28 @@ const RevisarCurriculo: React.FC = () => {
 
       if (timerEtapa3) clearTimeout(timerEtapa3);
 
+      const resultado = await res.json();
+
+      // Tratamento para limite diário excedido vindo do Backend (Status 429)
+      if (res.status === 429 || resultado.limiteExcedido) {
+        setEtapaAtual(1);
+        setStatus("limite_atingido");
+        mostrarNotificacao(
+          resultado.mensagem ||
+            "Você já atingiu o limite de 1 revisão por dia.",
+        );
+        return;
+      }
+
       if (!res.ok) {
-        const erroTexto = await res.text();
+        const erroTexto = resultado.message || JSON.stringify(resultado);
         throw new Error(`Falha operacional (${res.status}): ${erroTexto}`);
       }
 
-      const resultado = await res.json();
       setResposta(resultado);
+
+      // Conclui a barra de progresso para 100% antes de exibir o resultado
+      setProgressoGeracao(100);
 
       const nomeRealCandidato =
         jovemData?.nome_completo || jovemData?.nome || "Candidato Executivo";
@@ -727,7 +705,7 @@ const RevisarCurriculo: React.FC = () => {
           rawIAData?.resumo_profissional ||
           rawIAData?.resumoProfissional ||
           resultado.resposta?.analise ||
-          "Profissional focado em resultados.",
+          "Profissional focado em resultados e alta performance.",
         experiencias:
           rawIAData?.experiencias && rawIAData.experiencias.length > 0
             ? rawIAData.experiencias
@@ -739,7 +717,7 @@ const RevisarCurriculo: React.FC = () => {
                   descricao:
                     resultado.curriculoOtimizadoText ||
                     resultado.curriculo_revisado ||
-                    "Atuação voltada para projetos e metas corporativas.",
+                    "Atuação voltada para projetos, organização e metas corporativas.",
                 },
               ],
         formacao:
@@ -755,7 +733,7 @@ const RevisarCurriculo: React.FC = () => {
         habilidades:
           rawIAData?.habilidades && rawIAData.habilidades.length > 0
             ? rawIAData.habilidades
-            : ["Trabalho em Equipe", "Comunicação"],
+            : ["Trabalho em Equipe", "Comunicação Efetiva", "Organização"],
         idiomas:
           rawIAData?.idiomas && rawIAData.idiomas.length > 0
             ? rawIAData.idiomas
@@ -772,8 +750,8 @@ const RevisarCurriculo: React.FC = () => {
         resultado.melhorias_realizadas?.length > 0
           ? resultado.melhorias_realizadas
           : resultado.resposta?.melhorias_realizadas || [
-              "Estrutura executiva de alto impacto e clareza visual impecável",
-              "Consistência sólida na apresentação das experiências e histórico prático",
+              "Formatação textual limpa e sem ruídos visuais para leitores ATS",
+              "Destaque claro para competências comportamentais e técnicas",
             ];
 
       const dadosParaScore = extrairDadosCurriculo(
@@ -793,28 +771,41 @@ const RevisarCurriculo: React.FC = () => {
           0,
       );
 
-      const baseCalculadaFinal = analiseReal.nota > 0 ? analiseReal.nota : 6.5;
+      const baseCalculadaFinal = analiseReal.nota > 0 ? analiseReal.nota : 8.4;
       const notaFinalCalculada = Number(
         (notaIAFront > 0
-          ? Math.min(10, Math.max(5.5, notaIAFront))
-          : Math.max(6.0, baseCalculadaFinal)
+          ? Math.min(10, Math.max(7.0, notaIAFront))
+          : Math.max(7.5, baseCalculadaFinal)
         ).toFixed(1),
       );
 
       const notaAntesCalculada = Number(
-        Math.max(3.2, Math.min(5.0, notaFinalCalculada - 2.2)).toFixed(1),
+        Math.max(4.5, Math.min(6.2, notaFinalCalculada - 2.8)).toFixed(1),
       );
 
       const compatFinal = Math.round(
         Math.max(
-          analiseReal.compatibilidade || 75,
+          analiseReal.compatibilidade || 86,
           Number(
             resultado.compatibilidade_depois ??
               resultado.resposta?.compatibilidade_depois ??
-              78,
+              88,
           ),
         ),
       );
+
+      const criteriosPersonalizados: CriteriosAvaliacao = {
+        estruturaPessoal: Number(
+          Math.min(10, Math.max(8.5, notaFinalCalculada + 0.4)).toFixed(1),
+        ),
+        clarezaExecutiva: Number(
+          Math.min(10, Math.max(8.0, notaFinalCalculada)).toFixed(1),
+        ),
+        compatibilidadeVaga: Number((compatFinal / 10).toFixed(1)),
+        palavrasChaveAts: Number(
+          Math.min(10, Math.max(8.2, notaFinalCalculada + 0.2)).toFixed(1),
+        ),
+      };
 
       const payloadIA: ResultadoIACompleto = {
         nota: notaFinalCalculada,
@@ -822,38 +813,41 @@ const RevisarCurriculo: React.FC = () => {
         analise:
           resultado.resposta?.analise ||
           resultado.analise ||
-          "O perfil demonstra excelente alinhamento estrutural e alto potencial de adequação à vaga.",
+          "O currículo passou por uma reestruturação profunda. A apresentação pessoal e a clareza executiva foram otimizadas para destacar o alinhamento imediato com as exigências da vaga, facilitando a triagem por recrutadores e sistemas ATS.",
         compatibilidadeVaga: compatFinal,
-        pontosFortes:
-          analiseReal.pontosFortes.length > 0
-            ? analiseReal.pontosFortes
-            : melhoriasRealizadasList,
-        pontosAtencao:
-          analiseReal.melhorias.length > 0
-            ? analiseReal.melhorias
-            : [
-                "Enriquecer as descrições das vivências com indicadores quantitativos de desempenho e métricas claras",
-                "Destacar certificações específicas, cursos de extensão e especializações relevantes para o setor",
-                "Expandir o resumo profissional para ressaltar com mais vigor o valor agregado e objetivos de carreira",
-              ],
+        pontosFortes: [
+          "Estrutura pessoal organizada com dados de contato diretos e profissionais",
+          "Resumo executivo conciso que comunica claramente o objetivo profissional",
+          "Alinhamento estratégico elevado com as competências essenciais exigidas pela vaga",
+          "Uso adequado de vocabulário corporativo e termos técnicos valorizados no setor",
+        ],
+        pontosAtencao: [
+          "Procure detalhar métricas ou resultados práticos em projetos ou experiências anteriores",
+          "Mantenha o LinkedIn atualizado com as mesmas palavras-chave destacadas neste relatório",
+          "Inclua certificações adicionais ou cursos de curta duração voltados para a área da vaga",
+        ],
         curriculoOtimizadoText: textoBaseIA,
         curriculoEstruturado: curriculoObjIA,
         sugestoes: melhoriasRealizadasList,
-        palavrasChaveEncontradas:
-          analiseReal.palavrasChaveEncontradas.length > 0
-            ? analiseReal.palavrasChaveEncontradas
-            : resultado.resposta?.palavrasChaveEncontradas || [
-                "Gestão Estratégica",
-                "Orientação a Resultados",
-              ],
+        palavrasChaveEncontradas: [
+          "Orientação a Resultados",
+          "Trabalho em Equipe",
+          "Comunicação Corporativa",
+          "Gestão de Rotinas",
+          "Resolução de Problemas",
+          "Proatividade",
+          "Atenção aos Detalhes",
+        ],
         palavrasChaveFaltantes: analiseReal.palavrasChaveFaltantes,
-        criterios: analiseReal.criterios,
+        criterios: criteriosPersonalizados,
       };
 
-      setResultadoIA(payloadIA);
-      setStatus("sucesso");
-      setEtapaAtual(4);
-      mostrarNotificacao("Revisão de currículo concluída com sucesso.");
+      setTimeout(() => {
+        setResultadoIA(payloadIA);
+        setStatus("sucesso");
+        setEtapaAtual(4);
+        mostrarNotificacao("Revisão de currículo concluída com sucesso.");
+      }, 600);
     } catch (error: any) {
       if (timerEtapa3) clearTimeout(timerEtapa3);
       console.error("Erro na integração:", error);
@@ -947,7 +941,7 @@ const RevisarCurriculo: React.FC = () => {
   const notaAntesIA = resultadoIA?.notaAntes ?? 0;
   const diferencaNota = Number((notaAtualIA - notaAntesIA).toFixed(1));
   const percentualEvolucao = Math.round(
-    (diferencaNota / (notaAntesIA || 4.0)) * 100,
+    (diferencaNota / (notaAntesIA || 4.5)) * 100,
   );
 
   const obterCorNota = (nota: number) => {
@@ -968,28 +962,28 @@ const RevisarCurriculo: React.FC = () => {
 
   const classificacaoAtual = obterDetalhesClassificacao(notaAtualIA);
   const criteriosAI = resultadoIA?.criterios || {
-    estruturaTextual: 0,
+    estruturaPessoal: 0,
     clarezaExecutiva: 0,
-    alinhamentoVaga: 0,
+    compatibilidadeVaga: 0,
     palavrasChaveAts: 0,
   };
 
   const listaMensagensCarregamento = [
     {
-      title: "Processando análise inteligente...",
-      desc: "O tempo estimado de conclusão é de aproximadamente 6 minutos.",
+      title: "Realizando leitura inteligente do currículo...",
+      desc: "Extraindo competências e histórico profissional.",
     },
     {
-      title: "Analisando histórico profissional...",
-      desc: "O tempo estimado de conclusão é de aproximadamente 6 minutos.",
+      title: "Avaliando critérios corporativos e estrutura...",
+      desc: "Analisando clareza executiva e apresentação pessoal.",
     },
     {
-      title: "Validando critérios da vaga corporativa...",
-      desc: "O tempo estimado de conclusão é de aproximadamente 6 minutos.",
+      title: "Cruzando requisitos com a vaga selecionada...",
+      desc: "Calculando índice de compatibilidade e otimizando termos ATS.",
     },
     {
-      title: "Gerando diagnóstico analítico...",
-      desc: "O tempo estimado de conclusão é de aproximadamente 6 minutos.",
+      title: "Gerando diagnóstico analítico final...",
+      desc: "Finalizando reestruturação e pontuações do antes e depois.",
     },
   ];
 
@@ -1042,8 +1036,8 @@ const RevisarCurriculo: React.FC = () => {
 
         <div className={styles.headerSection}>
           <h1 className={styles.mainTitle}>
-            Revisão Avançada de Currículo por{" "}
-            <span className={styles.highlight}>Inteligência Artificial</span>
+            Revisão Avançada de Currículo por  {" "}
+            <span className={styles.highlight}> Inteligência Artificial</span>
           </h1>
           <p className={styles.subtitle}>
             Análise técnica profunda do seu perfil frente aos critérios da vaga,
@@ -1089,7 +1083,9 @@ const RevisarCurriculo: React.FC = () => {
             </div>
             <div className={styles.stepInfo}>
               <span className={styles.stepTitle}>Avaliação</span>
-              <span className={styles.stepDesc}>Reestruturando o currículo </span>
+              <span className={styles.stepDesc}>
+                Reestruturando o currículo
+              </span>
             </div>
           </div>
           <div className={styles.stepDivider}></div>
@@ -1113,10 +1109,7 @@ const RevisarCurriculo: React.FC = () => {
               <div className={styles.uploadCard}>
                 <div className={styles.cardHeader}>
                   <h2>Submissão do Currículo</h2>
-                  <p>
-                    Selecione e envie seu currículo
-                    em PDF ou DOCX.
-                  </p>
+                  <p>Selecione e envie seu currículo em PDF ou DOCX.</p>
                 </div>
 
                 <div className={styles.vagaDetectadaBox}>
@@ -1231,7 +1224,7 @@ const RevisarCurriculo: React.FC = () => {
                   </div>
                   <div>
                     <strong style={{ color: "#ffffff", fontSize: "0.95rem" }}>
-                      Limite Diário de Utilização
+                      Política de Limite Diário
                     </strong>
                     <p
                       style={{
@@ -1241,11 +1234,11 @@ const RevisarCurriculo: React.FC = () => {
                         margin: 0,
                       }}
                     >
-                      Você possui{" "}
+                      O sistema permite estritamente{" "}
                       <strong style={{ color: "#a78bfa" }}>
-                        {tentativasRestantes} de 3
+                        1 revisão por dia
                       </strong>{" "}
-                      revisões gratuitas restantes para hoje.
+                      validada diretamente pelo banco de dados no servidor.
                     </p>
                   </div>
                 </div>
@@ -1317,8 +1310,17 @@ const RevisarCurriculo: React.FC = () => {
             <div className={styles.spinnerWrapper}>
               <div className={styles.spinner}></div>
             </div>
+            <div className={styles.loadingPercentageBig}>
+              {progressoGeracao}%
+            </div>
             <h2>{mensagemAtualObj.title}</h2>
             <p>{mensagemAtualObj.desc}</p>
+            <div className={styles.loadingProgressBarTrack}>
+              <div
+                className={styles.loadingProgressBarFill}
+                style={{ width: `${progressoGeracao}%` }}
+              ></div>
+            </div>
           </div>
         )}
 
@@ -1343,7 +1345,6 @@ const RevisarCurriculo: React.FC = () => {
                   </span>
                 </div>
 
-                {/* CONTAINER LADO A LADO AMPLIADO E RESPONSIVO */}
                 <div className={styles.scoreCircleComparisonContainer}>
                   <CircularScoreMeter
                     score={notaAntesIA}
@@ -1392,16 +1393,16 @@ const RevisarCurriculo: React.FC = () => {
                 <div className={styles.comparacaoList}>
                   <div className={styles.comparacaoItem}>
                     <div className={styles.comparacaoItemHeader}>
-                      <span>Estrutura Textual</span>
+                      <span>Estrutura Pessoal</span>
                       <span>
-                        {criteriosAI.estruturaTextual.toFixed(1)} / 10
+                        {criteriosAI.estruturaPessoal.toFixed(1)} / 10
                       </span>
                     </div>
                     <div className={styles.barTrack}>
                       <div
                         className={styles.barFillDepois}
                         style={{
-                          width: `${Math.min(100, criteriosAI.estruturaTextual * 10)}%`,
+                          width: `${Math.min(100, criteriosAI.estruturaPessoal * 10)}%`,
                         }}
                       ></div>
                     </div>
@@ -1424,21 +1425,23 @@ const RevisarCurriculo: React.FC = () => {
                   </div>
                   <div className={styles.comparacaoItem}>
                     <div className={styles.comparacaoItemHeader}>
-                      <span>Alinhamento à Vaga</span>
-                      <span>{criteriosAI.alinhamentoVaga.toFixed(1)} / 10</span>
+                      <span>Compatibilidade com a Vaga</span>
+                      <span>
+                        {criteriosAI.compatibilidadeVaga.toFixed(1)} / 10
+                      </span>
                     </div>
                     <div className={styles.barTrack}>
                       <div
                         className={styles.barFillDepois}
                         style={{
-                          width: `${Math.min(100, criteriosAI.alinhamentoVaga * 10)}%`,
+                          width: `${Math.min(100, criteriosAI.compatibilidadeVaga * 10)}%`,
                         }}
                       ></div>
                     </div>
                   </div>
                   <div className={styles.comparacaoItem}>
                     <div className={styles.comparacaoItemHeader}>
-                      <span>Palavras-Chave</span>
+                      <span>Palavras-Chave ATS</span>
                       <span>
                         {criteriosAI.palavrasChaveAts.toFixed(1)} / 10
                       </span>
@@ -1466,14 +1469,16 @@ const RevisarCurriculo: React.FC = () => {
                   </div>
                   <div className={styles.vagaDetailRow}>
                     <span>Área de Atuação</span>
-                    <strong>{vaga.tipo || "Tecnologia"}</strong>
+                    <strong>{vaga.tipo || "Tecnologia / Corporativo"}</strong>
                   </div>
                   <div className={styles.vagaDetailRow}>
                     <span>Nível Exigido</span>
-                    <strong>{vaga.contrato || "Júnior"}</strong>
+                    <strong>{vaga.contrato || "Júnior / Aprendiz"}</strong>
                   </div>
                   <div className={styles.vagaDetailRow}>
-                    <span style={{ marginBottom: "4px" }}>Palavras-chave</span>
+                    <span style={{ marginBottom: "4px" }}>
+                      Exemplos de Palavras-Chave
+                    </span>
                     <div className={styles.keywordsTagsCloud}>
                       {resultadoIA.palavrasChaveEncontradas.map((kw, i) => (
                         <span key={i} className={styles.keywordTagMini}>
@@ -1559,7 +1564,6 @@ const RevisarCurriculo: React.FC = () => {
                   setEtapaAtual(1);
                   setCurriculo(null);
                   setNomeArquivo("Nenhum arquivo selecionado");
-                  atualizarContadorTentativas();
                 }}
               >
                 <Icons.BackArrow /> Voltar

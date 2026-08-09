@@ -339,12 +339,12 @@
   cursor: pointer;
   margin-bottom: 14px;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+
 }
 
 .selectFileBtn:hover {
   transform: translateY(-1px);
-  filter: brightness(1.1);
+ 
 }
 
 .formatInfo {
@@ -440,13 +440,6 @@
   justify-content: center;
   gap: 10px;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  
-}
-
-.revisarButton:hover {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.5);
 }
 
 .revisarButton:active {
@@ -518,7 +511,7 @@
   background-color: #111520;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 20px;
-  padding: 80px 20px;
+  padding: 60px 20px;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -528,13 +521,39 @@
   box-sizing: border-box;
 }
 
+.loadingPercentageBig {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #a78bfa;
+  margin-bottom: 12px;
+  letter-spacing: -1px;
+}
+
+.loadingProgressBarTrack {
+  width: 300px;
+  max-width: 80%;
+  height: 8px;
+  background-color: #1a1f30;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 16px 0 24px 0;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.loadingProgressBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed 0%, #a78bfa 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
 .spinnerWrapper {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .spinner {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   border: 4px solid rgba(124, 58, 237, 0.2);
   border-top-color: #7c3aed;
   border-radius: 50%;

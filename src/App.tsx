@@ -24,6 +24,7 @@ import Favoritos from "pages/app/cliente/favoritos";
 import Candidaturas from "pages/app/cliente/candidaturas";
 import RevisarCurriculo from "pages/app/cliente/vagas/revisarCurriculo";
 import PreEntrevistaEmpresa from "./pages/app/empresa/preEntrevista";
+import BuscarUsers from "pages/app/cliente/buscarUsers/buscarUser";
 
 function App() {
   return (
@@ -45,6 +46,14 @@ function App() {
           element={
             <ProtectedRoute tipoEsperado="jovem_aprendiz">
               <ClientDashboard />
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/buscarUsers"
+          element={
+            <ProtectedRoute tipoEsperado="jovem_aprendiz">
+              <BuscarUsers />
             </ProtectedRoute>
           }
         />

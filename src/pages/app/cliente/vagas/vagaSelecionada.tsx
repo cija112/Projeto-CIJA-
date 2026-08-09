@@ -431,7 +431,7 @@ const VagaSelecionada: React.FC = () => {
                 }
                 className={styles.outlineLinkBtn}
               >
-                Ver perfil da empresa ↗
+                Ver perfil da empresa 
               </button>
             </div>
             <div className={styles.sidebarCard}>

@@ -2,7 +2,7 @@
 
 :root {
   --bg: #0a031a;
-  --card: rgba(18, 6, 41, 0.82);
+  --card: rgba(18, 6, 41, 0.85);
   --white: #ffffff;
   --muted: #a9a3b8;
   --purple: #9333ea;
@@ -32,10 +32,10 @@ body {
 body {
   font-family: "Poppins", sans-serif;
   background: var(--bg);
+  color: white;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   position: relative;
 }
 
@@ -45,25 +45,149 @@ body::before {
   inset: 0;
   background:
     radial-gradient(
-      circle at top left,
-      rgba(147, 51, 234, 0.15),
-      transparent 40%
+      circle at 15% 20%,
+      rgba(147, 51, 234, 0.18),
+      transparent 45%
     ),
     radial-gradient(
-      circle at top right,
+      circle at 85% 80%,
       rgba(168, 85, 247, 0.1),
-      transparent 40%
-    );
+      transparent 50%
+    ),
+    var(--bg);
   pointer-events: none;
   z-index: -3;
 }
 
-/* ========================= BACKGROUND DECORATIONS ========================= */
+/* ========================= HEADER ========================= */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  background: rgba(10, 3, 26, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.headerLogoContainer {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.headerLogo {
+  width: 56px;
+  height: auto;
+  object-fit: contain;
+}
+
+.navMenu {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  list-style: none;
+}
+
+.navLink {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  position: relative;
+  padding-bottom: 4px;
+  transition: color 0.2s ease;
+}
+
+.navLink:hover {
+  color: white !important;
+}
+/* barra de ativo em baixo roxa **/
+.activeLink::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  transition: all 0.1s ease-in-out;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(135deg, #a855f7, #9333ea);
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(147, 51, 234, 0.6);
+}
+
+.contactButtonHeader {
+  background-color: transparent;
+  color: white;
+  padding: 11px 24px;
+  border: none;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.92rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.contactButtonHeader:hover {
+  opacity: 0.9;
+}
+
+.activeContactButton {
+  border: none;
+}
+.activeContactButton::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(135deg, #a855f7, #9333ea);
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(147, 51, 234, 0.6);
+}
+/* ========================= BACKGROUND IMAGE & DECORATIONS ========================= */
 .bgDecorations {
   position: absolute;
   inset: 0;
   pointer-events: none;
   overflow: hidden;
+  z-index: 1;
+}
+
+/* Imagem do jovem responsiva e com cores naturais ajustadas */
+.bgBoyImage {
+  position: absolute;
+  right: 2%;
+  top: 84px;
+  width: 48%;
+  height: calc(100vh - 84px);
+  background-size: cover;
+  background-position: center top;
+  opacity: 0.75;
+  filter: brightness(1) contrast(1.05);
+  mask-image: linear-gradient(
+    to left,
+    rgba(0, 0, 0, 0.9) 55%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to left,
+    rgba(0, 0, 0, 0.9) 55%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  pointer-events: none;
   z-index: 1;
 }
 
@@ -87,46 +211,23 @@ body::before {
   border-radius: 50%;
 }
 
-.bgArcBottom {
-  position: absolute;
-  bottom: -120px;
-  left: -100px;
-  width: 450px;
-  height: 450px;
-  border: 1px solid rgba(168, 85, 247, 0.1);
-  border-radius: 50%;
-}
-
-/* ========================= WRAPPER ========================= */
-.wrapper {
+/* ========================= SEÇÕES DO SITE ========================= */
+.section {
   width: 100%;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 24px;
+  padding: 140px 24px 80px 24px;
   position: relative;
   overflow: hidden;
-}
-
-/* ========================= LOGOS ========================= */
-.desktopLogo {
-  position: absolute;
-  top: 28px;
-  left: 28px;
-  width: 64px;
-  height: auto;
-  z-index: 30;
-  object-fit: contain;
-}
-.mobileLogo {
-  display: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 /* ========================= ALERT ========================= */
 .alert {
   position: fixed;
-  top: 24px;
+  top: 100px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--danger);
@@ -135,7 +236,7 @@ body::before {
   border-radius: 16px;
   font-weight: 600;
   font-size: 0.95rem;
-  z-index: 100;
+  z-index: 1100;
   box-shadow: 0 10px 35px rgba(255, 77, 77, 0.28);
   animation: fadeDown 0.35s ease;
 }
@@ -150,12 +251,13 @@ body::before {
   }
 }
 
-/* ========================= CONTAINER ========================= */
+/* ========================= CONTAINER  ========================= */
 .loginContainer {
   width: 100%;
   max-width: 1400px;
   position: relative;
   z-index: 2;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -163,53 +265,19 @@ body::before {
   margin: auto;
 }
 
-/* ========================= LEFT ========================= */
+/* ========================= LEFT HERO & FEATURES ========================= */
 .left {
   flex: 1;
   position: relative;
-  padding-left: 22px;
-}
-
-.leftIndicator {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 10px;
-}
-
-.purpleDot {
-  width: 10px;
-  height: 10px;
-  background-color: var(--purple-light);
-  border-radius: 50%;
-  box-shadow: 0 0 12px var(--purple-light);
-  flex-shrink: 0;
-  margin-top: 6px;
-}
-
-.leftIndicatorLine {
-  width: 2px;
-  flex: 1;
-  background: linear-gradient(
-    180deg,
-    var(--purple-light) 0%,
-    rgba(147, 51, 234, 0.25) 50%,
-    transparent 100%
-  );
-  margin-top: 8px;
 }
 
 .left h1 {
-  font-size: clamp(3rem, 6vw, 6.5rem);
-  line-height: 0.92;
-  letter-spacing: -3px;
+  font-size: clamp(2.8rem, 5vw, 5.2rem);
+  line-height: 1.02;
+  letter-spacing: -2.5px;
   font-weight: 800;
   color: white;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 .left h1 span {
   background: linear-gradient(135deg, #a855f7, #9333ea);
@@ -219,52 +287,75 @@ body::before {
 }
 .tagline {
   color: var(--muted);
-  max-width: 560px;
+  max-width: 520px;
   line-height: 1.7;
-  font-size: 1.05rem;
-  margin-bottom: 36px;
+  font-size: 1rem;
+  margin-bottom: 35px;
 }
 
-.leftFooterText {
+/* Features List */
+.featuresList {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.featureItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  max-width: 500px;
+}
+
+.featureIconBox {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: rgba(147, 51, 234, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.25);
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  color: var(--purple-light);
+  flex-shrink: 0;
+}
+
+.featureIcon {
+  width: 22px;
+  height: 22px;
+}
+
+.featureText h4 {
+  color: white;
+  font-size: 0.98rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.featureText p {
   color: var(--muted);
-  font-size: 0.95rem;
-}
-
-.leftFooterBar {
-  display: inline-block;
-  width: 2px;
-  height: 14px;
-  background-color: var(--purple-light);
-}
-
-.leftFooterText span {
-  color: #c084fc;
-  font-weight: 500;
+  font-size: 0.88rem;
+  line-height: 1.5;
 }
 
 /* ========================= LOGIN CARD ========================= */
 .loginCard {
   width: 100%;
-  max-width: 460px;
+  max-width: 440px;
   min-height: 580px;
-  background: linear-gradient(
-    180deg,
-    rgba(25, 16, 42, 0.92),
-    rgba(15, 10, 28, 0.96)
-  );
+  background: rgba(18, 10, 35, 0.82);
   border: 1px solid var(--border);
   border-radius: 34px;
   padding: 40px;
-  backdrop-filter: blur(35px);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(45px);
   box-shadow: var(--shadow);
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  z-index: 3;
 }
 .cardContent {
   width: 100%;
@@ -502,7 +593,48 @@ body::before {
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* ========================= SHAKE ========================= */
+/* ========================= SEÇÃO SOBRE NÓS / CONTATE-NOS ========================= */
+.sectionContentBox {
+  width: 100%;
+  max-width: 900px;
+  background: linear-gradient(
+    180deg,
+    rgba(25, 16, 42, 0.92),
+    rgba(15, 10, 28, 0.96)
+  );
+  border: 1px solid var(--border);
+  border-radius: 34px;
+  padding: 60px 40px;
+  backdrop-filter: blur(35px);
+  -webkit-backdrop-filter: blur(35px);
+  box-shadow: var(--shadow);
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+.sectionContentBox h2 {
+  color: white;
+  font-size: 2.8rem;
+  letter-spacing: -1.5px;
+  margin-bottom: 20px;
+}
+
+.sectionContentBox h2 span {
+  background: linear-gradient(135deg, #a855f7, #9333ea);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.sectionContentBox p {
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1.8;
+  margin-bottom: 30px;
+}
+
+/* ========================= SHAKE & SUCCESS ========================= */
 .shake {
   animation: shake 0.45s;
 }
@@ -524,7 +656,6 @@ body::before {
   }
 }
 
-/* ========================= SUCCESS ANIMATION ========================= */
 .successAnimation {
   position: absolute;
   inset: 0;
@@ -603,52 +734,50 @@ body::before {
 
 /* ========================= RESPONSIVIDADE ========================= */
 @media (max-width: 1100px) {
+  .header {
+    padding: 0 24px;
+  }
+  .navMenu {
+    gap: 20px;
+  }
+  .bgBoyImage {
+    width: 100%;
+    opacity: 0.25;
+  }
   .loginContainer {
     flex-direction: column;
     text-align: center;
     gap: 40px;
     padding-top: 20px;
   }
-  .desktopLogo {
-    display: none;
+  .featuresList {
+    align-items: center;
   }
-  .mobileLogo {
-    display: block;
-    width: 60px;
-    margin: 0 auto 16px;
-    object-fit: contain;
-  }
-  .left {
-    padding-left: 0;
-  }
-  .leftIndicator {
-    position: relative;
-    flex-direction: row;
-    width: 100%;
-    justify-content: center;
-    margin-bottom: 16px;
-    height: auto;
-  }
-  .leftIndicatorLine {
-    width: 60px;
-    height: 2px;
-    margin-top: 0;
-  }
-  .tagline,
-  .leftFooterText {
-    margin-left: auto;
-    margin-right: auto;
-    justify-content: center;
+  .featureItem {
+    text-align: left;
   }
 }
 
 @media (max-width: 768px) {
-  .wrapper {
-    padding: 20px 16px;
-    align-items: center;
+  .header {
+    height: 70px;
+    padding: 0 16px;
+  }
+  .navMenu {
+    gap: 12px;
+  }
+  .navLink {
+    font-size: 0.85rem;
+  }
+  .contactButtonHeader {
+    padding: 8px 14px;
+    font-size: 0.82rem;
+  }
+  .section {
+    padding: 100px 16px 40px 16px;
   }
   .left h1 {
-    font-size: clamp(2.5rem, 9vw, 3.8rem);
+    font-size: clamp(2.3rem, 8vw, 3.5rem);
     letter-spacing: -2px;
   }
   .loginCard {
@@ -656,17 +785,5 @@ body::before {
     min-height: 540px;
     padding: 30px 20px;
     border-radius: 26px;
-  }
-}
-
-@media (max-width: 480px) {
-  .left h1 {
-    font-size: 2.3rem;
-  }
-  .tagline {
-    font-size: 0.88rem;
-  }
-  .cardContent h2 {
-    font-size: 1.9rem;
   }
 }

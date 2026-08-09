@@ -26,6 +26,7 @@ export class IaController {
   async revisar(
     @UploadedFile() file: Express.Multer.File,
     @Body('vaga') vaga: string,
+    @Body('userId') userId: string,
   ) {
     if (!file) {
       throw new BadRequestException('Nenhum currículo enviado.');
@@ -33,6 +34,9 @@ export class IaController {
     if (!vaga || !vaga.trim()) {
       throw new BadRequestException('Informe a vaga.');
     }
-    return this.iaService.revisar(file, vaga);
+    if (!userId || !userId.trim()) {
+      throw new BadRequestException('ID do usuário não informado.');
+    }
+    return this.iaService.revisar(file, vaga, userId);
   }
 }

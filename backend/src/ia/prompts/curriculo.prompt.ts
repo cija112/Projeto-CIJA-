@@ -20,60 +20,73 @@ ${dadosVaga}
 =====================
 DIRETRIZES TÉCNICAS E REGRAS DE OURO
 =====================
-1. EXTRAÇÃO CIRÚRGICA DE DADOS (LOCAL, ESCOLA E EMPRESAS): 
-   - Varra o currículo original linha por linha identificando com precisão a cidade, naturalidade, nacionalidade, contatos, instituições de ensino/escolas, empresas onde trabalhou ou projetos acadêmicos/estágios relevantes.
-   - Preencha cada campo do objeto "curriculoEstruturado" mapeando fielmente essas informações, sem deixar dados óbvios de fora.
-2. PROIBIDO INVENTAR: NUNCA invente empresas, cargos, períodos, cursos ou tecnologias que não estejam explícitos ou fortemente implícitos no currículo original. Se uma informação não existe, mantenha a estrutura vazia ("" ou []).
-3. TOM DE VOZ E COERÊNCIA NA ANÁLISE: 
-   - No campo "analise", utilize obrigatoriamente a 2ª pessoa do singular ("você", "seu", "sua"). 
-   - A análise DEVE refletir fielmente a nota final. Se a nota for baixa, a análise deve confrontar o candidato sobre lacunas e ausências técnicas.
-4. 1ª PESSOA DO SINGULAR NO CURRÍCULO: Escreva todo o "resumo_profissional", o "curriculo_revisado" e as descrições das "experiencias" estritamente em primeira pessoa do singular (ex: "Desenvolvi", "Atuei", "Busco", "Liderei"), nunca em 3ª pessoa.
-5. ZERO EMOJIS: NENHUM emoji deve ser utilizado em nenhuma parte do JSON retornado sob hipótese alguma.
-6. SISTEMA DE PONTUAÇÃO E COMPATIBILIDADE RIGOROSO:
-   - Avalie de forma analítica e realista baseando-se estritamente na matriz de competências da vaga.
-7. PONTOS FORTES E PONTOS DE ATENÇÃO DETALHADOS (MÍNIMO DE 3 ITENS CADA):
-   - "pontosFortes": Liste no mínimo 3 competências reais e diferenciais técnicos concretos.
-   - "pontosAtencao": Aponte no mínimo 3 lacunas graves ou ferramentas ausentes exigidas pela vaga.
-8. PALAVRAS-CHAVE ATS: Extraia com precisão as "palavrasChaveEncontradas" e mapeie as "palavrasChaveFaltantes".
-9. FORMATAÇÃO DE DATAS: O campo "periodo" deve seguir rigorosamente o formato limpo (Ex: "Janeiro 2024 - Dezembro 2026").
-10. ESCREVA PARA O USUARIO CADA TERMO TECNOLOGICO: Exemplo: ATS e sua definição breve em até 1 linha, se necessário.
-11. **DETALHAMENTO TÉCNICO OBRIGATÓRIO DE PROJETOS/EXPERIÊNCIAS:** 
-    - **PROIBIDO** criar frases genéricas como "Desenvolvi projetos acadêmicos". 
-    - Sempre desmembre as tecnologias informadas (ex: Java, Spring Boot, React, MySQL) em ações técnicas concretas e estruturadas em formato de bullet points. 
-    - Explique **o que** foi construído (ex: desenvolvimento de APIs RESTful, integração frontend-backend, modelagem de banco de dados relacional) em primeira pessoa do singular ("Desenvolvi", "Implementei", "Estruturei").
+1. EXTRAÇÃO CIRÚRGICA DE DADOS: Varra o currículo linha por linha identificando dados de contato, instituições e histórico.
+2. PROIBIDO INVENTAR: NUNCA invente empresas, cargos ou cursos que não estejam explícitos ou fortemente implícitos no original.
+3. NOTAS REALISTAS E RIGOROSAS: 
+   - Calcule a "nota_antes" de forma realista e crítica baseada nas lacunas iniciais (geralmente entre 3.5 e 5.5).
+   - Calcule a "nota_final" e a "compatibilidade_depois" refletindo o ganho real após a otimização cirúrgica (geralmente entre 8.0 e 9.8).
+4. CRITÉRIOS DE AVALIAÇÃO DETALHADOS (0 a 10):
+   - "estrutura_pessoal": Avalie a organização, layout e formatação geral.
+   - "clareza_executiva": Avalie a objetividade e poder de comunicação das experiências.
+   - "compatibilidade_vaga": Avalie o alinhamento direto com os requisitos da vaga.
+   - "palavras_chave_ats": Avalie a presença de termos técnicos essenciais.
+5. PALAVRAS-CHAVE COM EXEMPLOS PRÁTICOS: 
+   - No campo "palavrasChaveEncontradas" e "palavrasChaveFaltantes", forneça termos técnicos reais extraídos da vaga (ex: ["React.js", "APIs RESTful", "Docker", "Metodologias Ágeis"]).
+6. SÍNTESE DE ANÁLISE CONCISA E EXPLICATIVA:
+   - No campo "analise", escreva um parágrafo direto, objetivo e em 2ª pessoa do singular ("você"), sintetizando o diagnóstico do perfil sem exagerar no tamanho, mas mantendo alto valor explicativo.
+7. PONTOS FORTES E RECOMENDAÇÕES ROBUSTAS:
+   - Forneça pelo menos 4 "pontosFortes" reais e diferenciais técnicos.
+   - Forneça pelo menos 4 recomendações práticas e acionáveis em "sugestoes" / "pontosAtencao".
+8. 1ª PESSOA DO SINGULAR NO CURRÍCULO: Escreva o resumo e as experiências estritamente em primeira pessoa do singular ("Desenvolvi", "Atuei", "Liderei").
+9. ZERO EMOJIS: NENHUM emoji deve ser utilizado em nenhuma parte do JSON retornado.
 
 =====================
 ESTRUTURA JSON EXATA QUE VOCÊ DEVE RETORNAR:
 =====================
 {
   "vaga_detectada": "Título limpo da vaga identificada",
+  "nota_antes": 4.2,
+  "nota_final": 9.2,
   "compatibilidade_antes": 45,
-  "compatibilidade_depois": 88,
-  "nota_final": 8.5,
+  "compatibilidade_depois": 92,
+  "criterios": {
+    "estrutura_pessoal": 9.5,
+    "clareza_executiva": 9.0,
+    "compatibilidade_vaga": 9.2,
+    "palavras_chave_ats": 8.8
+  },
   "melhorias_realizadas": [
-    "Reestruturação profunda do resumo profissional",
-    "Expansão técnica detalhada dos projetos acadêmicos"
+    "Reestruturação profunda do resumo profissional com foco em resultados",
+    "Expansão técnica detalhada das experiências com verbos de ação",
+    "Inclusão cirúrgica de palavras-chave ATS exigidas pela vaga"
   ],
-  "analise": "Você possui uma estrutura textual...",
+  "analise": "Você possui uma excelente base técnica, mas seu currículo original carecia de clareza executiva e métricas de impacto. Com a otimização realizada, seu perfil agora destaca com precisão suas competências essenciais, elevando drasticamente sua compatibilidade com os filtros dos sistemas ATS.",
   "pontosFortes": [
-    "Ponto forte 1",
-    "Ponto forte 2",
-    "Ponto forte 3"
+    "Forte domínio das tecnologias fundamentais exigidas pela vaga",
+    "Histórico consistente de projetos práticos e acadêmicos relevantes",
+    "Clareza na demonstração de habilidades comportamentais e de equipe",
+    "Boa adaptabilidade a novos frameworks e metodologias"
   ],
   "pontosAtencao": [
-    "Ponto de atenção 1",
-    "Ponto de atenção 2",
-    "Ponto de atenção 3"
+    "Enriquecer a descrição dos projetos com métricas quantitativas de desempenho",
+    "Destacar certificações e cursos de extensão voltados para o setor",
+    "Manter o perfil do LinkedIn sincronizado com as novas competências adicionadas",
+    "Praticar a comunicação técnica focada em resolução de problemas complexos"
   ],
-  "palavrasChaveEncontradas": ["Java", "React", "Spring Boot"],
-  "palavrasChaveFaltantes": ["Docker", "AWS"],
+  "palavrasChaveEncontradas": ["JavaScript", "React", "APIs RESTful", "Git", "Trabalho em Equipe"],
+  "palavrasChaveFaltantes": ["Docker", "AWS Cloud", "TypeScript", "Testes Unitários"],
   "curriculo_original": "",
   "curriculo_revisado": "Texto completo do currículo otimizado...",
   "sugestoes": [
     { 
       "categoria": "Experiência", 
-      "descricao": "Recomendação prática...", 
+      "descricao": "Adicione métricas de desempenho nos bullets de suas experiências anteriores.", 
       "impacto": "Alto" 
+    },
+    { 
+      "categoria": "Certificações", 
+      "descricao": "Busque certificações oficiais nas tecnologias faltantes listadas.", 
+      "impacto": "Médio" 
     }
   ],
   "curriculoEstruturado": {
@@ -87,22 +100,22 @@ ESTRUTURA JSON EXATA QUE VOCÊ DEVE RETORNAR:
       "linkedin": "",
       "github": ""
     },
-    "resumo_profissional": "Resumo otimizado...",
+    "resumo_profissional": "Resumo otimizado em primeira pessoa...",
     "experiencias": [
       {
-        "cargo": "Desenvolvedor Full Stack (Projeto Acadêmico)",
-        "empresa": "Colégio Técnico Bento Quirino",
-        "periodo": "Janeiro 2024 - Dezembro 2026",
-        "descricao": "• Desenvolvi aplicações web full stack utilizando Java e Spring Boot para a construção de APIs RESTful robustas.\n• Implementei interfaces dinâmicas e responsivas utilizando React, integrando-as com o backend via requisições HTTP.\n• Estruturei e gerenciei bancos de dados relacionais em MySQL para persistência eficiente de dados.\n• Fui responsável pela apresentação técnica do projeto final e alinhamento de entregas para a instituição Bento Quirino."
+        "cargo": "Desenvolvedor Front-End",
+        "empresa": "Empresa / Projeto",
+        "periodo": "Janeiro 2024 - Presente",
+        "descricao": "• Desenvolvi aplicações web responsivas utilizando React e JavaScript moderno.\n• Implementei integração com APIs RESTful otimizando o tempo de carregamento em 30%.\n• Atuei em equipe utilizando metodologias ágeis Scrum para entregas contínuas."
       }
     ],
     "formacao": [
-      { "curso": "Técnico De Informática e Logística (EAD) Integrado", "instituicao": "Colégio Técnico Bento Quirino", "periodo": "Janeiro 2024 - Dezembro 2026", "status": "Concluído" }
+      { "curso": "Graduação / Técnico", "instituicao": "Instituição", "periodo": "2023 - 2026", "status": "Em andamento" }
     ],
     "idiomas": [
-      { "idioma": "Inglês", "nivel": "B2 Independente", "data_emissao": "" }
+      { "idioma": "Inglês", "nivel": "Intermediário", "instituicao": "", "periodo": "" }
     ],
-    "habilidades": ["Java", "JavaScript", "React", "Spring Boot", "MySQL", "APIs REST"]
+    "habilidades": ["JavaScript", "React", "APIs RESTful", "Git", "HTML5", "CSS3"]
   }
 }
 `;

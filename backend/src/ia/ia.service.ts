@@ -1,42 +1,98 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Injectable,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import * as mammoth from 'mammoth';
+import { GoogleGenAI } from '@google/genai';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { gerarCurriculoPrompt } from './prompts/curriculo.prompt';
 
-// pdf-parse é exportado via CommonJS
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import pdfParse = require('pdf-parse');
 
-interface OllamaResponse {
-  model?: string;
-  response: string;
-  done: boolean;
-  prompt_eval_count?: number;
-  eval_count?: number;
-}
-
-const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:3b';
-const OLLAMA_TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS || 420_000); // 7 min
 const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB
 
 @Injectable()
 export class IaService {
-  /*Executa o fluxo em duas etapas:1. Gera o currículo estruturado e revisado 2. Gera a análise, compatibilidade e sugestões (Resiliente: se falhar, não quebra a requisição).
-   */
-  async revisar(file: Express.Multer.File, vaga: string) {
+  private ai: GoogleGenAI;
+  private modelName: string;
+  private _supabase: SupabaseClient | null = null;
+
+  constructor() {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.warn('Aviso: API não está configurada no arquivo .env');
+    }
+    this.ai = new GoogleGenAI({ apiKey: apiKey || '' });
+    this.modelName = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  }
+
+  // Método getter seguro para instanciar o Supabase apenas quando necessário
+  private getSupabase(): SupabaseClient {
+    if (this._supabase) return this._supabase;
+
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey =
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new ServiceUnavailableException(
+        'As variáveis SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY não estão configuradas no .env do backend.',
+      );
+    }
+
+    this._supabase = createClient(supabaseUrl, supabaseKey);
+    return this._supabase;
+  }
+
+  async revisar(file: Express.Multer.File, vaga: string, userId: string) {
     if (!file) {
       throw new BadRequestException('Nenhum currículo foi enviado.');
     }
     if (!vaga || !vaga.trim()) {
       throw new BadRequestException('A vaga é obrigatória.');
     }
+    if (!userId || !userId.trim()) {
+      throw new BadRequestException('Usuário não identificado.');
+    }
     if (file.size > MAX_FILE_BYTES) {
       throw new BadRequestException('Arquivo excede o limite de 10 MB.');
+    }
+
+    const supabase = this.getSupabase();
+
+    // ==========================================================
+    // VALIDAÇÃO DE LIMITE DIÁRIO (1 revisão por dia)
+    // ==========================================================
+    const inicioHoje = new Date();
+    inicioHoje.setHours(0, 0, 0, 0);
+
+    const { data: revisoesHoje, error: erroBusca } = await supabase
+      .from('historico_revisoes')
+      .select('id')
+      .eq('user_id', userId)
+      .gte('created_at', inicioHoje.toISOString());
+
+    if (erroBusca) {
+      console.error('Erro ao verificar limite diário:', erroBusca.message);
+      throw new ServiceUnavailableException(
+        'Erro ao validar limite diário no banco de dados.',
+      );
+    }
+
+    if (revisoesHoje && revisoesHoje.length > 0) {
+      throw new HttpException(
+        {
+          limiteExcedido: true,
+          mensagem:
+            'Você já atingiu o limite de 1 revisão de currículo por dia. Tente novamente amanhã.',
+        },
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
     }
 
     const textoCurriculo = await this.extrairTexto(file);
@@ -47,12 +103,14 @@ export class IaService {
     }
 
     // ==========================================================
-    // ETAPA 1: Gerar o Currículo Otimizado e Estruturado (Obrigatório)
+    // ETAPA 1: Gerar o Currículo Otimizado e Estruturado
     // ==========================================================
     const promptCurriculo = gerarCurriculoPrompt(textoCurriculo, vaga);
-    const dadosCurriculoRaw = await this.chamarOllama(promptCurriculo);
+    const inicio1 = Date.now();
+    const dadosCurriculoRaw = await this.chamarGemini(promptCurriculo);
+    const tempo1 = Date.now() - inicio1;
 
-    const textoLimpoCurriculo = dadosCurriculoRaw.response
+    const textoLimpoCurriculo = dadosCurriculoRaw
       .replace(/```json/gi, '')
       .replace(/```/g, '')
       .trim();
@@ -75,8 +133,7 @@ export class IaService {
       '';
 
     // ==========================================================
-    // ETAPA 2: Gerar Análise e Compatibilidade (Opcional/Resiliente)
-    // Se essa etapa falhar, o usuário ainda recebe o currículo pronto!
+    // ETAPA 2: Gerar Análise e Compatibilidade
     // ==========================================================
     let dadosAnalise: any = {
       compatibilidade_antes: null,
@@ -92,8 +149,8 @@ export class IaService {
       VAGA: ${vaga}
       CURRICULO: ${JSON.stringify(curriculoEstruturado)}`;
 
-      const dadosAnaliseRaw = await this.chamarOllama(promptAnalise);
-      const textoLimpoAnalise = dadosAnaliseRaw.response
+      const dadosAnaliseRaw = await this.chamarGemini(promptAnalise);
+      const textoLimpoAnalise = dadosAnaliseRaw
         .replace(/```json/gi, '')
         .replace(/```/g, '')
         .trim();
@@ -107,17 +164,28 @@ export class IaService {
       );
     }
 
+    // ==========================================================
+    // REGISTRO DE SUCESSO: Salvar histórico de revisão no Supabase
+    // ==========================================================
+    const { error: erroInsercao } = await supabase
+      .from('historico_revisoes')
+      .insert([{ user_id: userId }]);
+
+    if (erroInsercao) {
+      console.error(
+        'Erro ao salvar histórico de revisão no Supabase:',
+        erroInsercao.message,
+      );
+    }
+
     return {
-      modelo: dadosCurriculoRaw.model ?? OLLAMA_MODEL,
-      tempo_ms: dadosCurriculoRaw.__tempo_ms ?? 0,
-      tokens:
-        (dadosCurriculoRaw.prompt_eval_count ?? 0) +
-        (dadosCurriculoRaw.eval_count ?? 0),
+      modelo: this.modelName,
+      tempo_ms: tempo1,
+      tokens: 0,
       vaga: vaga,
-      // Atalhos diretos no topo
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       curriculoEstruturado,
-      // Mantém compatibilidade: também expõe curriculoOtimizadoText
+      // eslint-disable-content...
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       curriculoOtimizadoText: curriculoRevisadoText,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -147,7 +215,7 @@ export class IaService {
   }
 
   // ------------------------------------------------------------
-  // Extração de texto (PDF / DOCX)[cite: 3]
+  // Extração de texto PDF / DOCX
   // ------------------------------------------------------------
   private async extrairTexto(file: Express.Multer.File): Promise<string> {
     const extensao = file.originalname.split('.').pop()?.toLowerCase();
@@ -189,65 +257,35 @@ export class IaService {
   }
 
   // ------------------------------------------------------------
-  // Chamada ao Ollama
+  // Chamada ao Google Gemini
   // ------------------------------------------------------------
-  private async chamarOllama(
-    prompt: string,
-  ): Promise<OllamaResponse & { __tempo_ms: number }> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), OLLAMA_TIMEOUT_MS);
-
-    const inicio = Date.now();
-
-    let response: Response;
+  private async chamarGemini(prompt: string): Promise<string> {
     try {
-      response = await fetch(`${OLLAMA_URL}/api/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          model: OLLAMA_MODEL,
-          prompt,
-          stream: false,
-          format: 'json',
-          keep_alive: '30m',
-          options: {
-            num_predict: 6000,
-            temperature: 0.4,
-            top_p: 0.9,
-            repeat_penalty: 1.1,
-            num_ctx: 8192,
-          },
-        }),
+      const response = await this.ai.models.generateContent({
+        model: this.modelName,
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          temperature: 0.3,
+        },
       });
-    } catch (err: any) {
-      clearTimeout(timeout);
-      if (err?.name === 'AbortError') {
+
+      if (!response.text) {
         throw new ServiceUnavailableException(
-          'A IA demorou demais para responder. Tente novamente ou use um modelo menor.',
+          'O Cija retornou uma resposta vazia.',
         );
       }
-      throw new ServiceUnavailableException(
-        `Falha de conexão com a IA em ${OLLAMA_URL}: ${err?.message || 'verifique se o Ollama está rodando'}`,
-      );
-    } finally {
-      clearTimeout(timeout);
-    }
 
-    if (!response.ok) {
-      const erroDetalhado = await response.text();
+      return response.text;
+    } catch (err: any) {
       throw new ServiceUnavailableException(
-        `Erro da IA (${response.status}): ${erroDetalhado.slice(0, 500)}`,
+        `Falha ao comunicar com o Cija IA: ${err?.message || 'erro desconhecido'}`,
       );
     }
-
-    const data = (await response.json()) as OllamaResponse;
-    (data as any).__tempo_ms = Date.now() - inicio;
-    return data as OllamaResponse & { __tempo_ms: number };
   }
 
   // ------------------------------------------------------------
-  // Parse seguro do JSON retornado pela IA[cite: 3]
+  // Parse seguro do JSON retornado pela IA
   // ------------------------------------------------------------
   private tentarParsearJson(textoLimpo: string): any {
     const inicio = textoLimpo.indexOf('{');
@@ -267,14 +305,12 @@ export class IaService {
     const jsonString = textoLimpo.substring(inicio, fim + 1);
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return JSON.parse(jsonString);
     } catch {
       const recuperado = jsonString
         .replace(/,(\s*[}\]])/g, '$1')
         .replace(/\n/g, '\\n');
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return JSON.parse(recuperado);
       } catch {
         throw new ServiceUnavailableException(
