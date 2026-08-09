@@ -11,6 +11,7 @@ import {
 } from "docx";
 // @ts-ignore - html2pdf.js não tem tipos oficiais
 import html2pdf from "html2pdf.js";
+import API_BASE_URL from "../config/api";
 
 /* ============================================================
    1) STOPWORDS / DICIONÁRIO LÉXICO PARA O SCORE REAL
@@ -1276,7 +1277,7 @@ export async function baixarCurriculoPDF(
 
   let usouBackend = false;
   try {
-    const response = await fetch("https://cija-backend.onrender.com/pdf/curriculo", {
+    const response = await fetch(`${API_BASE_URL}/pdf/curriculo`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ html }),

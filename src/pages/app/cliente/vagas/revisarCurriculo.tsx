@@ -10,6 +10,7 @@ import {
   calcularScoreCurriculo,
   extrairDadosCurriculo,
 } from "../../../../utils/geradorCurriculo";
+import API_BASE_URL from "../../../../config/api";
 
 interface Empresa {
   id_em: string;
@@ -635,7 +636,7 @@ const RevisarCurriculo: React.FC = () => {
         );
       }, 3000);
 
-      const res = await fetch("https://cija-backend.onrender.com/ia/revisar", {
+      const res = await fetch(`${API_BASE_URL}/ia/revisar`, {
         method: "POST",
         body: dadosEnviar,
       });
