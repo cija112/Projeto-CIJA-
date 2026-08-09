@@ -11,10 +11,21 @@ import { GoogleGenAI } from '@google/genai';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { gerarCurriculoPrompt } from './prompts/curriculo.prompt';
 
+// pdf-parse-fork não tem o bug de carregar arquivos de teste no import
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-import pdfParse = require('pdf-parse');
+import pdfParse = require('pdf-parse-fork');
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB
+
+// Modelos válidos da API Gemini (atualizado 2026)
+const MODELOS_VALIDOS = [
+  'gemini-2.5-flash',
+  'gemini-2.5-pro',
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-exp',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro',
+];
 
 @Injectable()
 export class IaService {
@@ -25,10 +36,22 @@ export class IaService {
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.warn('Aviso: API não está configurada no arquivo .env');
+      console.warn('[IaService] Aviso: GEMINI_API_KEY não está configurada no .env');
     }
     this.ai = new GoogleGenAI({ apiKey: apiKey || '' });
-    this.modelName = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+
+    // Fallback seguro se a env var tiver modelo inválido
+    const modeloEnv = process.env.GEMINI_MODEL;
+    this.modelName =
+      modeloEnv && MODELOS_VALIDOS.includes(modeloEnv)
+        ? modeloEnv
+        : 'gemini-2.5-flash';
+
+    if (modeloEnv && !MODELOS_VALIDOS.includes(modeloEnv)) {
+      console.warn(
+        `[IaService] GEMINI_MODEL="${modeloEnv}" não é válido. Usando fallback: ${this.modelName}`,
+      );
+    }
   }
 
   // Método getter seguro para instanciar o Supabase apenas quando necessário

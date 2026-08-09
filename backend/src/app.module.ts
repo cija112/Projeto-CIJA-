@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { IaController } from './ia/ia.controller';
-import { IaService } from './ia/ia.service';
+import { IaModule } from './ia/ia.module';
 import { PdfModule } from './pdf/pdf.module';
 
 @Module({
-  imports: [PdfModule],
-  controllers: [IaController],
-  providers: [AppService, IaService],
+  imports: [IaModule, PdfModule],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
