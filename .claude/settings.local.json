@@ -5,7 +5,12 @@
       "Bash(npx nest *)",
       "Bash(npx react-scripts *)",
       "Bash(dir D:\\\\\\\\AllProjects\\\\\\\\CIJA-Project-main\\\\\\\\CIJA-Project-main\\\\\\\\backend\\\\)",
-      "Bash(echo \"Exit: $?\")"
+      "Bash(echo \"Exit: $?\")",
+      "Bash(git reflog *)",
+      "Bash(git gc *)",
+      "Bash(git fsck *)",
+      "Bash(git update-ref *)",
+      "Bash(git pack-refs *)"
     ]
   }
 }
