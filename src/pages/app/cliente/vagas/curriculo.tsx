@@ -4,7 +4,7 @@ import {
   baixarCurriculoDOCX,
   extrairDadosCurriculo,
 } from "../../../../utils/geradorCurriculo";
-import "./curriculo.css";
+import "./curriculo.style.css";
 
 interface CurriculoProps {
   jovemData?: any;

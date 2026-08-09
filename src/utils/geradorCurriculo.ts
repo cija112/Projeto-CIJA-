@@ -948,131 +948,237 @@ export function renderHtmlCurriculo(d: any): string {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Currículo — ${nome}</title>
 <style>
-  @page { size: A4; margin: 15mm 18mm; }
-  * { box-sizing: border-box; }
+  @page { size: A4; margin: 14mm 16mm; }
+  * { box-sizing: border-box; word-wrap: break-word; overflow-wrap: break-word; }
+  html, body { margin: 0; padding: 0; background: #ffffff; }
   body {
-    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, "Helvetica", "Arial", sans-serif;
     color: #1F2937;
-    margin: 0;
-    padding: 0;
-    line-height: 1.45;
-    font-size: 12px;
+    line-height: 1.5;
+    font-size: 11.5pt;
+    max-width: 100%;
+  }
+  .curriculo-container {
+    max-width: 800px;
+    margin: 0 auto;
     background: #ffffff;
+    padding: 24px 28px;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: #1F2937;
   }
-  h1 {
-    font-size: 24px;
-    color: #1E3A8A;
-    text-align: center;
-    margin: 0 0 6px 0;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+  .curriculo-header {
+    border-bottom: 2px solid #2563EB;
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+    text-align: left;
   }
-  .contatos {
-    text-align: center;
-    font-size: 11px;
-    color: #4B5563;
-    margin-bottom: 14px;
-    border-bottom: 2px solid #1E3A8A;
-    padding-bottom: 6px;
-  }
-  h2 {
-    font-size: 14px;
-    color: #1E3A8A;
-    border-bottom: 1px solid #D1D5DB;
-    padding-bottom: 3px;
-    margin: 16px 0 8px 0;
+  .curriculo-header h1 {
+    font-size: 22pt;
+    color: #111827;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin: 0 0 6px 0;
+    font-weight: 700;
+    line-height: 1.15;
   }
-  p, li { font-size: 12px; margin: 2px 0; }
-  .linha-cabecalho { display: flex; justify-content: space-between; align-items: baseline; width: 100%; margin-bottom: 2px; }
-  .titulo-cargo { font-weight: bold; font-size: 13px; color: #111827; flex: 1; padding-right: 12px; }
-  .data-periodo { font-style: italic; color: #4B5563; font-size: 11px; white-space: nowrap; }
-  .exp-empresa { color: #2563EB; font-weight: 600; font-size: 12px; margin-bottom: 4px; }
-  ul { margin: 4px 0 10px 18px; padding: 0; }
-  li { margin-bottom: 2px; }
-  .resumo { text-align: justify; margin: 4px 0 8px 0; }
-  .habilidades-container { font-size: 12px; color: #1F2937; word-spacing: 2px; }
-  .idioma-item { margin-bottom: 2px; }
+  .curriculo-header p {
+    font-size: 10.5pt;
+    color: #4B5563;
+    margin: 0;
+    line-height: 1.5;
+  }
+  .curriculo-body .secao {
+    margin-bottom: 14px;
+    page-break-inside: avoid;
+  }
+  .curriculo-body h2 {
+    font-size: 12pt;
+    color: #2563EB;
+    border-bottom: 1px solid #E5E7EB;
+    padding-bottom: 3px;
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+  }
+  .curriculo-body h3 {
+    font-size: 11pt;
+    color: #111827;
+    font-weight: 600;
+    margin: 0 0 3px 0;
+  }
+  .curriculo-body p {
+    font-size: 10.5pt;
+    line-height: 1.5;
+    color: #374151;
+    margin: 0 0 6px 0;
+    text-align: justify;
+  }
+  .curriculo-body ul {
+    padding-left: 18px;
+    margin: 4px 0 0 0;
+    color: #374151;
+    font-size: 10.5pt;
+  }
+  .curriculo-body li {
+    margin-bottom: 2px;
+    line-height: 1.5;
+  }
+  .curriculo-body .periodo {
+    font-size: 9.5pt;
+    color: #6B7280;
+    font-style: italic;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .item-experiencia,
+  .item-formacao {
+    margin-bottom: 10px;
+    page-break-inside: avoid;
+  }
+  .habilidades-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    margin: 0;
+    padding: 0;
+  }
+  .habilidade-chip {
+    display: inline-block;
+    background: #EFF6FF;
+    color: #1E3A8A;
+    border: 1px solid #DBEAFE;
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 10pt;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: normal;
+  }
+  .linha-cabecalho {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 2px;
+  }
+  .titulo-cargo {
+    font-weight: 700;
+    font-size: 11pt;
+    color: #111827;
+    flex: 1 1 auto;
+  }
+  .data-periodo {
+    font-style: italic;
+    color: #4B5563;
+    font-size: 9.5pt;
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+  .exp-empresa {
+    color: #2563EB;
+    font-weight: 600;
+    font-size: 10.5pt;
+    margin-bottom: 4px;
+  }
+  @media print {
+    .curriculo-container { padding: 0; max-width: 100%; }
+    .curriculo-body .secao,
+    .item-experiencia,
+    .item-formacao { page-break-inside: avoid; }
+  }
 </style>
 </head>
 <body>
-  <h1>${nome}</h1>
-  ${contatos ? `<div class="contatos">${contatos}</div>` : ""}
+  <div class="curriculo-container">
+    <div class="curriculo-header">
+      <h1>${nome}</h1>
+      ${contatos ? `<p>${contatos}</p>` : ""}
+    </div>
 
-  ${d?.resumo ? `<h2>Resumo Profissional</h2><p class="resumo">${escapar(d.resumo)}</p>` : ""}
+    <div class="curriculo-body">
+      ${d?.resumo ? `<section class="secao"><h2>Resumo Profissional</h2><p>${escapar(d.resumo)}</p></section>` : ""}
 
-  ${
-    experiencias.length > 0
-      ? `<h2>Experiência Profissional</h2>${experiencias
-          .map((exp: any) => {
-            const bullets =
-              Array.isArray(exp.bullets) && exp.bullets.length > 0
-                ? exp.bullets
-                : exp.descricao
-                  ? String(exp.descricao).split("\n").filter(Boolean)
-                  : [];
-            return `
-              <div style="margin-bottom: 10px;">
-                <div class="linha-cabecalho">
-                  <span class="titulo-cargo">${escapar(exp.cargo || exp.titulo || "Cargo")}</span>
-                  <span class="data-periodo">${escapar(exp.periodo || "Recente")}</span>
-                </div>
-                <div class="exp-empresa">${escapar(exp.empresa || "")}</div>
-                ${
-                  bullets.length > 0
-                    ? `<ul>${bullets.map((b: string) => `<li>${escapar(b)}</li>`).join("")}</ul>`
-                    : ""
-                }
-              </div>`;
-          })
-          .join("")}`
-      : ""
-  }
+      ${
+        experiencias.length > 0
+          ? `<section class="secao"><h2>Experiência Profissional</h2>${experiencias
+              .map((exp: any) => {
+                const bullets =
+                  Array.isArray(exp.bullets) && exp.bullets.length > 0
+                    ? exp.bullets
+                    : exp.descricao
+                      ? String(exp.descricao)
+                          .split("\n")
+                          .map((b) => b.replace(/^[•\-*]\s*/, "").trim())
+                          .filter(Boolean)
+                      : [];
+                return `
+                  <div class="item-experiencia">
+                    <div class="linha-cabecalho">
+                      <span class="titulo-cargo">${escapar(exp.cargo || exp.titulo || "Cargo")}</span>
+                      <span class="data-periodo">${escapar(exp.periodo || "Recente")}</span>
+                    </div>
+                    ${exp.empresa ? `<div class="exp-empresa">${escapar(exp.empresa)}</div>` : ""}
+                    ${
+                      bullets.length > 0
+                        ? `<ul>${bullets.map((b: string) => `<li>${escapar(b)}</li>`).join("")}</ul>`
+                        : ""
+                    }
+                  </div>`;
+              })
+              .join("")}</section>`
+          : ""
+      }
 
-  ${
-    formacao.length > 0
-      ? `<h2>Formação Acadêmica</h2>${formacao
-          .map(
-            (f: any) => `
-              <div style="margin-bottom: 6px;">
-                <div class="linha-cabecalho">
-                  <span class="titulo-cargo">${escapar(f.curso || "Curso")}${
-                    f.status
-                      ? ` <span style="font-weight: normal; color: #4B5563;">(${escapar(f.status)})</span>`
-                      : ""
-                  }</span>
-                  <span class="data-periodo">${escapar(f.periodo || "Concluído")}</span>
-                </div>
-                <div style="color: #4B5563; font-size: 11px;">${escapar(f.instituicao || "")}</div>
-              </div>`,
-          )
-          .join("")}`
-      : ""
-  }
+      ${
+        formacao.length > 0
+          ? `<section class="secao"><h2>Formação Acadêmica</h2>${formacao
+              .map(
+                (f: any) => `
+                  <div class="item-formacao">
+                    <div class="linha-cabecalho">
+                      <span class="titulo-cargo">${escapar(f.curso || "Curso")}${
+                        f.status
+                          ? ` <span style="font-weight: normal; color: #4B5563;">(${escapar(f.status)})</span>`
+                          : ""
+                      }</span>
+                      <span class="data-periodo">${escapar(f.periodo || "Concluído")}</span>
+                    </div>
+                    ${f.instituicao ? `<p style="margin: 0;">${escapar(f.instituicao)}</p>` : ""}
+                  </div>`,
+              )
+              .join("")}</section>`
+          : ""
+      }
 
-  ${
-    habilidades.length > 0
-      ? `<h2>Habilidades e Competências</h2><p class="habilidades-container">${habilidades
-          .map((h: string) => escapar(h))
-          .join(" &bull; ")}</p>`
-      : ""
-  }
+      ${
+        habilidades.length > 0
+          ? `<section class="secao"><h2>Habilidades e Competências</h2>
+              <div class="habilidades-grid">
+                ${habilidades.map((h: string) => `<span class="habilidade-chip">${escapar(h)}</span>`).join("")}
+              </div>
+            </section>`
+          : ""
+      }
 
-  ${
-    idiomas.length > 0
-      ? `<h2>Idiomas</h2><ul>${idiomas
-          .map((i: any) => {
-            const nomeIdioma =
-              typeof i === "string" ? i : i.nome || i.idioma || "";
-            const nivel = typeof i === "string" ? "" : i.nivel || "";
-            return `<li class="idioma-item"><strong>${escapar(nomeIdioma)}</strong>${nivel ? ` — ${escapar(nivel)}` : ""}</li>`;
-          })
-          .join("")}</ul>`
-      : ""
-  }
+      ${
+        idiomas.length > 0
+          ? `<section class="secao"><h2>Idiomas</h2><ul>${idiomas
+              .map((i: any) => {
+                const nomeIdioma =
+                  typeof i === "string" ? i : i.nome || i.idioma || "";
+                const nivel = typeof i === "string" ? "" : i.nivel || "";
+                return `<li><strong>${escapar(nomeIdioma)}</strong>${nivel ? ` — ${escapar(nivel)}` : ""}</li>`;
+              })
+              .join("")}</ul></section>`
+          : ""
+      }
+    </div>
+  </div>
 </body>
 </html>`;
 }
@@ -1243,7 +1349,7 @@ async function gerarPdfFrontend(html: string, nomeBase: string): Promise<void> {
   }
 
   const opt = {
-    margin: [15, 18, 15, 18],
+    margin: [14, 16, 14, 16],
     filename: `curriculo-${nomeBase}.pdf`,
     image: { type: "jpeg", quality: 0.98 },
     html2canvas: {
@@ -1251,9 +1357,10 @@ async function gerarPdfFrontend(html: string, nomeBase: string): Promise<void> {
       useCORS: true,
       backgroundColor: "#ffffff",
       logging: false,
+      windowWidth: 800,
     },
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-    pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+    pagebreak: { mode: ["avoid-all", "css", "legacy"], avoid: ".item-experiencia, .item-formacao, .secao" },
   };
 
   // @ts-ignore
@@ -1567,7 +1674,7 @@ export async function baixarCurriculoDOCX(
   if (d.habilidades.length > 0) {
     children.push(criarSecaoDocx("HABILIDADES E COMPETÊNCIAS", COR_PRIMARIA));
 
-    const porLinha = 4;
+    const porLinha = 3;
     for (let i = 0; i < d.habilidades.length; i += porLinha) {
       const bloco = d.habilidades.slice(i, i + porLinha);
       const runs: TextRun[] = [];
@@ -1575,8 +1682,8 @@ export async function baixarCurriculoDOCX(
         if (idx > 0) {
           runs.push(
             new TextRun({
-              text: "    •    ",
-              size: 20,
+              text: "  •  ",
+              size: 19,
               color: COR_SUAVES,
               font: "Calibri",
             }),
@@ -1585,9 +1692,9 @@ export async function baixarCurriculoDOCX(
         runs.push(
           new TextRun({
             text: hab,
-            size: 20,
+            size: 19,
             bold: true,
-            color: COR_TEXTO,
+            color: COR_PRIMARIA,
             font: "Calibri",
           }),
         );
@@ -1595,7 +1702,8 @@ export async function baixarCurriculoDOCX(
 
       children.push(
         new Paragraph({
-          spacing: { after: 50, line: 260 },
+          spacing: { after: 60, line: 280 },
+          alignment: AlignmentType.LEFT,
           children: runs,
         }),
       );
