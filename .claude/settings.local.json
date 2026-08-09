@@ -10,7 +10,22 @@
       "Bash(git gc *)",
       "Bash(git fsck *)",
       "Bash(git update-ref *)",
-      "Bash(git pack-refs *)"
+      "Bash(git pack-refs *)",
+      "Bash(curl *)",
+      "Bash(npm uninstall *)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(node -e \"require\\('dotenv'\\).config\\(\\); console.log\\('GEMINI_MODEL:', process.env.GEMINI_MODEL\\); console.log\\('GEMINI_API_KEY set:', !!process.env.GEMINI_API_KEY\\); console.log\\('SUPABASE_URL:', process.env.SUPABASE_URL\\);\")",
+      "Bash(node dist/main.js)",
+      "Bash(pkill -f \"node dist/main.js\")",
+      "Bash(netstat -ano)",
+      "Bash(node --max-old-space-size=350 dist/main.js)",
+      "Bash(ps -o pid,rss,command)",
+      "Bash(tasklist /FI \"IMAGENAME eq node.exe\")",
+      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")",
+      "Bash(taskkill //PID 18968 //F)",
+      "Read(//d/AllProjects/CIJA-Project-main/CIJA-Project-main/backend/**)",
+      "Bash(taskkill //PID 2156 //F)"
     ]
   }
 }

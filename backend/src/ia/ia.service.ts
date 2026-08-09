@@ -11,9 +11,18 @@ import { GoogleGenAI } from '@google/genai';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { gerarCurriculoPrompt } from './prompts/curriculo.prompt';
 
-// pdf-parse-fork não tem o bug de carregar arquivos de teste no import
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import pdfParse = require('pdf-parse-fork');
+// pdf-parse será carregado LAZY (dentro da função) para não inflar
+// a memória na inicialização do NestJS. Importar no top-level puxa
+// pdfjs-dist e estoura o limite de 512MB do Render free tier.
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+let pdfParse: any = null;
+const carregarPdfParse = async () => {
+  if (!pdfParse) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    pdfParse = require('pdf-parse');
+  }
+  return pdfParse;
+};
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB
 
@@ -250,11 +259,10 @@ export class IaService {
 
     if (ehPdf) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const parseFunction = (pdfParse as any).default || pdfParse;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+        // Carrega pdf-parse lazy (evita pdfjs-dist no boot do NestJS)
+        const parser = await carregarPdfParse();
+        const parseFunction = (parser as any).default || parser;
         const pdfData = await parseFunction(file.buffer);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
         return (pdfData.text || '').toString();
       } catch (err: any) {
         throw new BadRequestException(

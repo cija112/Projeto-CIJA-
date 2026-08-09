@@ -10,6 +10,7 @@ import {
   calcularScoreCurriculo,
   extrairDadosCurriculo,
 } from "../../../../utils/geradorCurriculo";
+import { fetchSeguro } from "../../../../utils/apiHelpers";
 
 interface Empresa {
   id_em: string;
@@ -635,29 +636,60 @@ const RevisarCurriculo: React.FC = () => {
         );
       }, 3000);
 
-      const res = await fetch("https://cija-backend.onrender.com/ia/revisar", {
-        method: "POST",
-        body: dadosEnviar,
-      });
+      // fetchSeguro: timeout + retry em 502/503/504 + parsing seguro de HTML/JSON
+      const { ok, status, data: resultado, htmlRecebido, erroRede } =
+        await fetchSeguro<any>(
+          "https://cija-backend.onrender.com/ia/revisar",
+          {
+            method: "POST",
+            body: dadosEnviar,
+            // NÃO definir Content-Type — o navegador gera com o boundary correto
+          },
+          120_000, // 2 min (Gemini free tier pode demorar)
+          2, // 1 retry automático em cold start
+        );
 
       if (timerEtapa3) clearTimeout(timerEtapa3);
 
-      const resultado = await res.json();
+      // 1. Erro de rede (Failed to fetch)
+      if (erroRede) {
+        setEtapaAtual(1);
+        setStatus("erro");
+        mostrarNotificacao(
+          (resultado as any)?.message ||
+            "Não foi possível conectar ao servidor de IA. Verifique sua conexão.",
+        );
+        return;
+      }
 
-      // Tratamento para limite diário excedido vindo do Backend (Status 429)
-      if (res.status === 429 || resultado.limiteExcedido) {
+    
+      if (htmlRecebido || [502, 503, 504].includes(status)) {
+        setEtapaAtual(1);
+        setStatus("erro");
+        mostrarNotificacao(
+          "O servidor de IA está inicializando. Aguarde 30-60 segundos e tente novamente.",
+        );
+        return;
+      }
+
+ 
+      if (status === 429 || (resultado as any)?.limiteExcedido) {
         setEtapaAtual(1);
         setStatus("limite_atingido");
         mostrarNotificacao(
-          resultado.mensagem ||
+          (resultado as any)?.mensagem ||
             "Você já atingiu o limite de 1 revisão por dia.",
         );
         return;
       }
 
-      if (!res.ok) {
-        const erroTexto = resultado.message || JSON.stringify(resultado);
-        throw new Error(`Falha operacional (${res.status}): ${erroTexto}`);
+
+      if (!ok) {
+        const erroTexto =
+          (resultado as any)?.message ||
+          (resultado as any)?.error ||
+          "Erro desconhecido";
+        throw new Error(`Falha operacional (${status}): ${erroTexto}`);
       }
 
       setResposta(resultado);
@@ -855,9 +887,9 @@ const RevisarCurriculo: React.FC = () => {
       setStatus("erro");
 
       const mensagemErro =
-        error.message?.includes("Failed to fetch") || error.name === "TypeError"
-          ? "Não foi possível conectar ao servidor de IA."
-          : error.message ||
+        error?.message?.includes("Failed to fetch") || error?.name === "TypeError"
+          ? "Não foi possível conectar ao servidor de IA. Verifique sua conexão e tente novamente."
+          : error?.message ||
             "Falha ao processar o currículo com a inteligência artificial.";
 
       mostrarNotificacao(mensagemErro);

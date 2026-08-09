@@ -11,9 +11,10 @@ import {
 } from "docx";
 // @ts-ignore - html2pdf.js não tem tipos oficiais
 import html2pdf from "html2pdf.js";
+import { fetchSeguro } from "./apiHelpers";
 
 /* ============================================================
-   1) STOPWORDS / DICIONÁRIO LÉXICO PARA O SCORE REAL
+   DICIONÁRIO LÉXICO PARA O SCORE REAL
    ============================================================ */
 
 const STOPWORDS = new Set<string>([
@@ -1276,11 +1277,18 @@ export async function baixarCurriculoPDF(
 
   let usouBackend = false;
   try {
-    const response = await fetch("https://cija-backend.onrender.com/pdf/curriculo", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ html }),
-    });
+   
+    const { fetchComTimeoutETentativa } = await import("./apiHelpers");
+    const response = await fetchComTimeoutETentativa(
+      "https://cija-backend.onrender.com/pdf/curriculo",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html }),
+      },
+      60_000, // 60s para gerar PDF
+      2,
+    );
 
     if (!response.ok) {
       const errTxt = await response.text().catch(() => "");

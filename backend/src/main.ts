@@ -23,23 +23,23 @@ async function bootstrap() {
     'http://localhost:5173',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:5173',
+    'https://cija-backend.onrender.com',
+    'https://projeto-cija.vercel.app',
+    'https://projeto-cija.vercel.app/',
+    // Domínios comuns adicionais
+    'https://cija-app.vercel.app',
+    'https://cija-frontend.vercel.app',
+    'https://cija.netlify.app',
+    // Adicione aqui a URL exata do seu front em produção
     ...(process.env.FRONTEND_URLS || '')
       .split(',')
-      .map((o) => o.trim())
+      .map((o) => o.trim().replace(/\/+$/, '')) // remove trailing slash
       .filter(Boolean),
   ];
 
   app.use((req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers.origin;
 
-    // ============================================================
-    // ESTRATÉGIA CORS:
-    // Ecoamos QUALQUER origin no header Access-Control-Allow-Origin.
-    // Isso é seguro quando credentials=false (que é nosso caso).
-    // O navegador só vai bloquear origens maliciosas se houver
-    // cookies/Authorization headers, o que não acontece neste backend.
-    // Lista de origens permitidas é mantida apenas para logs e auditoria.
-    // ============================================================
     if (origin) {
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Vary', 'Origin');
