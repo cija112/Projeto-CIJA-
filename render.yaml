@@ -14,7 +14,7 @@ services:
       - key: NODE_OPTIONS
         value: "--max-old-space-size=350"
       - key: GEMINI_MODEL
-        value: "gemini-2.5-flash"
+        value: "gemini-3.5-flash"
       # GEMINI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
       # devem ser configuradas no painel do Render como Secret Files
       - key: FRONTEND_URLS
