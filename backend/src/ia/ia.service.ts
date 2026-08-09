@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   BadRequestException,
@@ -16,25 +17,20 @@ import { gerarCurriculoPrompt } from './prompts/curriculo.prompt';
 // pdfjs-dist e estoura o limite de 512MB do Render free tier.
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 let pdfParse: any = null;
+// eslint-disable-next-line @typescript-eslint/require-await
 const carregarPdfParse = async () => {
   if (!pdfParse) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
     pdfParse = require('pdf-parse');
   }
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return pdfParse;
 };
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB
 
 // Modelos válidos da API Gemini (atualizado 2026)
-const MODELOS_VALIDOS = [
-  'gemini-2.5-flash',
-  'gemini-2.5-pro',
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-exp',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
-];
+const MODELOS_VALIDOS = ['gemini-3.5-flash'];
 
 @Injectable()
 export class IaService {
@@ -45,7 +41,9 @@ export class IaService {
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.warn('[IaService] Aviso: GEMINI_API_KEY não está configurada no .env');
+      console.warn(
+        '[IaService] Aviso: GEMINI_API_KEY não está configurada no .env',
+      );
     }
     this.ai = new GoogleGenAI({ apiKey: apiKey || '' });
 
@@ -54,7 +52,7 @@ export class IaService {
     this.modelName =
       modeloEnv && MODELOS_VALIDOS.includes(modeloEnv)
         ? modeloEnv
-        : 'gemini-2.5-flash';
+        : 'gemini-3.5-flash';
 
     if (modeloEnv && !MODELOS_VALIDOS.includes(modeloEnv)) {
       console.warn(
@@ -261,8 +259,10 @@ export class IaService {
       try {
         // Carrega pdf-parse lazy (evita pdfjs-dist no boot do NestJS)
         const parser = await carregarPdfParse();
-        const parseFunction = (parser as any).default || parser;
+        const parseFunction = parser.default || parser;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         const pdfData = await parseFunction(file.buffer);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
         return (pdfData.text || '').toString();
       } catch (err: any) {
         throw new BadRequestException(
