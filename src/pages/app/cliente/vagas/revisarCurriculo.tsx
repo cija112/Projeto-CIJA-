@@ -635,7 +635,7 @@ const RevisarCurriculo: React.FC = () => {
         );
       }, 3000);
 
-      const res = await fetch("http://localhost:3001/ia/revisar", {
+      const res = await fetch("https://cija-backend.onrender.com/ia/revisar", {
         method: "POST",
         body: dadosEnviar,
       });
