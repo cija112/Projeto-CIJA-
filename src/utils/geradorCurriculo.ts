@@ -938,12 +938,42 @@ export function renderHtmlCurriculo(d: any): string {
   // CORREÇÃO: Utilizando o caractere unicode " • " em vez de "&bull;" para evitar o texto literal no PDF[cite: 16]
   const contatos = [cidade, telefone, email, linkedin, github]
     .filter(Boolean)
-    .join(" • ");
+    .join("   |   ");
 
   const experiencias = Array.isArray(d?.experiencias) ? d.experiencias : [];
   const formacao = Array.isArray(d?.formacao) ? d.formacao : [];
   const habilidades = Array.isArray(d?.habilidades) ? d.habilidades : [];
   const idiomas = Array.isArray(d?.idiomas) ? d.idiomas : [];
+
+  // Bloco JSON escondido: o backend NestJS usa isso para gerar o PDF
+  // com a mesma estrutura profissional do DOCX.
+  const blocoEstruturado = {
+    dados_pessoais: {
+      nome: d?.nome || "",
+      cidade: d?.cidade || "",
+      telefone: d?.telefone || "",
+      email: d?.email || "",
+      linkedin: d?.linkedin || "",
+      github: d?.github || "",
+    },
+    resumo_profissional: d?.resumo || "",
+    experiencias: experiencias.map((e: any) => ({
+      cargo: e.cargo || "",
+      empresa: e.empresa || "",
+      periodo: e.periodo || "",
+      descricao: e.descricao || "",
+      bullets: Array.isArray(e.bullets) ? e.bullets : [],
+    })),
+    formacao: formacao.map((f: any) => ({
+      curso: f.curso || "",
+      instituicao: f.instituicao || "",
+      periodo: f.periodo || "",
+      status: f.status || "",
+    })),
+    habilidades: habilidades,
+    idiomas: idiomas,
+  };
+  const blocoEstruturadoSerializado = JSON.stringify(blocoEstruturado);
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -956,10 +986,10 @@ export function renderHtmlCurriculo(d: any): string {
   * { box-sizing: border-box; word-wrap: break-word; overflow-wrap: break-word; }
   html, body { margin: 0; padding: 0; background: #ffffff; }
   body {
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, "Helvetica", "Arial", sans-serif;
+    font-family: "Calibri", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     color: #1F2937;
-    line-height: 1.5;
-    font-size: 11.5pt;
+    line-height: 1.45;
+    font-size: 11pt;
     max-width: 100%;
   }
   .curriculo-container {
@@ -967,26 +997,26 @@ export function renderHtmlCurriculo(d: any): string {
     margin: 0 auto;
     background: #ffffff;
     padding: 24px 28px;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-family: "Calibri", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     color: #1F2937;
   }
   .curriculo-header {
-    border-bottom: 2px solid #2563EB;
-    padding-bottom: 12px;
+    border-bottom: 2px solid #1E3A8A;
+    padding-bottom: 10px;
     margin-bottom: 18px;
-    text-align: left;
+    text-align: center;
   }
   .curriculo-header h1 {
     font-size: 22pt;
-    color: #111827;
+    color: #1E3A8A;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin: 0 0 6px 0;
+    margin: 0 0 8px 0;
     font-weight: 700;
     line-height: 1.15;
   }
   .curriculo-header p {
-    font-size: 10.5pt;
+    font-size: 10pt;
     color: #4B5563;
     margin: 0;
     line-height: 1.5;
@@ -997,19 +1027,13 @@ export function renderHtmlCurriculo(d: any): string {
   }
   .curriculo-body h2 {
     font-size: 12pt;
-    color: #2563EB;
+    color: #1E3A8A;
     border-bottom: 1px solid #E5E7EB;
     padding-bottom: 3px;
     margin: 0 0 8px 0;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 700;
-  }
-  .curriculo-body h3 {
-    font-size: 11pt;
-    color: #111827;
-    font-weight: 600;
-    margin: 0 0 3px 0;
   }
   .curriculo-body p {
     font-size: 10.5pt;
@@ -1028,13 +1052,6 @@ export function renderHtmlCurriculo(d: any): string {
     margin-bottom: 2px;
     line-height: 1.5;
   }
-  .curriculo-body .periodo {
-    font-size: 9.5pt;
-    color: #6B7280;
-    font-style: italic;
-    display: block;
-    margin-bottom: 4px;
-  }
   .item-experiencia,
   .item-formacao {
     margin-bottom: 10px;
@@ -1043,20 +1060,16 @@ export function renderHtmlCurriculo(d: any): string {
   .habilidades-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px 8px;
+    gap: 6px 10px;
     margin: 0;
     padding: 0;
   }
   .habilidade-chip {
     display: inline-block;
-    background: #EFF6FF;
     color: #1E3A8A;
-    border: 1px solid #DBEAFE;
-    border-radius: 999px;
-    padding: 3px 10px;
-    font-size: 10pt;
-    font-weight: 600;
-    line-height: 1.3;
+    font-size: 10.5pt;
+    font-weight: 700;
+    line-height: 1.4;
     white-space: normal;
   }
   .linha-cabecalho {
@@ -1082,7 +1095,7 @@ export function renderHtmlCurriculo(d: any): string {
   }
   .exp-empresa {
     color: #2563EB;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 10.5pt;
     margin-bottom: 4px;
   }
@@ -1095,6 +1108,7 @@ export function renderHtmlCurriculo(d: any): string {
 </style>
 </head>
 <body>
+  <!--CURRICULO_JSON:${blocoEstruturadoSerializado}-->
   <div class="curriculo-container">
     <div class="curriculo-header">
       <h1>${nome}</h1>

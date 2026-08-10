@@ -174,10 +174,17 @@ export class IaService {
     };
 
     try {
-      const promptAnalise = `Analise o currículo a seguir frente à vaga informada e retorne APENAS um JSON válido contendo: compatibilidade_antes (número de 0 a 100), compatibilidade_depois (número de 0 a 100), nota_final (número de 0 a 10), vaga_detectada (string) e melhorias_realizadas (array de strings).
-      
-      VAGA: ${vaga}
-      CURRICULO: ${JSON.stringify(curriculoEstruturado)}`;
+      const promptAnalise = `Analise o currículo a seguir frente à vaga informada e retorne APENAS um JSON válido contendo:
+- compatibilidade_antes (número de 0 a 100, porcentagem real de aderência do currículo ORIGINAL)
+- compatibilidade_depois (número de 0 a 100, porcentagem real de aderência do currículo REVISADO, considerando APENAS as competências reais já presentes no candidato — não invente habilidades novas para inflar)
+- nota_final (número de 0.0 a 10.0 com uma casa decimal, baseada no conteúdo real; currículos vazios devem receber notas baixas como 2.5 a 4.5, NUNCA padronize em 7.0 ou 8.5)
+- vaga_detectada (string com o título identificado)
+- melhorias_realizadas (array de strings, no máximo 4 itens curtos)
+
+REGRA CRÍTICA: não infle notas nem compatibilidade. Se o currículo for genérico e pouco aderente à vaga, retorne valores baixos de verdade. Não force notas acima de 7.0 sem justificativa real.
+
+VAGA: ${vaga}
+CURRICULO: ${JSON.stringify(curriculoEstruturado)}`;
 
       const dadosAnaliseRaw = await this.chamarGemini(promptAnalise);
       const textoLimpoAnalise = dadosAnaliseRaw

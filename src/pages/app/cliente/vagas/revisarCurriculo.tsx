@@ -804,39 +804,66 @@ const RevisarCurriculo: React.FC = () => {
           0,
       );
 
-      const baseCalculadaFinal = analiseReal.nota > 0 ? analiseReal.nota : 8.4;
+      // Score real vindo da IA; sem piso artificial de 7.0.
+      // Se a IA não retornou nada válido, usa o cálculo local do frontend.
       const notaFinalCalculada = Number(
         (notaIAFront > 0
-          ? Math.min(10, Math.max(7.0, notaIAFront))
-          : Math.max(7.5, baseCalculadaFinal)
+          ? Math.min(10, Math.max(0, notaIAFront))
+          : Math.max(0, analiseReal.nota || 0)
         ).toFixed(1),
       );
 
-      const notaAntesCalculada = Number(
-        Math.max(4.5, Math.min(6.2, notaFinalCalculada - 2.8)).toFixed(1),
+      const notaAntesIA = Number(
+        resultado.nota_antes ??
+          resultado.resposta?.nota_antes ??
+          resultado.notaAntes ??
+          0,
       );
 
+      // Garante que "nota antes" seja menor ou igual à "nota depois",
+      // sem inflar artificialmente o resultado final.
+      const notaAntesCalculada = Number(
+        notaAntesIA > 0
+          ? Math.min(notaFinalCalculada, Math.max(0, notaAntesIA)).toFixed(1)
+          : Math.max(0, notaFinalCalculada - 2.5).toFixed(1),
+      );
+
+      // Compatibilidade real (0–100) — sem piso de 86%.
       const compatFinal = Math.round(
         Math.max(
-          analiseReal.compatibilidade || 86,
-          Number(
-            resultado.compatibilidade_depois ??
-              resultado.resposta?.compatibilidade_depois ??
-              88,
+          0,
+          Math.min(
+            100,
+            Number(
+              resultado.compatibilidade_depois ??
+                resultado.resposta?.compatibilidade_depois ??
+                analiseReal.compatibilidade ??
+                0,
+            ),
           ),
         ),
       );
 
       const criteriosPersonalizados: CriteriosAvaliacao = {
         estruturaPessoal: Number(
-          Math.min(10, Math.max(8.5, notaFinalCalculada + 0.4)).toFixed(1),
+          Math.min(
+            10,
+            Math.max(0, analiseReal.criterios?.estruturaTextual ?? 0),
+          ).toFixed(1),
         ),
         clarezaExecutiva: Number(
-          Math.min(10, Math.max(8.0, notaFinalCalculada)).toFixed(1),
+          Math.min(
+            10,
+            Math.max(0, analiseReal.criterios?.clarezaExecutiva ?? 0),
+          ).toFixed(1),
         ),
-        compatibilidadeVaga: Number((compatFinal / 10).toFixed(1)),
+        compatibilidadeVaga: Number(
+          Math.min(10, Math.max(0, compatFinal / 10)).toFixed(1),
+        ),
         palavrasChaveAts: Number(
-          Math.min(10, Math.max(8.2, notaFinalCalculada + 0.2)).toFixed(1),
+          Math.min(10, Math.max(0, analiseReal.criterios?.palavrasChaveAts ?? 0)).toFixed(
+            1,
+          ),
         ),
       };
 
@@ -846,31 +873,35 @@ const RevisarCurriculo: React.FC = () => {
         analise:
           resultado.resposta?.analise ||
           resultado.analise ||
-          "O currículo passou por uma reestruturação profunda. A apresentação pessoal e a clareza executiva foram otimizadas para destacar o alinhamento imediato com as exigências da vaga, facilitando a triagem por recrutadores e sistemas ATS.",
+          "Currículo reestruturado com base nos dados reais do candidato.",
         compatibilidadeVaga: compatFinal,
-        pontosFortes: [
-          "Estrutura pessoal organizada com dados de contato diretos e profissionais",
-          "Resumo executivo conciso que comunica claramente o objetivo profissional",
-          "Alinhamento estratégico elevado com as competências essenciais exigidas pela vaga",
-          "Uso adequado de vocabulário corporativo e termos técnicos valorizados no setor",
-        ],
-        pontosAtencao: [
-          "Procure detalhar métricas ou resultados práticos em projetos ou experiências anteriores",
-          "Mantenha o LinkedIn atualizado com as mesmas palavras-chave destacadas neste relatório",
-          "Inclua certificações adicionais ou cursos de curta duração voltados para a área da vaga",
-        ],
+        pontosFortes:
+          resultado.pontosFortes && resultado.pontosFortes.length > 0
+            ? resultado.pontosFortes
+            : resultado.resposta?.pontosFortes && resultado.resposta.pontosFortes.length > 0
+              ? resultado.resposta.pontosFortes
+              : analiseReal.pontosFortes.length > 0
+                ? analiseReal.pontosFortes
+                : [
+                    "Currículo com informações legíveis e passíveis de evolução.",
+                  ],
+        pontosAtencao:
+          resultado.pontosAtencao && resultado.pontosAtencao.length > 0
+            ? resultado.pontosAtencao
+            : resultado.resposta?.pontosAtencao && resultado.resposta.pontosAtencao.length > 0
+              ? resultado.resposta.pontosAtencao
+              : analiseReal.melhorias.slice(0, 3),
         curriculoOtimizadoText: textoBaseIA,
         curriculoEstruturado: curriculoObjIA,
         sugestoes: melhoriasRealizadasList,
-        palavrasChaveEncontradas: [
-          "Orientação a Resultados",
-          "Trabalho em Equipe",
-          "Comunicação Corporativa",
-          "Gestão de Rotinas",
-          "Resolução de Problemas",
-          "Proatividade",
-          "Atenção aos Detalhes",
-        ],
+        palavrasChaveEncontradas:
+          analiseReal.palavrasChaveEncontradas.length > 0
+            ? analiseReal.palavrasChaveEncontradas
+            : [
+                "Orientação a Resultados",
+                "Trabalho em Equipe",
+                "Comunicação Corporativa",
+              ],
         palavrasChaveFaltantes: analiseReal.palavrasChaveFaltantes,
         criterios: criteriosPersonalizados,
       };
