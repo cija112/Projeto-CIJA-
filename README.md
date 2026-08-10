@@ -1,4 +1,4 @@
-# CIJA — Centro de Integração Jovem Aprendiz
+a# CIJA — Centro de Integração Jovem Aprendiz
 
 O CIJA é uma plataforma desenvolvida para conectar jovens aprendizes e empresas de maneira moderna, acessível e eficiente. O projeto foi criado com foco em experiência do usuário, autenticação segura, inteligência artificial integrada para análise de currículos e uma interface profissional totalmente responsiva.
 
@@ -43,7 +43,7 @@ A proposta da plataforma é simplificar o processo de cadastro, login, gerenciam
 
 ### Sistema
 - Integração com Supabase Auth
-- Processamento de IA via motor local/servidor com Ollama (`qwen2.5:3b`)
+- Processamento de IA
 - Validações frontend e backend
 - Animações de sucesso e erro
 - Máscaras automáticas de campos
