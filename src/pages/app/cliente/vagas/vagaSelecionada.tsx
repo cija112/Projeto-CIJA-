@@ -79,14 +79,14 @@ const UserCheckIcon = () => (
   </svg>
 );
 const ShieldIcon = () => (
-  <svg 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    width="40" 
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    width="40"
     height="40"
   >
     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -190,7 +190,7 @@ const VagaSelecionada: React.FC = () => {
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [ativa, setAtiva] = useState<string | null>(null);
   const [notificacao, setNotificacao] = useState<string | null>(null);
- useDocumentTitle("CIJA - Vaga Selecionada");
+  useDocumentTitle("CIJA - Vaga Selecionada");
   const mostrarNotificacao = (mensagem: string) => {
     setNotificacao(mensagem);
     setTimeout(() => setNotificacao(null), 3000);
@@ -309,13 +309,11 @@ const VagaSelecionada: React.FC = () => {
           `Deseja confirmar sua candidatura para "${vaga.titulo}"?`,
         )
       ) {
-        const { error } = await supabase
-          .from("candidaturas")
-          .insert({
-            id_vaga: vaga.id_vag,
-            id_candidato: userId,
-            data_candidatura: new Date().toISOString(),
-          });
+        const { error } = await supabase.from("candidaturas").insert({
+          id_vaga: vaga.id_vag,
+          id_candidato: userId,
+          data_candidatura: new Date().toISOString(),
+        });
         if (error) {
           mostrarNotificacao("Erro ao realizar a candidatura.");
         } else {
@@ -431,7 +429,7 @@ const VagaSelecionada: React.FC = () => {
                 }
                 className={styles.outlineLinkBtn}
               >
-                Ver perfil da empresa 
+                Ver perfil da empresa
               </button>
             </div>
             <div className={styles.sidebarCard}>
@@ -475,7 +473,9 @@ const VagaSelecionada: React.FC = () => {
             </button>
             {isModeloOpen && (
               <div className={styles.modalOverlay}>
-                <div className={styles.modalContainer}>
+                <div
+                  className={styles.modalContainer}
+                >
                   <header className={styles.modalHeader}>
                     <div>
                       <h2>Como funciona sua candidatura?</h2>
@@ -525,10 +525,10 @@ const VagaSelecionada: React.FC = () => {
                     <ShieldIcon />
                     <span>
                       <strong>
-                        Transparência e segurança em todo o processo. 
-                      </strong> <br />{" "}
-                      Você acompanha cada etapa da sua candidatura diretamente
-                      pela plataforma.
+                        Transparência e segurança em todo o processo.
+                      </strong>{" "}
+                      <br /> Você acompanha cada etapa da sua candidatura
+                      diretamente pela plataforma.
                     </span>
                   </div>
                   <footer className={styles.modalFooter}>
@@ -540,7 +540,7 @@ const VagaSelecionada: React.FC = () => {
                     </button>
                     <button
                       onClick={() => {
-                       navigate(`/revisar-curriculo/${vaga.id_vag}`)
+                        navigate(`/revisar-curriculo/${vaga.id_vag}`);
                         setModeloOpen(false);
                       }}
                       className={styles.primaryBtn}

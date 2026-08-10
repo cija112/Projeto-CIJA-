@@ -12,19 +12,20 @@ import { GoogleGenAI } from '@google/genai';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { gerarCurriculoPrompt } from './prompts/curriculo.prompt';
 
-// pdf-parse será carregado LAZY (dentro da função) para não inflar
-// a memória na inicialização do NestJS. Importar no top-level puxa
-// pdfjs-dist e estoura o limite de 512MB do Render free tier.
+// pdfjs-dist (motor moderno, igual ao do navegador) carregado LAZY para
+// não inflar a memória no boot do NestJS (limite de 512MB no Render free tier).
+// É usado em vez do `pdf-parse` legado, que falha com "bad XRef entry" em PDFs
+// modernos que usam cross-reference streams.
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-let pdfParse: any = null;
+let pdfjsLib: any = null;
 // eslint-disable-next-line @typescript-eslint/require-await
-const carregarPdfParse = async () => {
-  if (!pdfParse) {
+const carregarPdfJs = async () => {
+  if (!pdfjsLib) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
-    pdfParse = require('pdf-parse');
+    pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
   }
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  return pdfParse;
+  return pdfjsLib;
 };
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB
@@ -263,17 +264,69 @@ CURRICULO: ${JSON.stringify(curriculoEstruturado)}`;
       extensao === 'docx';
 
     if (ehPdf) {
+      // 1) Tenta pdfjs-dist (motor moderno, robusto com cross-reference streams)
       try {
-        // Carrega pdf-parse lazy (evita pdfjs-dist no boot do NestJS)
-        const parser = await carregarPdfParse();
+        const pdfjs = await carregarPdfJs();
+        // pdfjs-dist v4 não precisa de worker separado no Node; desabilita para evitar caminhos quebrados
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (pdfjs.GlobalWorkerOptions) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          pdfjs.GlobalWorkerOptions.workerSrc = '';
+        }
+
+        const buffer = new Uint8Array(
+          file.buffer.buffer,
+          file.buffer.byteOffset,
+          file.buffer.byteLength,
+        );
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        const loadingTask = pdfjs.getDocument({
+          data: buffer,
+          disableWorker: true,
+          isEvalSupported: false,
+          useSystemFonts: true,
+        });
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        const pdf = await loadingTask.promise;
+
+        const paginas: string[] = [];
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        for (let i = 1; i <= pdf.numPages; i++) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          const page = await pdf.getPage(i);
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          const content = await page.getTextContent();
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          const itens: any[] = content.items || [];
+          const linha = itens
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            .map((it: any) => (typeof it.str === 'string' ? it.str : ''))
+            .join(' ');
+          paginas.push(linha);
+        }
+
+        const texto = paginas.join('\n\n').trim();
+        if (texto.length >= 20) return texto;
+      } catch (errPdfJs: any) {
+        console.warn(
+          '[IaService] pdfjs-dist falhou, tentando fallback pdf-parse:',
+          errPdfJs?.message || errPdfJs,
+        );
+      }
+
+      // 2) Fallback: pdf-parse legado (cobre PDFs muito antigos/escaneados)
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const parser = require('pdf-parse');
         const parseFunction = parser.default || parser;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         const pdfData = await parseFunction(file.buffer);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
         return (pdfData.text || '').toString();
-      } catch (err: any) {
+      } catch (errLegacy: any) {
         throw new BadRequestException(
-          `Erro ao ler o arquivo PDF: ${err?.message || 'arquivo inválido'}`,
+          `Erro ao ler o arquivo PDF (${errLegacy?.message || 'arquivo inválido ou corrompido'}). Tente re-exportar o PDF ou envie em DOCX.`,
         );
       }
     }
