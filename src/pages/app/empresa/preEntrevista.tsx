@@ -1,357 +1,901 @@
-import React, { useState, useEffect } from "react";
-import styles from "./preEntrevista.module.css";
-import SidebarEmpresa from "../../../components/sideBar/sideBarEmpresa";
+import React, { useEffect, useState } from "react";
 import { supabase } from "../../../supabaseClient";
+import styles from "./preEntrevista.module.css";
+import { SidebarEmpresa } from "../../../components/sideBar/sideBarEmpresa";
+import { useDocumentTitle } from "Hooks/useDocumentTitle";
 
 interface Pergunta {
-  texto: string;
-  tipo: "texto" | "escolha";
-  opcoes: string[];
+  id?: string;
+  created_at?: string;
+  form_id?: string;
+  question_text: string;
+  type: string;
+  options: string[];
 }
 
-export const PreEntrevistaEmpresa: React.FC = () => {
-  useEffect(() => {
-    document.title = "CIJA - Criar Pré-Entrevista";
-  }, []);
+interface Formulario {
+  id: string;
+  id_em: string;
+  created_at: string;
+  title: string;
+  description: string;
+  questions?: Pergunta[];
+}
 
-  const [titulo, setTitulo] = useState("");
-  const [descricao, setDescricao] = useState("");
+const TIPOS_PERGUNTA = [
+  { value: "text", label: "Texto curto" },
+  { value: "textarea", label: "Texto longo" },
+  { value: "radio", label: "Escolha única" },
+  { value: "select", label: "Lista de opções" },
+  { value: "checkbox", label: "Múltipla escolha" },
+];
+
+export const PreEntrevistas: React.FC = () => {
+  useDocumentTitle("CIJA - Pré-Entrevistas");
+
+  const [formularios, setFormularios] = useState<Formulario[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState("");
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const [editingForm, setEditingForm] = useState<Formulario | null>(null);
+  const [formParaExcluir, setFormParaExcluir] =
+    useState<Formulario | null>(null);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+
   const [perguntas, setPerguntas] = useState<Pergunta[]>([]);
 
-  // Estados da pergunta atual em edição
-  const [textoPergunta, setTextoPergunta] = useState("");
-  const [tipoResposta, setTipoResposta] = useState<"texto" | "escolha">("texto");
-  const [opcaoTexto, setOpcaoTexto] = useState("");
-  const [listaOpcoes, setListaOpcoes] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    buscarUsuario();
+  }, []);
 
-  // Adicionar uma nova opção de múltipla escolha
-  const adicionarOpcao = () => {
-    const textoLimpo = opcaoTexto.trim();
-    if (!textoLimpo) return;
-
-    if (listaOpcoes.includes(textoLimpo)) {
-      alert("Esta opção já foi adicionada.");
-      return;
-    }
-
-    setListaOpcoes([...listaOpcoes, textoLimpo]);
-    setOpcaoTexto("");
-  };
-
-  // Remover uma opção de múltipla escolha pelo índice
-  const removerOpcao = (indexParaRemover: number) => {
-    setListaOpcoes(listaOpcoes.filter((_, index) => index !== indexParaRemover));
-  };
-
-  // Adicionar a pergunta completa à lista
-  const adicionarPergunta = () => {
-    if (!textoPergunta.trim()) {
-      alert("Por favor, digite o texto da pergunta.");
-      return;
-    }
-
-    if (tipoResposta === "escolha" && listaOpcoes.length < 2) {
-      alert("Uma pergunta de múltipla escolha precisa ter pelo menos 2 opções.");
-      return;
-    }
-
-    setPerguntas([
-      ...perguntas,
-      {
-        texto: textoPergunta.trim(),
-        tipo: tipoResposta,
-        opcoes: tipoResposta === "escolha" ? listaOpcoes : [],
-      },
-    ]);
-
-    // Limpar campos após incluir
-    setTextoPergunta("");
-    setTipoResposta("texto");
-    setListaOpcoes([]);
-    setOpcaoTexto("");
-  };
-
-  const removerPergunta = (index: number) => {
-    setPerguntas(perguntas.filter((_, i) => i !== index));
-  };
-
-  // Salvar formulário no Supabase
-  const salvarFormulario = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!titulo.trim()) {
-      alert("Informe o título do questionário.");
-      return;
-    }
-
-    if (perguntas.length === 0) {
-      alert("Adicione pelo menos uma pergunta ao questionário.");
-      return;
-    }
-
-    setLoading(true);
-
+  async function buscarUsuario() {
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
+      setLoading(true);
 
-      // 1. Criar Formulário
-      const { data: formData, error: formErr } = await supabase
-        .from("forms")
-        .insert([{ title: titulo, description: descricao, id_em: userId }])
-        .select()
-        .single();
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
 
-      if (formErr) throw formErr;
+      if (error || !user) {
+        console.error("Usuário não encontrado.");
+        return;
+      }
 
-      // 2. Criar Perguntas
-      const payloadPerguntas = perguntas.map((p) => ({
-        form_id: formData.id,
-        question_text: p.texto,
-        type: p.tipo,
-        options: p.opcoes,
-      }));
-
-      const { error: qErr } = await supabase
-        .from("form_questions")
-        .insert(payloadPerguntas);
-
-      if (qErr) throw qErr;
-
-      alert("Pré-Entrevista salva com sucesso!");
-      setTitulo("");
-      setDescricao("");
-      setPerguntas([]);
-    } catch (err: any) {
-      alert("Erro ao salvar questionário: " + err.message);
+      setUserId(user.id);
+      await carregarFormularios(user.id);
+    } catch (error) {
+      console.error("Erro ao buscar usuário:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  async function carregarFormularios(empresaId: string) {
+    try {
+      const { data: forms, error: formsError } = await supabase
+        .from("forms")
+        .select("*")
+        .eq("id_em", empresaId)
+        .order("created_at", { ascending: false });
+
+      if (formsError) {
+        throw formsError;
+      }
+
+      if (!forms) {
+        setFormularios([]);
+        return;
+      }
+
+      const formsComPerguntas: Formulario[] = [];
+
+      for (const form of forms) {
+        const { data: questions, error: questionsError } = await supabase
+          .from("form_questions")
+          .select("*")
+          .eq("form_id", form.id)
+          .order("created_at", { ascending: true });
+
+        if (questionsError) {
+          throw questionsError;
+        }
+
+        formsComPerguntas.push({
+          ...form,
+          questions: (questions || []).map((question) => ({
+            ...question,
+            options: Array.isArray(question.options)
+              ? question.options
+              : [],
+          })),
+        });
+      }
+
+      setFormularios(formsComPerguntas);
+    } catch (error) {
+      console.error("Erro ao carregar pré-entrevistas:", error);
+    }
+  }
+
+  function abrirModal(formulario: Formulario | null = null) {
+    if (formulario) {
+      setEditingForm(formulario);
+      setTitle(formulario.title);
+      setDescription(formulario.description);
+
+      setPerguntas(
+        formulario.questions?.map((question) => ({
+          id: question.id,
+          created_at: question.created_at,
+          form_id: question.form_id,
+          question_text: question.question_text,
+          type: question.type,
+          options: question.options || [],
+        })) || []
+      );
+    } else {
+      setEditingForm(null);
+      setTitle("");
+      setDescription("");
+
+      setPerguntas([
+        {
+          question_text: "",
+          type: "text",
+          options: [],
+        },
+      ]);
+    }
+
+    setIsModalOpen(true);
+  }
+
+  function fecharModal() {
+    setIsModalOpen(false);
+    setEditingForm(null);
+    setTitle("");
+    setDescription("");
+    setPerguntas([]);
+  }
+
+  function adicionarPergunta() {
+    setPerguntas((prev) => [
+      ...prev,
+      {
+        question_text: "",
+        type: "text",
+        options: [],
+      },
+    ]);
+  }
+
+  function removerPergunta(index: number) {
+    setPerguntas((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function atualizarPergunta(
+    index: number,
+    campo: keyof Pergunta,
+    valor: any
+  ) {
+    setPerguntas((prev) =>
+      prev.map((pergunta, i) => {
+        if (i !== index) return pergunta;
+
+        return {
+          ...pergunta,
+          [campo]: valor,
+        };
+      })
+    );
+  }
+
+  function alterarTipoPergunta(index: number, tipo: string) {
+    setPerguntas((prev) =>
+      prev.map((pergunta, i) => {
+        if (i !== index) return pergunta;
+
+        const precisaOpcoes =
+          tipo === "radio" ||
+          tipo === "select" ||
+          tipo === "checkbox";
+
+        return {
+          ...pergunta,
+          type: tipo,
+          options: precisaOpcoes
+            ? pergunta.options.length > 0
+              ? pergunta.options
+              : ["", ""]
+            : [],
+        };
+      })
+    );
+  }
+
+  function adicionarOpcao(perguntaIndex: number) {
+    setPerguntas((prev) =>
+      prev.map((pergunta, index) => {
+        if (index !== perguntaIndex) return pergunta;
+
+        return {
+          ...pergunta,
+          options: [...pergunta.options, ""],
+        };
+      })
+    );
+  }
+
+  function removerOpcao(perguntaIndex: number, opcaoIndex: number) {
+    setPerguntas((prev) =>
+      prev.map((pergunta, index) => {
+        if (index !== perguntaIndex) return pergunta;
+
+        return {
+          ...pergunta,
+          options: pergunta.options.filter(
+            (_, indexOpcao) => indexOpcao !== opcaoIndex
+          ),
+        };
+      })
+    );
+  }
+
+  function atualizarOpcao(
+    perguntaIndex: number,
+    opcaoIndex: number,
+    valor: string
+  ) {
+    setPerguntas((prev) =>
+      prev.map((pergunta, index) => {
+        if (index !== perguntaIndex) return pergunta;
+
+        return {
+          ...pergunta,
+          options: pergunta.options.map((opcao, indexOpcao) =>
+            indexOpcao === opcaoIndex ? valor : opcao
+          ),
+        };
+      })
+    );
+  }
+
+  function validarFormulario() {
+    if (!title.trim()) {
+      alert("Digite o título da pré-entrevista.");
+      return false;
+    }
+
+    if (!description.trim()) {
+      alert("Digite uma descrição para a pré-entrevista.");
+      return false;
+    }
+
+    if (perguntas.length === 0) {
+      alert("Adicione pelo menos uma pergunta.");
+      return false;
+    }
+
+    for (let i = 0; i < perguntas.length; i++) {
+      const pergunta = perguntas[i];
+
+      if (!pergunta.question_text.trim()) {
+        alert(`Digite o texto da pergunta ${i + 1}.`);
+        return false;
+      }
+
+      const precisaOpcoes =
+        pergunta.type === "radio" ||
+        pergunta.type === "select" ||
+        pergunta.type === "checkbox";
+
+      if (precisaOpcoes) {
+        const opcoesValidas = pergunta.options.filter(
+          (opcao) => opcao.trim() !== ""
+        );
+
+        if (opcoesValidas.length < 2) {
+          alert(
+            `A pergunta ${i + 1} precisa ter pelo menos duas opções.`
+          );
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  async function salvarFormulario(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (!validarFormulario()) return;
+
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        alert("Sessão expirada. Faça login novamente.");
+        return;
+      }
+
+      let formId = editingForm?.id;
+
+      if (!editingForm) {
+        const { data: novoForm, error: formError } = await supabase
+          .from("forms")
+          .insert([
+            {
+              id_em: user.id,
+              title: title.trim(),
+              description: description.trim(),
+            },
+          ])
+          .select()
+          .single();
+
+        if (formError) throw formError;
+
+        formId = novoForm.id;
+      } else {
+        const { error: formError } = await supabase
+          .from("forms")
+          .update({
+            title: title.trim(),
+            description: description.trim(),
+          })
+          .eq("id", editingForm.id)
+          .eq("id_em", user.id);
+
+        if (formError) throw formError;
+      }
+
+      if (!formId) {
+        throw new Error("Não foi possível identificar o formulário.");
+      }
+
+      if (editingForm) {
+        const { error: deleteQuestionsError } = await supabase
+          .from("form_questions")
+          .delete()
+          .eq("form_id", formId);
+
+        if (deleteQuestionsError) {
+          throw deleteQuestionsError;
+        }
+      }
+
+      const perguntasParaInserir = perguntas.map((pergunta) => {
+        const precisaOpcoes =
+          pergunta.type === "radio" ||
+          pergunta.type === "select" ||
+          pergunta.type === "checkbox";
+
+        return {
+          form_id: formId,
+          question_text: pergunta.question_text.trim(),
+          type: pergunta.type,
+          options: precisaOpcoes
+            ? pergunta.options
+                .filter((opcao) => opcao.trim() !== "")
+                .map((opcao) => opcao.trim())
+            : [],
+        };
+      });
+
+      const { error: questionsError } = await supabase
+        .from("form_questions")
+        .insert(perguntasParaInserir);
+
+      if (questionsError) {
+        throw questionsError;
+      }
+
+      alert(
+        editingForm
+          ? "Pré-entrevista atualizada com sucesso!"
+          : "Pré-entrevista criada com sucesso!"
+      );
+
+      fecharModal();
+      await carregarFormularios(user.id);
+    } catch (error: any) {
+      console.error("Erro ao salvar pré-entrevista:", error);
+
+      alert(
+        `Não foi possível salvar a pré-entrevista: ${
+          error.message || "Erro desconhecido"
+        }`
+      );
+    }
+  }
+
+  async function excluirFormulario() {
+    if (!formParaExcluir) return;
+
+    try {
+      const { error } = await supabase
+        .from("forms")
+        .delete()
+        .eq("id", formParaExcluir.id)
+        .eq("id_em", userId);
+
+      if (error) throw error;
+
+      alert("Pré-entrevista excluída com sucesso!");
+
+      setFormParaExcluir(null);
+      setIsDeleteModalOpen(false);
+
+      await carregarFormularios(userId);
+    } catch (error: any) {
+      console.error("Erro ao excluir formulário:", error);
+
+      alert(
+        `Não foi possível excluir a pré-entrevista: ${
+          error.message || "Erro desconhecido"
+        }`
+      );
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <SidebarEmpresa />
+
+        <div className={styles.mainWrapper}>
+          <main className={styles.content}>
+            <div className={styles.loading}>
+              Carregando pré-entrevistas...
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
       <SidebarEmpresa />
+
       <div className={styles.mainWrapper}>
         <main className={styles.content}>
           <div className={styles.headerArea}>
-            <h1>Criar Pré-Entrevista</h1>
-            <p>Monte o questionário de seleção para avaliar os candidatos</p>
+            <div className={styles.headerText}>
+              <h1>Pré-Entrevistas</h1>
+
+              <p>
+                Crie questionários para avaliar candidatos antes da
+                entrevista.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className={styles.btnCriar}
+              onClick={() => abrirModal()}
+            >
+              + Criar Pré-Entrevista
+            </button>
           </div>
 
-          <form className={styles.cardForm} onSubmit={salvarFormulario}>
-            {/* Dados do Formulário */}
-            <div className={styles.formGroup}>
-              <label>Título do Questionário</label>
-              <input
-                className={styles.inputField}
-                type="text"
-                placeholder="Ex: Pré-Seleção - Auxiliar Administrativo"
-                value={titulo}
-                onChange={(e) => setTitulo(e.target.value)}
-              />
-            </div>
+          <div className={styles.formsSection}>
+            {formularios.length === 0 ? (
+              <div className={styles.semFormularios}>
+                <div className={styles.emptyIcon}>+</div>
 
-            <div className={styles.formGroup}>
-              <label>Descrição / Instruções</label>
-              <textarea
-                className={styles.textareaField}
-                rows={3}
-                placeholder="Ex: Responda a todas as questões com atenção..."
-                value={descricao}
-                onChange={(e) => setDescricao(e.target.value)}
-              />
-            </div>
+                <h2>Nenhuma pré-entrevista criada</h2>
 
-            <hr className={styles.sectionDivider} />
+                <p>
+                  Crie sua primeira pré-entrevista para começar a
+                  avaliar candidatos.
+                </p>
 
-            {/* Criador de Pergunta */}
-            <div className={styles.boxAdicionarPergunta}>
-              <h3>+ Nova Pergunta</h3>
-
-              <div className={styles.formGroup}>
-                <label>Pergunta</label>
-                <input
-                  className={styles.inputField}
-                  type="text"
-                  placeholder="Ex: Qual seu nível de experiência com Pacote Office?"
-                  value={textoPergunta}
-                  onChange={(e) => setTextoPergunta(e.target.value)}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label>Tipo de Resposta</label>
-                <select
-                  className={styles.selectField}
-                  value={tipoResposta}
-                  onChange={(e) => {
-                    setTipoResposta(e.target.value as "texto" | "escolha");
-                    setListaOpcoes([]);
-                  }}
+                <button
+                  type="button"
+                  className={styles.btnCriar}
+                  onClick={() => abrirModal()}
                 >
-                  <option value="texto">Texto Livre (Dissertativa)</option>
-                  <option value="escolha">Múltipla Escolha</option>
-                </select>
+                  + Criar Pré-Entrevista
+                </button>
               </div>
+            ) : (
+              <>
+                <div className={styles.listHeader}>
+                  <div>
+                    <h2>Suas pré-entrevistas</h2>
 
-              {/* Seção Exclusiva de Múltipla Escolha */}
-              {tipoResposta === "escolha" && (
-                <div className={styles.formGroup}>
-                  <label>Opções de Resposta</label>
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    <input
-                      className={styles.inputField}
-                      type="text"
-                      placeholder="Ex: Intermediário (adicione e aperte Enter)"
-                      value={opcaoTexto}
-                      onChange={(e) => setOpcaoTexto(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          adicionarOpcao();
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      className={styles.btnAdd}
-                      onClick={adicionarOpcao}
-                    >
-                      + Adicionar
-                    </button>
-                  </div>
-
-                  {/* Lista de Opções adicionadas com botão de excluir */}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "8px",
-                      marginTop: "12px",
-                    }}
-                  >
-                    {listaOpcoes.map((opcao, idx) => (
-                      <span
-                        key={idx}
-                        style={{
-                          backgroundColor: "#334155",
-                          color: "#f8fafc",
-                          padding: "6px 12px",
-                          borderRadius: "16px",
-                          fontSize: "14px",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "8px",
-                        }}
-                      >
-                        {opcao}
-                        <button
-                          type="button"
-                          onClick={() => removerOpcao(idx)}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            color: "#ef4444",
-                            cursor: "pointer",
-                            fontWeight: "bold",
-                            fontSize: "14px",
-                          }}
-                        >
-                          ✕
-                        </button>
-                      </span>
-                    ))}
+                    <span>
+                      {formularios.length}{" "}
+                      {formularios.length === 1
+                        ? "pré-entrevista cadastrada"
+                        : "pré-entrevistas cadastradas"}
+                    </span>
                   </div>
                 </div>
-              )}
 
-              <button
-                type="button"
-                className={styles.btnAdd}
-                onClick={adicionarPergunta}
-                style={{ marginTop: "12px", width: "100%" }}
-              >
-                Incluir Pergunta no Questionário
-              </button>
-            </div>
+                <div className={styles.formsGrid}>
+                  {formularios.map((formulario) => (
+                    <div
+                      key={formulario.id}
+                      className={styles.formCard}
+                    >
+                      <div className={styles.cardHeader}>
+                        <div className={styles.cardTitleArea}>
+                          <h2>{formulario.title}</h2>
 
-            {/* Pergunta Criadas */}
-            {perguntas.length > 0 && (
-              <div className={styles.listaPerguntas}>
-                <h3>Perguntas Adicionadas ({perguntas.length})</h3>
-                {perguntas.map((p, idx) => (
-                  <div key={idx} className={styles.itemPergunta}>
-                    <div style={{ flex: 1 }}>
-                      <strong>
-                        {idx + 1}. {p.texto}
-                      </strong>
-                      <span
-                        style={{
-                          display: "block",
-                          fontSize: 12,
-                          color: "#94a3b8",
-                          marginTop: "2px",
-                        }}
-                      >
-                        Tipo: {p.tipo === "texto" ? "Texto Livre" : "Múltipla Escolha"}
-                      </span>
+                          <span className={styles.dataTag}>
+                            Criada em{" "}
+                            {new Date(
+                              formulario.created_at
+                            ).toLocaleDateString("pt-BR")}
+                          </span>
+                        </div>
+                      </div>
 
-                      {/* Renderiza as opções da pergunta se for múltipla escolha */}
-                      {p.tipo === "escolha" && (
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "6px",
-                            flexWrap: "wrap",
-                            marginTop: "6px",
+                      <p className={styles.description}>
+                        {formulario.description}
+                      </p>
+
+                      <div className={styles.formInfo}>
+                        <span>
+                          {formulario.questions?.length || 0}{" "}
+                          {formulario.questions?.length === 1
+                            ? "pergunta"
+                            : "perguntas"}
+                        </span>
+                      </div>
+
+                      <div className={styles.questionsPreview}>
+                        {formulario.questions
+                          ?.slice(0, 3)
+                          .map((pergunta, index) => (
+                            <div
+                              key={pergunta.id || index}
+                              className={styles.questionPreview}
+                            >
+                              <span>{index + 1}</span>
+
+                              <p>
+                                {pergunta.question_text}
+                              </p>
+                            </div>
+                          ))}
+
+                        {(formulario.questions?.length || 0) > 3 && (
+                          <span className={styles.moreQuestions}>
+                            +{" "}
+                            {(formulario.questions?.length || 0) -
+                              3}{" "}
+                            perguntas
+                          </span>
+                        )}
+                      </div>
+
+                      <div className={styles.acoesArea}>
+                        <button
+                          type="button"
+                          className={styles.btnEditar}
+                          onClick={() => abrirModal(formulario)}
+                        >
+                          Editar
+                        </button>
+
+                        <button
+                          type="button"
+                          className={styles.btnExcluir}
+                          onClick={() => {
+                            setFormParaExcluir(formulario);
+                            setIsDeleteModalOpen(true);
                           }}
                         >
-                          {p.opcoes.map((opt, oIdx) => (
-                            <span
-                              key={oIdx}
-                              style={{
-                                backgroundColor: "#1e293b",
-                                color: "#cbd5e1",
-                                padding: "2px 8px",
-                                borderRadius: "4px",
-                                fontSize: "12px",
-                                border: "1px solid #475569",
-                              }}
-                            >
-                              • {opt}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                          Excluir
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {isModalOpen && (
+            <div className={styles.modalOverlay}>
+              <div className={styles.modalContainer}>
+                <div className={styles.modalHeader}>
+                  <div>
+                    <h2>
+                      {editingForm
+                        ? "Editar Pré-Entrevista"
+                        : "Criar Pré-Entrevista"}
+                    </h2>
+
+                    <p>
+                      Configure o questionário que será apresentado
+                      aos candidatos.
+                    </p>
+                  </div>
+
+                  <button
+                    className={styles.btnFechar}
+                    type="button"
+                    onClick={fecharModal}
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <form
+                  onSubmit={salvarFormulario}
+                  className={styles.formulario}
+                >
+                  <div className={styles.inputGroup}>
+                    <label>Título da Pré-Entrevista</label>
+
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="Ex: Pré-entrevista - Desenvolvedor"
+                      maxLength={150}
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label>Descrição</label>
+
+                    <textarea
+                      value={description}
+                      onChange={(e) =>
+                        setDescription(e.target.value)
+                      }
+                      placeholder="Explique ao candidato o objetivo desta pré-entrevista..."
+                      rows={4}
+                      maxLength={1000}
+                      required
+                    />
+
+                    <span className={styles.contador}>
+                      {description.length} / 1000
+                    </span>
+                  </div>
+
+                  <div className={styles.questionsHeader}>
+                    <div>
+                      <h3>Perguntas</h3>
+
+                      <p>
+                        Adicione as perguntas que deseja fazer aos
+                        candidatos.
+                      </p>
                     </div>
 
                     <button
                       type="button"
-                      className={styles.btnRemover}
-                      onClick={() => removerPergunta(idx)}
+                      className={styles.btnAdicionarPergunta}
+                      onClick={adicionarPergunta}
                     >
-                      Remover
+                      + Adicionar Pergunta
                     </button>
                   </div>
-                ))}
-              </div>
-            )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className={styles.btnSalvarPrincipal}
-              style={{ marginTop: "24px" }}
-            >
-              {loading ? "Salvando..." : "Publicar Pré-Entrevista"}
-            </button>
-          </form>
+                  <div className={styles.questionsList}>
+                    {perguntas.map((pergunta, index) => {
+                      const possuiOpcoes =
+                        pergunta.type === "radio" ||
+                        pergunta.type === "select" ||
+                        pergunta.type === "checkbox";
+
+                      return (
+                        <div
+                          key={pergunta.id || index}
+                          className={styles.questionCard}
+                        >
+                          <div className={styles.questionTop}>
+                            <div className={styles.questionNumber}>
+                              {index + 1}
+                            </div>
+
+                            <button
+                              type="button"
+                              className={styles.btnRemoverPergunta}
+                              onClick={() =>
+                                removerPergunta(index)
+                              }
+                            >
+                              Excluir
+                            </button>
+                          </div>
+
+                          <div className={styles.inputGroup}>
+                            <label>Pergunta</label>
+
+                            <input
+                              type="text"
+                              value={pergunta.question_text}
+                              onChange={(e) =>
+                                atualizarPergunta(
+                                  index,
+                                  "question_text",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="Digite a pergunta..."
+                              required
+                            />
+                          </div>
+
+                          <div className={styles.inputGroup}>
+                            <label>Tipo de resposta</label>
+
+                            <select
+                              value={pergunta.type}
+                              onChange={(e) =>
+                                alterarTipoPergunta(
+                                  index,
+                                  e.target.value
+                                )
+                              }
+                            >
+                              {TIPOS_PERGUNTA.map((tipo) => (
+                                <option
+                                  key={tipo.value}
+                                  value={tipo.value}
+                                >
+                                  {tipo.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {possuiOpcoes && (
+                            <div className={styles.optionsArea}>
+                              <div className={styles.optionsHeader}>
+                                <label>
+                                  Opções de resposta
+                                </label>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    adicionarOpcao(index)
+                                  }
+                                  className={
+                                    styles.btnAdicionarOpcao
+                                  }
+                                >
+                                  + Adicionar opção
+                                </button>
+                              </div>
+
+                              {pergunta.options.map(
+                                (opcao, opcaoIndex) => (
+                                  <div
+                                    key={opcaoIndex}
+                                    className={styles.optionRow}
+                                  >
+                                    <span>
+                                      {opcaoIndex + 1}.
+                                    </span>
+
+                                    <input
+                                      type="text"
+                                      value={opcao}
+                                      onChange={(e) =>
+                                        atualizarOpcao(
+                                          index,
+                                          opcaoIndex,
+                                          e.target.value
+                                        )
+                                      }
+                                      placeholder={`Opção ${
+                                        opcaoIndex + 1
+                                      }`}
+                                    />
+
+                                    <button
+                                      type="button"
+                                      className={
+                                        styles.btnRemoverOpcao
+                                      }
+                                      onClick={() =>
+                                        removerOpcao(
+                                          index,
+                                          opcaoIndex
+                                        )
+                                      }
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className={styles.modalAcoes}>
+                    <button
+                      type="button"
+                      className={styles.btnCancelar}
+                      onClick={fecharModal}
+                    >
+                      Cancelar
+                    </button>
+
+                    <button
+                      type="submit"
+                      className={styles.btnSalvar}
+                    >
+                      {editingForm
+                        ? "Salvar Alterações"
+                        : "Criar Pré-Entrevista"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {isDeleteModalOpen && formParaExcluir && (
+            <div className={styles.modalOverlay}>
+              <div
+                className={`${styles.modalContainer} ${styles.modalDelete}`}
+              >
+                <h3>Excluir Pré-Entrevista</h3>
+
+                <p>
+                  Você tem certeza que deseja excluir a
+                  pré-entrevista{" "}
+                  <strong>{formParaExcluir.title}</strong>?
+                </p>
+
+                <p className={styles.warning}>
+                  Todas as perguntas associadas também serão
+                  excluídas. Esta ação não poderá ser desfeita.
+                </p>
+
+                <div className={styles.modalAcoes}>
+                  <button
+                    type="button"
+                    className={styles.btnCancelar}
+                    onClick={() => {
+                      setIsDeleteModalOpen(false);
+                      setFormParaExcluir(null);
+                    }}
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="button"
+                    className={styles.btnConfirmarDeletar}
+                    onClick={excluirFormulario}
+                  >
+                    Sim, Excluir
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>
   );
 };
 
-export default PreEntrevistaEmpresa;
+export default PreEntrevistas;

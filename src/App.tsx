@@ -25,6 +25,7 @@ import Candidaturas from "pages/app/cliente/candidaturas";
 import RevisarCurriculo from "pages/app/cliente/vagas/revisarCurriculo";
 import PreEntrevistaEmpresa from "./pages/app/empresa/preEntrevista";
 import BuscarUsers from "pages/app/cliente/buscarUsers/buscarUser";
+import PreEntrevistas from "pages/app/empresa/preEntrevista";
 
 function App() {
   return (
@@ -128,6 +129,15 @@ function App() {
           element={
             <ProtectedRoute tipoEsperado="empresa">
               <MenuEmpresa />
+            </ProtectedRoute>
+          }
+        />
+
+          <Route
+          path="/menuEmpresa"
+          element={
+            <ProtectedRoute tipoEsperado="empresa">
+              <PreEntrevistas />
             </ProtectedRoute>
           }
         />
