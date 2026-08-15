@@ -4,6 +4,10 @@ import { Sidebar } from "../../../components/sideBar/sideBar";
 import { supabase } from "supabaseClient";
 import styles from "./perfil.module.css";
 import { useDocumentTitle } from "Hooks/useDocumentTitle";
+import {
+  formatarCPF,
+  formatarTelefone,
+} from "../../../utils/validations/formatter";
 
 const phone = (v: string) => {
   if (!v) return "—";
@@ -50,7 +54,16 @@ const validateCpf = (cpf: string) => {
 };
 
 const validatePhoneBrazil = (phoneStr: string) => {
-  const cleanPhone = phoneStr.replace(/\D/g, "");
+  let cleanPhone = phoneStr.replace(/\D/g, "");
+
+  // Se o número tiver 12 ou 13 dígitos e começar com 55 (DDI do Brasil), removemos o 55 para validar o DDD e número
+  if (
+    (cleanPhone.length === 12 || cleanPhone.length === 13) &&
+    cleanPhone.startsWith("55")
+  ) {
+    cleanPhone = cleanPhone.slice(2);
+  }
+
   if (cleanPhone.length !== 10 && cleanPhone.length !== 11) return false;
   const ddd = parseInt(cleanPhone.slice(0, 2), 10);
   if (ddd < 11 || ddd > 99) return false;
@@ -126,7 +139,7 @@ export default function Perfil() {
     email: "",
     tel: "",
     cpf: "",
-    cidade: "São Paulo, Brasil",
+    endereco: "",
     avatar: "",
     titulo: "Jovem Aprendiz",
   });
@@ -146,6 +159,7 @@ export default function Perfil() {
   const [editNome, setEditNome] = useState("");
   const [editTel, setEditTel] = useState("");
   const [editCpf, setEditCpf] = useState("");
+  const [editCity, setEditCity] = useState("");
   const [savingPersonal, setSavingPersonal] = useState(false);
   const [personalError, setPersonalError] = useState("");
 
@@ -155,16 +169,24 @@ export default function Perfil() {
   const [candidaturasCount, setCandidaturasCount] = useState(0);
   const [activeTab, setActiveTab] = useState("visao");
 
+  // Formação states
   const [showAddFormacao, setShowAddFormacao] = useState(false);
+  const [editingFormIndex, setEditingFormIndex] = useState<number | null>(null);
   const [newCurso, setNewCurso] = useState("");
   const [newInstituicao, setNewInstituicao] = useState("");
   const [newInicio, setNewInicio] = useState("");
   const [newFim, setNewFim] = useState("");
 
+  // Competência states
   const [showAddCompetencia, setShowAddCompetencia] = useState(false);
+  const [editingSkillIndex, setEditingSkillIndex] = useState<number | null>(
+    null,
+  );
   const [newCompetencia, setNewCompetencia] = useState("");
 
+  // Experiência states
   const [showAddExperiencia, setShowAddExperiencia] = useState(false);
+  const [editingExpIndex, setEditingExpIndex] = useState<number | null>(null);
   const [newCargo, setNewCargo] = useState("");
   const [newEmpresa, setNewEmpresa] = useState("");
   const [newExpInicio, setNewExpInicio] = useState("");
@@ -251,13 +273,14 @@ export default function Perfil() {
           email: p.data.email || userEmail,
           tel: p.data.telefone || "",
           cpf: p.data.cpf || "",
-          cidade: p.data.cidade || "São Paulo, Brasil",
+          endereco: p.data.endereco || "Não informado.",
           avatar: avatarUrl,
           titulo: "Jovem Aprendiz",
         });
         setEditNome(p.data.nome || "");
         setEditTel(p.data.telefone || "");
         setEditCpf(p.data.cpf || "");
+        setEditCity(p.data.endereco || "");
       }
 
       if (c.data) {
@@ -381,7 +404,10 @@ export default function Perfil() {
       );
       return;
     }
-
+    if (!editCity) {
+      setPersonalError("Cidade invalida, digite uma cidade valida do Brasil.");
+      return;
+    }
     if (!validateCpf(editCpf)) {
       setPersonalError("CPF inválido. Verifique os dígitos informados.");
       return;
@@ -394,6 +420,7 @@ export default function Perfil() {
         nome: editNome,
         telefone: editTel,
         cpf: editCpf,
+        endereco: editCity,
       })
       .eq("id_ja", uid);
 
@@ -405,6 +432,7 @@ export default function Perfil() {
         nome: editNome,
         tel: editTel,
         cpf: editCpf,
+        endereco: editCity,
       }));
       setEditingPersonal(false);
     }
@@ -430,17 +458,23 @@ export default function Perfil() {
     setSaving(false);
   };
 
-  const handleAddFormacao = async () => {
+  // --- FORMAÇÃO CRUD ---
+  const handleSaveFormacao = async () => {
     if (!uid || !newCurso || !newInstituicao) return;
-    const updated = [
-      ...curList,
-      {
-        curso: newCurso,
-        instituicao: newInstituicao,
-        inicio: newInicio,
-        fim: newFim,
-      },
-    ];
+    let updated = [...curList];
+    const newFormItem = {
+      curso: newCurso,
+      instituicao: newInstituicao,
+      inicio: newInicio,
+      fim: newFim,
+    };
+
+    if (editingFormIndex !== null) {
+      updated[editingFormIndex] = newFormItem;
+    } else {
+      updated.push(newFormItem);
+    }
+
     const str = JSON.stringify(updated);
     await supabase.from("curriculo_ja").upsert(
       {
@@ -454,16 +488,60 @@ export default function Perfil() {
       { onConflict: "id_ja" },
     );
     setCv((c) => ({ ...c, cur: str }));
+    resetFormacaoForm();
+  };
+
+  const handleEditFormacaoClick = (index: number) => {
+    const item = curList[index];
+    setNewCurso(item.curso || "");
+    setNewInstituicao(item.instituicao || "");
+    setNewInicio(item.inicio || "");
+    setNewFim(item.fim || "");
+    setEditingFormIndex(index);
+    setShowAddFormacao(false);
+  };
+
+  const handleDeleteFormacao = async (index: number) => {
+    if (!uid) return;
+    const updated = curList.filter((_, i) => i !== index);
+    const str = JSON.stringify(updated);
+    await supabase.from("curriculo_ja").upsert(
+      {
+        id_ja: uid,
+        curso: str,
+        competencias: cv.comp,
+        experiencias: cv.exp,
+        descricao: cv.desc,
+        pdf_url: cv.pdfUrl,
+      },
+      { onConflict: "id_ja" },
+    );
+    setCv((c) => ({ ...c, cur: str }));
+    resetFormacaoForm();
+  };
+
+  const resetFormacaoForm = () => {
     setNewCurso("");
     setNewInstituicao("");
     setNewInicio("");
     setNewFim("");
+    setEditingFormIndex(null);
     setShowAddFormacao(false);
   };
 
-  const handleAddCompetencia = async () => {
+  // --- COMPETÊNCIAS CRUD ---
+  const handleSaveCompetencia = async () => {
     if (!uid || !newCompetencia.trim()) return;
-    const updatedList = [...skillsList, newCompetencia.trim()];
+    let updatedList = [...skillsList];
+
+    if (editingSkillIndex !== null) {
+      updatedList[editingSkillIndex] = newCompetencia.trim();
+    } else {
+      if (!updatedList.includes(newCompetencia.trim())) {
+        updatedList.push(newCompetencia.trim());
+      }
+    }
+
     const str = updatedList.join(", ");
     await supabase.from("curriculo_ja").upsert(
       {
@@ -477,22 +555,58 @@ export default function Perfil() {
       { onConflict: "id_ja" },
     );
     setCv((c) => ({ ...c, comp: str }));
-    setNewCompetencia("");
+    resetCompetenciaForm();
+  };
+
+  const handleEditCompetenciaClick = (index: number) => {
+    setNewCompetencia(skillsList[index]);
+    setEditingSkillIndex(index);
     setShowAddCompetencia(false);
   };
 
-  const handleAddExperiencia = async () => {
-    if (!uid || !newCargo || !newEmpresa) return;
-    const updatedExps = [
-      ...expList,
+  const handleDeleteCompetencia = async (index: number) => {
+    if (!uid) return;
+    const updatedList = skillsList.filter((_, i) => i !== index);
+    const str = updatedList.join(", ");
+    await supabase.from("curriculo_ja").upsert(
       {
-        cargo: newCargo,
-        empresa: newEmpresa,
-        inicio: newExpInicio,
-        fim: newExpFim,
-        descricao: newExpDesc,
+        id_ja: uid,
+        competencias: str,
+        curso: cv.cur,
+        experiencias: cv.exp,
+        descricao: cv.desc,
+        pdf_url: cv.pdfUrl,
       },
-    ];
+      { onConflict: "id_ja" },
+    );
+    setCv((c) => ({ ...c, comp: str }));
+    resetCompetenciaForm();
+  };
+
+  const resetCompetenciaForm = () => {
+    setNewCompetencia("");
+    setEditingSkillIndex(null);
+    setShowAddCompetencia(false);
+  };
+
+  // --- EXPERIÊNCIA CRUD ---
+  const handleSaveExperiencia = async () => {
+    if (!uid || !newCargo || !newEmpresa) return;
+    let updatedExps = [...expList];
+    const newExpObj = {
+      cargo: newCargo,
+      empresa: newEmpresa,
+      inicio: newExpInicio,
+      fim: newExpFim,
+      descricao: newExpDesc,
+    };
+
+    if (editingExpIndex !== null) {
+      updatedExps[editingExpIndex] = newExpObj;
+    } else {
+      updatedExps.push(newExpObj);
+    }
+
     const payload = JSON.stringify({ experiencias: updatedExps });
     await supabase.from("curriculo_ja").upsert(
       {
@@ -506,11 +620,46 @@ export default function Perfil() {
       { onConflict: "id_ja" },
     );
     setCv((c) => ({ ...c, exp: payload }));
+    resetExperienciaForm();
+  };
+
+  const handleEditExperienciaClick = (index: number) => {
+    const item = expList[index];
+    setNewCargo(item.cargo || "");
+    setNewEmpresa(item.empresa || "");
+    setNewExpInicio(item.inicio || "");
+    setNewExpFim(item.fim || "");
+    setNewExpDesc(item.descricao || "");
+    setEditingExpIndex(index);
+    setShowAddExperiencia(false);
+  };
+
+  const handleDeleteExperiencia = async (index: number) => {
+    if (!uid) return;
+    const updatedExps = expList.filter((_: any, i: number) => i !== index);
+    const payload = JSON.stringify({ experiencias: updatedExps });
+    await supabase.from("curriculo_ja").upsert(
+      {
+        id_ja: uid,
+        experiencias: payload,
+        curso: cv.cur,
+        competencias: cv.comp,
+        descricao: cv.desc,
+        pdf_url: cv.pdfUrl,
+      },
+      { onConflict: "id_ja" },
+    );
+    setCv((c) => ({ ...c, exp: payload }));
+    resetExperienciaForm();
+  };
+
+  const resetExperienciaForm = () => {
     setNewCargo("");
     setNewEmpresa("");
     setNewExpInicio("");
     setNewExpFim("");
     setNewExpDesc("");
+    setEditingExpIndex(null);
     setShowAddExperiencia(false);
   };
 
@@ -640,6 +789,22 @@ export default function Perfil() {
     ? `${profile.avatar}${profile.avatar.includes("?") ? "&" : "?"}v=${avatarVersion}`
     : "";
 
+  // Estilzacao do botao de edit
+  const softEditBtnStyle: React.CSSProperties = {
+    background: "rgba(168, 85, 247, 0.12)",
+    color: "#c084fc",
+    border: "1px solid rgba(168, 85, 247, 0.3)",
+    padding: "6px 12px",
+    borderRadius: "6px",
+    fontSize: "12px",
+    fontWeight: "500",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+  };
+
   if (loading) {
     return (
       <div className={styles.page}>
@@ -677,7 +842,7 @@ export default function Perfil() {
                     height="14"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="currentColor"
+                    stroke="#ffffff"
                     strokeWidth="2"
                   >
                     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -695,20 +860,20 @@ export default function Perfil() {
                       setEditingPersonal(!editingPersonal);
                       setPersonalError("");
                     }}
-                    className={styles.editPersonalBtn}
+                    style={softEditBtnStyle}
                   >
                     <svg
                       width="13"
                       height="13"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="currentColor"
+                      stroke="#ffffff"
                       strokeWidth="2"
                     >
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                     </svg>
-                    {editingPersonal ? "Cancelar" : "Editar Dados Pessoais"}
+                    {editingPersonal ? "Cancelar" : "Editar perfil"}
                   </button>
                 )}
               </div>
@@ -739,14 +904,27 @@ export default function Perfil() {
                     type="text"
                     placeholder="Telefone (WhatsApp com DDD)"
                     value={editTel}
-                    onChange={(e) => setEditTel(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // Limita silenciosamente até 13 dígitos
+                      if (val.replace(/\D/g, "").length > 13) return;
+                      setEditTel(formatarTelefone(val));
+                    }}
                     className={styles.input}
                   />
                   <input
                     type="text"
                     placeholder="CPF (ex: 000.000.000-00)"
                     value={editCpf}
-                    onChange={(e) => setEditCpf(e.target.value)}
+                    onChange={(e) => setEditCpf(formatarCPF(e.target.value))}
+                    maxLength={14}
+                    className={styles.input}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Cidade ex: São Paulo"
+                    value={editCity}
+                    onChange={(e) => setEditCity(e.target.value)}
                     className={styles.input}
                   />
                   <button
@@ -754,12 +932,12 @@ export default function Perfil() {
                     onClick={savePersonalData}
                     disabled={savingPersonal}
                   >
-                    {savingPersonal ? "Salvando..." : "Salvar Dados Pessoais"}
+                    {savingPersonal ? "Salvando..." : "Salvar alterações"}
                   </button>
                 </div>
               ) : (
                 <p className={styles.bio}>
-                  {cv.desc || "Adicione uma descrição sobre você."}
+                  {cv.desc || "Adicione uma descrição profissional sobre você."}
                 </p>
               )}
 
@@ -770,7 +948,7 @@ export default function Perfil() {
                     height="13"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="currentColor"
+                    stroke="#ffffff"
                     strokeWidth="2"
                   >
                     <rect x="2" y="4" width="20" height="16" rx="2" />
@@ -784,7 +962,7 @@ export default function Perfil() {
                     height="13"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="currentColor"
+                    stroke="#ffffff"
                     strokeWidth="2"
                   >
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
@@ -799,7 +977,7 @@ export default function Perfil() {
                       height="13"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="currentColor"
+                      stroke="#ffffff"
                       strokeWidth="2"
                     >
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -815,13 +993,13 @@ export default function Perfil() {
                     height="13"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="currentColor"
+                    stroke="#ffffff"
                     strokeWidth="2"
                   >
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                     <circle cx="12" cy="10" r="3" />
                   </svg>
-                  {profile.cidade}
+                  {profile.endereco}
                 </span>
               </div>
             </div>
@@ -877,7 +1055,7 @@ export default function Perfil() {
                         height="16"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="currentColor"
+                        stroke="#ffffff"
                         strokeWidth="2"
                       >
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -888,6 +1066,7 @@ export default function Perfil() {
                     {!visualizacaoEmpresa && (
                       <button
                         onClick={() => setEditingSummary(!editingSummary)}
+                        style={softEditBtnStyle}
                       >
                         {editingSummary ? "Cancelar" : "Editar"}
                       </button>
@@ -900,7 +1079,7 @@ export default function Perfil() {
                         onChange={(e) => setSummary(e.target.value)}
                         rows={4}
                         className={styles.textarea}
-                        placeholder="Fale sobre você..."
+                        placeholder="Fale sobre suas expectativas profissionais e objetivos..."
                       />
                       <button
                         className={styles.save}
@@ -928,7 +1107,7 @@ export default function Perfil() {
                         height="16"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="currentColor"
+                        stroke="#ffffff"
                         strokeWidth="2"
                       >
                         <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
@@ -938,7 +1117,14 @@ export default function Perfil() {
                     </h3>
                     {!visualizacaoEmpresa && (
                       <button
-                        onClick={() => setShowAddFormacao(!showAddFormacao)}
+                        onClick={() => {
+                          if (showAddFormacao) {
+                            resetFormacaoForm();
+                          } else {
+                            setEditingFormIndex(null);
+                            setShowAddFormacao(true);
+                          }
+                        }}
                       >
                         {showAddFormacao ? "Cancelar" : "+ Adicionar"}
                       </button>
@@ -980,13 +1166,13 @@ export default function Perfil() {
                       <div className={styles.formActions}>
                         <button
                           className={styles.save}
-                          onClick={handleAddFormacao}
+                          onClick={handleSaveFormacao}
                         >
-                          Salvar Formação
+                          Adicionar Formação
                         </button>
                         <button
                           className={styles.cancelBtn}
-                          onClick={() => setShowAddFormacao(false)}
+                          onClick={resetFormacaoForm}
                         >
                           Cancelar
                         </button>
@@ -997,16 +1183,146 @@ export default function Perfil() {
                   {curList.length ? (
                     curList.map((c: any, i: number) => (
                       <div key={i} className={styles.item}>
-                        <div className={styles.dot} />
-                        <div>
-                          <strong>{c.curso}</strong>
-                          <p>{c.instituicao}</p>
-                          {(c.inicio || c.fim) && (
-                            <small>
-                              {c.inicio} {c.fim ? `- ${c.fim}` : ""}
-                            </small>
-                          )}
-                        </div>
+                        {editingFormIndex === i ? (
+                          <div
+                            className={styles.formBox}
+                            style={{ width: "100%", marginTop: "8px" }}
+                          >
+                            <input
+                              type="text"
+                              placeholder="Nome do curso"
+                              value={newCurso}
+                              onChange={(e) => setNewCurso(e.target.value)}
+                              className={styles.input}
+                            />
+                            <input
+                              type="text"
+                              placeholder="Instituição"
+                              value={newInstituicao}
+                              onChange={(e) =>
+                                setNewInstituicao(e.target.value)
+                              }
+                              className={styles.input}
+                            />
+                            <div className={styles.flexGap10}>
+                              <input
+                                type="text"
+                                placeholder="Início"
+                                value={newInicio}
+                                onChange={(e) => setNewInicio(e.target.value)}
+                                className={styles.input}
+                              />
+                              <input
+                                type="text"
+                                placeholder="Fim"
+                                value={newFim}
+                                onChange={(e) => setNewFim(e.target.value)}
+                                className={styles.input}
+                              />
+                            </div>
+                            <div
+                              className={styles.formActions}
+                              style={{
+                                display: "flex",
+                                gap: "8px",
+                                justifyContent: "space-between",
+                                width: "100%",
+                              }}
+                            >
+                              <div style={{ display: "flex", gap: "8px" }}>
+                                <button
+                                  className={styles.save}
+                                  onClick={handleSaveFormacao}
+                                >
+                                  Salvar alterações
+                                </button>
+                                <button
+                                  className={styles.cancelBtn}
+                                  onClick={resetFormacaoForm}
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                              <button
+                                className={styles.cancelBtn}
+                                onClick={() => handleDeleteFormacao(i)}
+                                style={{
+                                  color: "#ef4444",
+                                  borderColor: "#ef4444",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "6px",
+                                }}
+                              >
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="#ffffff"
+                                  strokeWidth="2"
+                                >
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                                Excluir
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "flex-start",
+                              width: "100%",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: "12px",
+                                alignItems: "flex-start",
+                              }}
+                            >
+                              <div className={styles.dot} />
+                              <div>
+                                <strong>{c.curso}</strong>
+                                <p>{c.instituicao}</p>
+                                {(c.inicio || c.fim) && (
+                                  <small
+                                    style={{
+                                      color: "#c084fc",
+                                      fontWeight: "500",
+                                    }}
+                                  >
+                                    {c.inicio} {c.fim ? `- ${c.fim}` : ""}
+                                  </small>
+                                )}
+                              </div>
+                            </div>
+                            {!visualizacaoEmpresa && (
+                              <button
+                                onClick={() => handleEditFormacaoClick(i)}
+                                style={softEditBtnStyle}
+                                title="Editar"
+                              >
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="#ffffff"
+                                  strokeWidth="2"
+                                >
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                                Editar
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))
                   ) : (
@@ -1024,7 +1340,7 @@ export default function Perfil() {
                         height="16"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="currentColor"
+                        stroke="#ffffff"
                         strokeWidth="2"
                       >
                         <polyline points="16 18 22 12 16 6" />
@@ -1034,9 +1350,14 @@ export default function Perfil() {
                     </h3>
                     {!visualizacaoEmpresa && (
                       <button
-                        onClick={() =>
-                          setShowAddCompetencia(!showAddCompetencia)
-                        }
+                        onClick={() => {
+                          if (showAddCompetencia) {
+                            resetCompetenciaForm();
+                          } else {
+                            setEditingSkillIndex(null);
+                            setShowAddCompetencia(true);
+                          }
+                        }}
                       >
                         {showAddCompetencia ? "Cancelar" : "+ Adicionar"}
                       </button>
@@ -1047,7 +1368,7 @@ export default function Perfil() {
                     <div className={styles.formBox}>
                       <input
                         type="text"
-                        placeholder="Ex: JavaScript, Pacote Office..."
+                        placeholder="Ex: JavaScript, Pacote Office, Comunicação..."
                         value={newCompetencia}
                         onChange={(e) => setNewCompetencia(e.target.value)}
                         className={styles.input}
@@ -1055,13 +1376,13 @@ export default function Perfil() {
                       <div className={styles.formActions}>
                         <button
                           className={styles.save}
-                          onClick={handleAddCompetencia}
+                          onClick={handleSaveCompetencia}
                         >
-                          Salvar Competência
+                          Adicionar Competência
                         </button>
                         <button
                           className={styles.cancelBtn}
-                          onClick={() => setShowAddCompetencia(false)}
+                          onClick={resetCompetenciaForm}
                         >
                           Cancelar
                         </button>
@@ -1069,16 +1390,113 @@ export default function Perfil() {
                     </div>
                   )}
 
+                  {editingSkillIndex !== null && (
+                    <div
+                      className={styles.formBox}
+                      style={{ marginBottom: "12px" }}
+                    >
+                      <input
+                        type="text"
+                        value={newCompetencia}
+                        onChange={(e) => setNewCompetencia(e.target.value)}
+                        className={styles.input}
+                      />
+                      <div
+                        className={styles.formActions}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          width: "100%",
+                        }}
+                      >
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <button
+                            className={styles.save}
+                            onClick={handleSaveCompetencia}
+                          >
+                            Salvar alteração
+                          </button>
+                          <button
+                            className={styles.cancelBtn}
+                            onClick={resetCompetenciaForm}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                        <button
+                          className={styles.cancelBtn}
+                          onClick={() =>
+                            handleDeleteCompetencia(editingSkillIndex)
+                          }
+                          style={{
+                            color: "#ef4444",
+                            borderColor: "#ef4444",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#ffffff"
+                            strokeWidth="2"
+                          >
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                          Excluir
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className={styles.skillsContainer}>
                     {skillsList.length ? (
-                      skillsList.map((s) => (
-                        <div key={s} className={styles.skillChip}>
-                          {s}
+                      skillsList.map((s, idx) => (
+                        <div
+                          key={s}
+                          className={styles.skillChip}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <span>{s}</span>
+                          {!visualizacaoEmpresa && (
+                            <button
+                              onClick={() => handleEditCompetenciaClick(idx)}
+                              title="Editar"
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                padding: 0,
+                                color: "#c084fc",
+                                display: "flex",
+                              }}
+                            >
+                              <svg
+                                width="11"
+                                height="11"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#ffffff"
+                                strokeWidth="2"
+                              >
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                              </svg>
+                            </button>
+                          )}
                         </div>
                       ))
                     ) : (
                       <p className={styles.textCenter}>
-                        Nenhuma competência cadastrada
+                        Nenhuma competência cadastrada.
                       </p>
                     )}
                   </div>
@@ -1095,7 +1513,7 @@ export default function Perfil() {
                         height="14"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="currentColor"
+                        stroke="#ffffff"
                         strokeWidth="2"
                       >
                         <rect
@@ -1118,7 +1536,7 @@ export default function Perfil() {
                         height="14"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="currentColor"
+                        stroke="#ffffff"
                         strokeWidth="2"
                       >
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
@@ -1137,7 +1555,7 @@ export default function Perfil() {
                         height="14"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="currentColor"
+                        stroke="#ffffff"
                         strokeWidth="2"
                       >
                         <rect
@@ -1188,7 +1606,7 @@ export default function Perfil() {
                                 fill="none"
                                 width="18"
                                 height="11"
-                                stroke="currentColor"
+                                stroke="#ffffff"
                                 strokeWidth="2"
                               >
                                 <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
@@ -1200,7 +1618,7 @@ export default function Perfil() {
                                 fill="none"
                                 width="18"
                                 height="11"
-                                stroke="currentColor"
+                                stroke="#ffffff"
                                 strokeWidth="2"
                               >
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -1228,7 +1646,7 @@ export default function Perfil() {
                               <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
-                                stroke="currentColor"
+                                stroke="#ffffff"
                                 strokeWidth="2"
                               >
                                 <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
@@ -1238,7 +1656,7 @@ export default function Perfil() {
                               <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
-                                stroke="currentColor"
+                                stroke="#ffffff"
                                 strokeWidth="2"
                               >
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -1266,7 +1684,7 @@ export default function Perfil() {
                               <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
-                                stroke="currentColor"
+                                stroke="#ffffff"
                                 strokeWidth="2"
                               >
                                 <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
@@ -1276,7 +1694,7 @@ export default function Perfil() {
                               <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
-                                stroke="currentColor"
+                                stroke="#ffffff"
                                 strokeWidth="2"
                               >
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -1335,7 +1753,15 @@ export default function Perfil() {
               <div className={styles.cardHead}>
                 <h3>Formação acadêmica</h3>
                 {!visualizacaoEmpresa && (
-                  <button onClick={() => setShowAddFormacao(!showAddFormacao)}>
+                  <button
+                    onClick={() => {
+                      if (showAddFormacao) resetFormacaoForm();
+                      else {
+                        setEditingFormIndex(null);
+                        setShowAddFormacao(true);
+                      }
+                    }}
+                  >
                     {showAddFormacao ? "Cancelar" : "+ Adicionar"}
                   </button>
                 )}
@@ -1373,12 +1799,15 @@ export default function Perfil() {
                     />
                   </div>
                   <div className={styles.formActions}>
-                    <button className={styles.save} onClick={handleAddFormacao}>
-                      Salvar Formação
+                    <button
+                      className={styles.save}
+                      onClick={handleSaveFormacao}
+                    >
+                      Adicionar Formação
                     </button>
                     <button
                       className={styles.cancelBtn}
-                      onClick={() => setShowAddFormacao(false)}
+                      onClick={resetFormacaoForm}
                     >
                       Cancelar
                     </button>
@@ -1388,16 +1817,136 @@ export default function Perfil() {
               {curList.length ? (
                 curList.map((c: any, i: number) => (
                   <div key={i} className={`${styles.item} ${styles.mb14}`}>
-                    <div className={styles.dot} />
-                    <div>
-                      <strong>{c.curso}</strong>
-                      <p>{c.instituicao}</p>
-                      {(c.inicio || c.fim) && (
-                        <small>
-                          {c.inicio} {c.fim ? `- ${c.fim}` : ""}
-                        </small>
-                      )}
-                    </div>
+                    {editingFormIndex === i ? (
+                      <div className={styles.formBox} style={{ width: "100%" }}>
+                        <input
+                          type="text"
+                          placeholder="Nome do curso"
+                          value={newCurso}
+                          onChange={(e) => setNewCurso(e.target.value)}
+                          className={styles.input}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Instituição"
+                          value={newInstituicao}
+                          onChange={(e) => setNewInstituicao(e.target.value)}
+                          className={styles.input}
+                        />
+                        <div className={styles.flexGap10}>
+                          <input
+                            type="text"
+                            placeholder="Início"
+                            value={newInicio}
+                            onChange={(e) => setNewInicio(e.target.value)}
+                            className={styles.input}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Fim"
+                            value={newFim}
+                            onChange={(e) => setNewFim(e.target.value)}
+                            className={styles.input}
+                          />
+                        </div>
+                        <div
+                          className={styles.formActions}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            width: "100%",
+                          }}
+                        >
+                          <div style={{ display: "flex", gap: "8px" }}>
+                            <button
+                              className={styles.save}
+                              onClick={handleSaveFormacao}
+                            >
+                              Salvar alterações
+                            </button>
+                            <button
+                              className={styles.cancelBtn}
+                              onClick={resetFormacaoForm}
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                          <button
+                            className={styles.cancelBtn}
+                            onClick={() => handleDeleteFormacao(i)}
+                            style={{
+                              color: "#ef4444",
+                              borderColor: "#ef4444",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
+                          >
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="#ffffff"
+                              strokeWidth="2"
+                            >
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                            Excluir
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          width: "100%",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "12px",
+                            alignItems: "flex-start",
+                          }}
+                        >
+                          <div className={styles.dot} />
+                          <div>
+                            <strong>{c.curso}</strong>
+                            <p>{c.instituicao}</p>
+                            {(c.inicio || c.fim) && (
+                              <small
+                                style={{ color: "#c084fc", fontWeight: "500" }}
+                              >
+                                {c.inicio} {c.fim ? `- ${c.fim}` : ""}
+                              </small>
+                            )}
+                          </div>
+                        </div>
+                        {!visualizacaoEmpresa && (
+                          <button
+                            onClick={() => handleEditFormacaoClick(i)}
+                            style={softEditBtnStyle}
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="#ffffff"
+                              strokeWidth="2"
+                            >
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                            Editar
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))
               ) : (
@@ -1417,7 +1966,13 @@ export default function Perfil() {
                 <h3>Competências</h3>
                 {!visualizacaoEmpresa && (
                   <button
-                    onClick={() => setShowAddCompetencia(!showAddCompetencia)}
+                    onClick={() => {
+                      if (showAddCompetencia) resetCompetenciaForm();
+                      else {
+                        setEditingSkillIndex(null);
+                        setShowAddCompetencia(true);
+                      }
+                    }}
                   >
                     {showAddCompetencia ? "Cancelar" : "+ Adicionar"}
                   </button>
@@ -1435,29 +1990,125 @@ export default function Perfil() {
                   <div className={styles.formActions}>
                     <button
                       className={styles.save}
-                      onClick={handleAddCompetencia}
+                      onClick={handleSaveCompetencia}
                     >
-                      Salvar Competência
+                      Adicionar Competência
                     </button>
                     <button
                       className={styles.cancelBtn}
-                      onClick={() => setShowAddCompetencia(false)}
+                      onClick={resetCompetenciaForm}
                     >
                       Cancelar
                     </button>
                   </div>
                 </div>
               )}
+
+              {editingSkillIndex !== null && (
+                <div
+                  className={styles.formBox}
+                  style={{ marginBottom: "16px" }}
+                >
+                  <input
+                    type="text"
+                    value={newCompetencia}
+                    onChange={(e) => setNewCompetencia(e.target.value)}
+                    className={styles.input}
+                  />
+                  <div
+                    className={styles.formActions}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      width: "100%",
+                    }}
+                  >
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <button
+                        className={styles.save}
+                        onClick={handleSaveCompetencia}
+                      >
+                        Salvar alteração
+                      </button>
+                      <button
+                        className={styles.cancelBtn}
+                        onClick={resetCompetenciaForm}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                    <button
+                      className={styles.cancelBtn}
+                      onClick={() => handleDeleteCompetencia(editingSkillIndex)}
+                      style={{
+                        color: "#ef4444",
+                        borderColor: "#ef4444",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#ffffff"
+                        strokeWidth="2"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className={styles.skillsContainer}>
                 {skillsList.length ? (
-                  skillsList.map((s) => (
-                    <div key={s} className={styles.skillChip}>
-                      {s}
+                  skillsList.map((s, idx) => (
+                    <div
+                      key={s}
+                      className={styles.skillChip}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <span>{s}</span>
+                      {!visualizacaoEmpresa && (
+                        <button
+                          onClick={() => handleEditCompetenciaClick(idx)}
+                          title="Editar"
+                          style={{
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            padding: 0,
+                            color: "#c084fc",
+                            display: "flex",
+                          }}
+                        >
+                          <svg
+                            width="11"
+                            height="11"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#ffffff"
+                            strokeWidth="2"
+                          >
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   ))
                 ) : (
                   <p className={styles.textCenter}>
-                    Nenhuma competência cadastrada
+                    Nenhuma competência cadastrada.
                   </p>
                 )}
               </div>
@@ -1470,7 +2121,13 @@ export default function Perfil() {
                 <h3>Experiência profissional</h3>
                 {!visualizacaoEmpresa && (
                   <button
-                    onClick={() => setShowAddExperiencia(!showAddExperiencia)}
+                    onClick={() => {
+                      if (showAddExperiencia) resetExperienciaForm();
+                      else {
+                        setEditingExpIndex(null);
+                        setShowAddExperiencia(true);
+                      }
+                    }}
                   >
                     {showAddExperiencia ? "Cancelar" : "+ Adicionar"}
                   </button>
@@ -1517,13 +2174,13 @@ export default function Perfil() {
                   <div className={styles.formActions}>
                     <button
                       className={styles.save}
-                      onClick={handleAddExperiencia}
+                      onClick={handleSaveExperiencia}
                     >
-                      Salvar Experiência
+                      Adicionar Experiência
                     </button>
                     <button
                       className={styles.cancelBtn}
-                      onClick={() => setShowAddExperiencia(false)}
+                      onClick={resetExperienciaForm}
                     >
                       Cancelar
                     </button>
@@ -1533,19 +2190,145 @@ export default function Perfil() {
               {expList.length ? (
                 expList.map((e: any, i: number) => (
                   <div key={i} className={`${styles.item} ${styles.mb14}`}>
-                    <div className={styles.dot} />
-                    <div>
-                      <strong>{e.cargo}</strong>
-                      <p>{e.empresa}</p>
-                      {(e.inicio || e.fim) && (
-                        <small>
-                          {e.inicio} {e.fim ? `- ${e.fim}` : ""}
-                        </small>
-                      )}
-                      {e.descricao && (
-                        <p className={styles.itemDesc}>{e.descricao}</p>
-                      )}
-                    </div>
+                    {editingExpIndex === i ? (
+                      <div className={styles.formBox} style={{ width: "100%" }}>
+                        <input
+                          type="text"
+                          placeholder="Cargo"
+                          value={newCargo}
+                          onChange={(e) => setNewCargo(e.target.value)}
+                          className={styles.input}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Empresa"
+                          value={newEmpresa}
+                          onChange={(e) => setNewEmpresa(e.target.value)}
+                          className={styles.input}
+                        />
+                        <div className={styles.flexGap10}>
+                          <input
+                            type="text"
+                            placeholder="Início"
+                            value={newExpInicio}
+                            onChange={(e) => setNewExpInicio(e.target.value)}
+                            className={styles.input}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Fim"
+                            value={newExpFim}
+                            onChange={(e) => setNewExpFim(e.target.value)}
+                            className={styles.input}
+                          />
+                        </div>
+                        <textarea
+                          placeholder="Descrição das atividades"
+                          value={newExpDesc}
+                          onChange={(e) => setNewExpDesc(e.target.value)}
+                          className={styles.textarea}
+                        />
+                        <div
+                          className={styles.formActions}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            width: "100%",
+                          }}
+                        >
+                          <div style={{ display: "flex", gap: "8px" }}>
+                            <button
+                              className={styles.save}
+                              onClick={handleSaveExperiencia}
+                            >
+                              Salvar alterações
+                            </button>
+                            <button
+                              className={styles.cancelBtn}
+                              onClick={resetExperienciaForm}
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                          <button
+                            className={styles.cancelBtn}
+                            onClick={() => handleDeleteExperiencia(i)}
+                            style={{
+                              color: "#ef4444",
+                              borderColor: "#ef4444",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
+                          >
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="#ffffff"
+                              strokeWidth="2"
+                            >
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                            Excluir
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          width: "100%",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "12px",
+                            alignItems: "flex-start",
+                          }}
+                        >
+                          <div className={styles.dot} />
+                          <div>
+                            <strong>{e.cargo}</strong>
+                            <p>{e.empresa}</p>
+                            {(e.inicio || e.fim) && (
+                              <small
+                                style={{ color: "#c084fc", fontWeight: "500" }}
+                              >
+                                {e.inicio} {e.fim ? `- ${e.fim}` : ""}
+                              </small>
+                            )}
+                            {e.descricao && (
+                              <p className={styles.itemDesc}>{e.descricao}</p>
+                            )}
+                          </div>
+                        </div>
+                        {!visualizacaoEmpresa && (
+                          <button
+                            onClick={() => handleEditExperienciaClick(i)}
+                            style={softEditBtnStyle}
+                          >
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="#ffffff"
+                              strokeWidth="2"
+                            >
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                            Editar
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))
               ) : (

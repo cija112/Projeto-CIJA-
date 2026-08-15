@@ -3,12 +3,32 @@ import { useState, useEffect, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./login.module.css";
 import { supabase } from "supabaseClient";
+import emailjs from "@emailjs/browser";
 import cija_logo from "../../../assets/logo2.png";
 import youngmanImage from "../../../assets/youngman.jpg";
+import groupMain from "../../../assets/groupMain.png";
+import girlMain from "../../../assets/girlMain.png";
 import EyeOpenIcon from "../../../components/icons/EyeOpenIcon";
 import EyeClosedIcon from "../../../components/icons/EyeClosedIcon";
 import { useDocumentTitle } from "Hooks/useDocumentTitle";
-import { Mail, Sparkles, Briefcase, TrendingUp } from "lucide-react";
+import { FaLinkedin, FaInstagram } from "react-icons/fa";
+import {
+  Mail,
+  Sparkles,
+  Briefcase,
+  TrendingUp,
+  Phone,
+  MapPin,
+  MessageSquare,
+  Clock,
+  Star,
+  Users,
+  Lightbulb,
+  FileText,
+  Heart,
+  CheckCircle2,
+  ArrowRight,
+} from "lucide-react";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -24,10 +44,19 @@ export default function Login() {
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [activeSection, setActiveSection] = useState("inicio");
 
-  const [activeSection,setActiveSection] = useState("inicio");
-
-
+  // Estados do formulário de contato com EmailJS
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactSubject, setContactSubject] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [contactConsent, setContactConsent] = useState(false);
+  const [loadingEmail, setLoadingEmail] = useState(false);
+  const [contactToast, setContactToast] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     if (globalNotificacao) {
@@ -36,7 +65,6 @@ export default function Login() {
     }
   }, [globalNotificacao]);
 
-  // Observer para detectar a seção visível na tela durante o scroll
   useEffect(() => {
     const sections = document.querySelectorAll("section[id]");
     const observer = new IntersectionObserver(
@@ -47,10 +75,10 @@ export default function Login() {
           }
         });
       },
-      
       {
         rootMargin: "-84px 0px -40% 0px",
-        threshold: 0.2 } // Aciona quando 20% da seção estiver visível da prox tela
+        threshold: 0.2,
+      },
     );
 
     sections.forEach((section) => observer.observe(section));
@@ -59,6 +87,7 @@ export default function Login() {
       sections.forEach((section) => observer.unobserve(section));
     };
   }, []);
+
   const triggerErrorAnimation = () => {
     setIsShaking(true);
     setTimeout(() => setIsShaking(false), 500);
@@ -154,37 +183,114 @@ export default function Login() {
     }
   };
 
+  // Sistema de Envio de E-mail via EmailJS integrado com Alerta Verde/Vermelho
+  const handleContactSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!contactConsent) {
+      setContactToast({
+        type: "error",
+        text: "Você deve autorizar o tratamento dos dados para enviar a mensagem.",
+      });
+      return;
+    }
+
+    setLoadingEmail(true);
+    setContactToast(null);
+
+    try {
+      await emailjs.send(
+        process.env.REACT_APP_EMAILJS_SERVICE_ID!,
+        process.env.REACT_APP_EMAILJS_TEMPLATE_ID!,
+        {
+          nome: contactName,
+          email: contactEmail,
+          assunto: contactSubject,
+          mensagem: contactMessage,
+        },
+        process.env.REACT_APP_EMAILJS_PUBLIC_KEY!,
+      );
+
+      setContactToast({
+        type: "success",
+        text: "Mensagem enviada com sucesso!",
+      });
+
+      setContactName("");
+      setContactEmail("");
+      setContactSubject("");
+      setContactMessage("");
+      setContactConsent(false);
+    } catch (err: any) {
+      console.error(err);
+      setContactToast({
+        type: "error",
+        text: "Não foi possível enviar a mensagem. Tente novamente.",
+      });
+    } finally {
+      setLoadingEmail(false);
+      setTimeout(() => {
+        setContactToast(null);
+      }, 5000);
+    }
+  };
+
   const cardClasses = `${styles.loginCard} ${isShaking ? styles.shake : ""}`;
 
   return (
-    <>
+    <div className={styles.pageWrapper}>
       <header className={styles.header}>
         <div
           className={styles.headerLogoContainer}
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         >
-          <img src={cija_logo} alt="CIJA" className={styles.headerLogo} />
+          <img
+            src={cija_logo}
+            alt="CIJA"
+            className={styles.headerLogo}
+            loading="eager"
+            decoding="async"
+          />
         </div>
         <ul className={styles.navMenu}>
           <li>
-            <a href="#inicio" className={`${styles.navLink} ${activeSection === "inicio" ? styles.activeLink: ""}`}>
+            <a
+              href="#inicio"
+              className={`${styles.navLink} ${activeSection === "inicio" ? styles.activeLink : ""}`}
+            >
               Início
             </a>
           </li>
           <li>
-            <a href="#sobre" className={`${styles.navLink} ${activeSection === "sobre" ? styles.activeLink : ""}`}>
+            <a
+              href="#sobre"
+              className={`${styles.navLink} ${activeSection === "sobre" ? styles.activeLink : ""}`}
+            >
               Sobre nós
             </a>
           </li>
           <li>
-            <a href="#contato"className={`${styles.navLink} ${activeSection === "contato" ? styles.activeContactButton : ""}`}> 
-              Contate-nos
+            <a
+              href="#contato"
+              className={`${styles.navLink} ${activeSection === "contato" ? styles.activeLink : ""}`}
+            >
+              Contato
             </a>
           </li>
         </ul>
+        <button
+          className={styles.entrarHeaderBtn}
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        >
+          <Users className={styles.entrarIcon} />
+          Entrar
+        </button>
       </header>
 
-      {/* SEÇÃO INÍCIO*/}
+      {globalNotificacao && (
+        <div className={styles.alert}>{globalNotificacao}</div>
+      )}
+
+      {/* SEÇÃO INÍCIO / HERO & LOGIN */}
       <section className={styles.section} id="inicio">
         <div
           className={styles.bgBoyImage}
@@ -196,10 +302,6 @@ export default function Login() {
           <div className={styles.bgArc1}></div>
           <div className={styles.bgArc2}></div>
         </div>
-
-        {globalNotificacao && (
-          <div className={styles.alert}>{globalNotificacao}</div>
-        )}
 
         <div className={styles.loginContainer}>
           <div className={styles.left}>
@@ -396,63 +498,323 @@ export default function Login() {
         </div>
       </section>
 
-      {/*  SEÇÃO SOBRE NÓS */}
-      <section className={styles.section} id="sobre">
-        <div className={styles.sectionContentBox}>
-          <h2>
-            Sobre <span>nós</span>
-          </h2>
-          <p>
-            A <strong>CIJA</strong> é uma empresa líder especializada no
-            ecossistema de Jovem Aprendiz. Nossa missão é encurtar a distância
-            entre o potencial inexplorado da nova geração e as grandes
-            corporações. Contamos com tecnologias avançadas de inteligência
-            artificial para otimização de currículos, oferecendo suporte
-            contínuo para o desenvolvimento humano e profissional.
-          </p>
-          <a
-            href="#inicio"
-            className={styles.actionButton}
-            style={{
-              display: "inline-block",
-              width: "auto",
-              padding: "12px 36px",
-              textDecoration: "none",
-              lineHeight: "30px",
-            }}
-          >
-            Começar agora na Plataforma
-          </a>
+      {/* SEÇÃO SOBRE NÓS */}
+      <section className={styles.aboutSectionFull} id="sobre">
+        <div className={styles.aboutContainerInner}>
+          <div className={styles.aboutHeroTop}>
+            <div className={styles.aboutHeroText}>
+              <span className={styles.aboutTag}>SOBRE A CIJA</span>
+              <h2 className={styles.aboutMainTitle}>
+                Conectamos jovens talentos <br />
+                <span>ao futuro</span>
+              </h2>
+              <p className={styles.aboutMainDesc}>
+                A CIJA é uma plataforma inovadora que aproxima jovens aprendizes
+                de oportunidades reais em grandes empresas. Unimos tecnologia,
+                educação e propósito para transformar carreiras e impulsionar o
+                desenvolvimento profissional da nova geração.
+              </p>
+              <div className={styles.aboutBtnGroup}>
+                <a href="#inicio" className={styles.purpleBtn}>
+                  Conheça nossa plataforma{" "}
+                  <ArrowRight className={styles.btnArrow} />
+                </a>
+                <a href="#contato" className={styles.chatLinkBtn}>
+                  <MessageSquare className={styles.chatIcon} /> Fale com nossa
+                  equipe
+                </a>
+              </div>
+            </div>
+            <div className={styles.aboutHeroImageWrapper}>
+              <img
+                src={groupMain}
+                alt="Jovens talentos CIJA"
+                className={styles.groupMainImg}
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+          </div>
+
+          <div className={styles.missionValuesCard}>
+            <div className={styles.missionColumn}>
+              <span className={styles.cardTag}>NOSSA MISSÃO</span>
+              <h3 className={styles.cardHeading}>
+                Transformar potencial <br />
+                em oportunidade
+              </h3>
+              <p className={styles.cardText}>
+                Acreditamos que o primeiro passo para uma grande carreira é ter
+                a oportunidade certa. Nossa missão é abrir portas para jovens
+                talentos, conectando-os com empresas que acreditam no poder da
+                diversidade e da inclusão.
+              </p>
+              <a href="#inicio" className={styles.purpleBtnSmall}>
+                Saiba mais sobre nossa missão
+              </a>
+
+              <div className={styles.missionImageContainer}>
+                <img
+                  src={girlMain}
+                  alt="Estudante no notebook"
+                  className={styles.girlMainImg}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className={styles.excellenceBadge}>
+                  <Star className={styles.badgeStar} />
+                  <div>
+                    <strong>Excelência</strong>
+                    <span>em tudo que fazemos</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.valuesColumn}>
+              <span className={styles.cardTag}>NOSSOS VALORES</span>
+
+              <div className={styles.valueItem}>
+                <div className={styles.valueIconBox}>
+                  <Users className={styles.valueIcon} />
+                </div>
+                <div className={styles.valueContent}>
+                  <h4>Inclusão</h4>
+                  <p>
+                    Acreditamos no potencial de todos os jovens, valorizando a
+                    diversidade e promovendo igualdade de oportunidades.
+                  </p>
+                </div>
+              </div>
+
+              <div className={styles.valueItem}>
+                <div className={styles.valueIconBox}>
+                  <Lightbulb className={styles.valueIcon} />
+                </div>
+                <div className={styles.valueContent}>
+                  <h4>Inovação</h4>
+                  <p>
+                    Utilizamos tecnologia de ponta para criar soluções que
+                    realmente fazem a diferença na vida dos jovens.
+                  </p>
+                </div>
+              </div>
+
+              <div className={styles.valueItem}>
+                <div className={styles.valueIconBox}>
+                  <FileText className={styles.valueIcon} />
+                </div>
+                <div className={styles.valueContent}>
+                  <h4>Transparência</h4>
+                  <p>
+                    Mantemos uma comunicação clara e honesta com todos os nossos
+                    usuários e parceiros.
+                  </p>
+                </div>
+              </div>
+
+              <div className={styles.valueItem}>
+                <div className={styles.valueIconBox}>
+                  <Heart className={styles.valueIcon} />
+                </div>
+                <div className={styles.valueContent}>
+                  <h4>Compromisso</h4>
+                  <p>
+                    Estamos comprometidos com o sucesso dos jovens e com o
+                    desenvolvimento do país.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* SEÇÃO CONTATE-NOS */}
-      <section className={styles.section} id="contato">
-        <div className={styles.sectionContentBox}>
-          <h2>
-            Contate - <span>nos</span>
-          </h2>
-          <p>
-            Tem alguma dúvida, sugestão ou deseja saber mais sobre as nossas
-            oportunidades de Jovem Aprendiz? Entre em contato diretamente com a
-            nossa equipe através do botão abaixo. Estamos prontos para atender
-            você!
-          </p>
-          <a
-            href="mailto:cijabento@gmail.com"
-            className={styles.actionButton}
-            style={{
-              display: "inline-block",
-              width: "auto",
-              padding: "12px 36px",
-              textDecoration: "none",
-              lineHeight: "30px",
-            }}
-          >
-            Enviar um e-mail
-          </a>
+      <section className={styles.contactSectionFull} id="contato">
+        <div className={styles.contactContainerInner}>
+          <div className={styles.contactHeaderArea}>
+            <h2 className={styles.contactMainTitle}>
+              Entre em <span>contato</span> conosco
+            </h2>
+            <p className={styles.contactMainSubtitle}>
+              Estamos aqui para ajudar. Se você tem dúvidas, sugestões ou deseja
+              saber mais sobre as oportunidades para Jovem Aprendiz, fale com a
+              gente.
+            </p>
+          </div>
+
+          <div className={styles.contactGridCard}>
+            <div className={styles.contactInfoCol}>
+              <h3 className={styles.contactColTitle}>Fale com a CIJA</h3>
+
+              <div className={styles.contactInfoItem}>
+                <div className={styles.contactIconBox}>
+                  <Mail className={styles.contactIcon} />
+                </div>
+                <div>
+                  <strong>E-mail</strong>
+                  <p>cijabento@gmail.com</p>
+                  <span>Responderemos em tempo</span>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.contactFormCol}>
+              <h3 className={styles.contactColTitle}>Envie sua mensagem</h3>
+
+              {/* Alerta / Toast dinâmico verde (sucesso) ou vermelho (erro) */}
+              {contactToast && (
+                <div
+                  style={{
+                    padding: "12px 16px",
+                    borderRadius: "12px",
+                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    backgroundColor:
+                      contactToast.type === "success"
+                        ? "rgba(34, 197, 94, 0.15)"
+                        : "rgba(239, 68, 68, 0.15)",
+                    color:
+                      contactToast.type === "success" ? "#22c55e" : "#ef4444",
+                    border: `1px solid ${
+                      contactToast.type === "success"
+                        ? "rgba(34, 197, 94, 0.3)"
+                        : "rgba(239, 68, 68, 0.3)"
+                    }`,
+                  }}
+                >
+                  <span>{contactToast.type === "success" ? "✓" : "✕"}</span>
+                  <span>{contactToast.text}</span>
+                </div>
+              )}
+
+              <form
+                onSubmit={handleContactSubmit}
+                className={styles.contactForm}
+              >
+                <div className={styles.formRow}>
+                  <div className={styles.inputGroup}>
+                    <input
+                      type="text"
+                      placeholder="Nome completo"
+                      value={contactName}
+                      onChange={(e) => setContactName(e.target.value)}
+                      required
+                      className={styles.inputContact}
+                    />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <input
+                      type="email"
+                      placeholder="E-mail"
+                      value={contactEmail}
+                      onChange={(e) => setContactEmail(e.target.value)}
+                      required
+                      className={styles.inputContact}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.inputGroup}>
+                  <input
+                    type="text"
+                    placeholder="Assunto"
+                    value={contactSubject}
+                    onChange={(e) => setContactSubject(e.target.value)}
+                    required
+                    className={styles.inputContact}
+                  />
+                </div>
+
+                <div className={styles.inputGroup}>
+                  <textarea
+                    placeholder="Mensagem"
+                    rows={5}
+                    value={contactMessage}
+                    onChange={(e) => setContactMessage(e.target.value)}
+                    required
+                    className={styles.textareaContact}
+                  ></textarea>
+                </div>
+
+                <div className={styles.checkboxGroup}>
+                  <label className={styles.checkboxLabelContact}>
+                    <input
+                      type="checkbox"
+                      checked={contactConsent}
+                      onChange={(e) => setContactConsent(e.target.checked)}
+                      required
+                    />
+                    Autorizo o tratamento dos meus dados para fins de contato
+                    conforme nossa Política de Privacidade.
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  className={styles.actionButton}
+                  disabled={loadingEmail}
+                >
+                  {loadingEmail ? "Enviando..." : "Enviar mensagem"}{" "}
+                  <ArrowRight className={styles.btnArrow} />
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       </section>
-    </>
+
+      {/* FOOTER */}
+      <footer className={styles.footer}>
+        <div className={styles.footerContainer}>
+          <div className={styles.footerBrandCol}>
+            <img
+              src={cija_logo}
+              alt="CIJA"
+              className={styles.footerLogoImg}
+              loading="lazy"
+              decoding="async"
+            />
+            <p className={styles.footerBrandText}>
+              Conectamos jovens talentos a oportunidades reais em grandes
+              empresas, impulsionando o desenvolvimento profissional da nova
+              geração.
+            </p>
+          </div>
+
+          <div className={styles.footerLinksCol}>
+            <h4>Institucional</h4>
+            <ul>
+              <li>
+                <a href="#sobre">Sobre nós</a>
+              </li>
+              <li>
+                <a href="#contato">Entre em contato conosco</a>
+              </li>
+              <li>
+                <a href="#">Login</a>
+              </li>
+            </ul>
+          </div>
+
+          <div className={styles.footerLinksCol}>
+            <h4>Atendimento</h4>
+            <ul className={styles.atendimentoList}>
+              <li>
+                <Mail className={styles.footerMiniIcon} /> cijabento@gmail.com
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className={styles.footerBottomBar}>
+          <p>© 2026 CIJA. Todos os direitos reservados.</p>
+        </div>
+      </footer>
+    </div>
   );
 }

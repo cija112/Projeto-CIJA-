@@ -39,6 +39,11 @@ body {
   position: relative;
 }
 
+.pageWrapper {
+  width: 100%;
+  position: relative;
+}
+
 body::before {
   content: "";
   position: fixed;
@@ -87,13 +92,16 @@ body::before {
 .headerLogo {
   width: 56px;
   height: auto;
+
   object-fit: contain;
 }
 
 .navMenu {
   display: flex;
+  margin-left: auto;
   align-items: center;
   gap: 36px;
+  margin-right: 36px;
   list-style: none;
 }
 
@@ -110,7 +118,11 @@ body::before {
 .navLink:hover {
   color: white !important;
 }
-/* barra de ativo em baixo roxa **/
+
+.activeLink {
+  color: white !important;
+}
+
 .activeLink::after {
   content: "";
   position: absolute;
@@ -124,39 +136,32 @@ body::before {
   box-shadow: 0 0 10px rgba(147, 51, 234, 0.6);
 }
 
-.contactButtonHeader {
-  background-color: transparent;
+.entrarHeaderBtn {
+  background: #7e22ce;
   color: white;
-  padding: 11px 24px;
+  padding: 10px 20px;
   border: none;
+  border-radius: 12px;
   font-weight: 600;
-  text-decoration: none;
   font-size: 0.92rem;
-  transition: all 0.2s ease;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  position: relative;
+  gap: 8px;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
-.contactButtonHeader:hover {
+.entrarHeaderBtn:hover {
   opacity: 0.9;
 }
 
-.activeContactButton {
-  border: none;
+.entrarIcon {
+  width: 16px;
+  height: 16px;
 }
-.activeContactButton::after {
-  content: "";
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(135deg, #a855f7, #9333ea);
-  border-radius: 2px;
-  box-shadow: 0 0 10px rgba(147, 51, 234, 0.6);
-}
+
 /* ========================= BACKGROUND IMAGE & DECORATIONS ========================= */
 .bgDecorations {
   position: absolute;
@@ -166,7 +171,6 @@ body::before {
   z-index: 1;
 }
 
-/* Imagem do jovem responsiva e com cores naturais ajustadas */
 .bgBoyImage {
   position: absolute;
   right: 2%;
@@ -189,6 +193,7 @@ body::before {
   );
   pointer-events: none;
   z-index: 1;
+  will-change: transform;
 }
 
 .bgArc1 {
@@ -240,6 +245,7 @@ body::before {
   box-shadow: 0 10px 35px rgba(255, 77, 77, 0.28);
   animation: fadeDown 0.35s ease;
 }
+
 @keyframes fadeDown {
   from {
     opacity: 0;
@@ -251,13 +257,12 @@ body::before {
   }
 }
 
-/* ========================= CONTAINER  ========================= */
+/* ========================= CONTAINER HERO ========================= */
 .loginContainer {
   width: 100%;
   max-width: 1400px;
   position: relative;
   z-index: 2;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -265,7 +270,6 @@ body::before {
   margin: auto;
 }
 
-/* ========================= LEFT HERO & FEATURES ========================= */
 .left {
   flex: 1;
   position: relative;
@@ -279,12 +283,14 @@ body::before {
   color: white;
   margin-bottom: 20px;
 }
+
 .left h1 span {
   background: linear-gradient(135deg, #a855f7, #9333ea);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
 }
+
 .tagline {
   color: var(--muted);
   max-width: 520px;
@@ -293,7 +299,6 @@ body::before {
   margin-bottom: 35px;
 }
 
-/* Features List */
 .featuresList {
   display: flex;
   flex-direction: column;
@@ -357,6 +362,7 @@ body::before {
   justify-content: center;
   z-index: 3;
 }
+
 .cardContent {
   width: 100%;
 }
@@ -374,6 +380,7 @@ body::before {
   letter-spacing: -1.5px;
   margin-bottom: 6px;
 }
+
 .cardContent > p {
   color: var(--muted);
   margin-bottom: 24px;
@@ -381,11 +388,11 @@ body::before {
   line-height: 1.5;
 }
 
-/* ========================= INPUTS ========================= */
 .inputGroup {
   margin-bottom: 16px;
   position: relative;
 }
+
 .inputGroup label {
   display: block;
   color: white;
@@ -393,6 +400,7 @@ body::before {
   font-weight: 600;
   margin-bottom: 8px;
 }
+
 .input {
   width: 100%;
   height: 54px;
@@ -405,16 +413,20 @@ body::before {
   outline: none;
   transition: 0.2s ease;
 }
+
 .input:focus {
   border-color: var(--purple);
   box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.16);
 }
+
 .input::placeholder {
   color: #7f7a8d;
 }
+
 .error {
   border-color: var(--danger) !important;
 }
+
 .errorMessage {
   color: var(--danger);
   margin-top: 6px;
@@ -433,10 +445,10 @@ body::before {
   height: 20px;
 }
 
-/* ========================= SENHA ========================= */
 .senhaBox {
   position: relative;
 }
+
 .toggleSenha {
   position: absolute;
   top: 50%;
@@ -454,16 +466,17 @@ body::before {
   border-radius: 10px;
   transition: 0.2s ease;
 }
+
 .toggleSenha:hover {
   background: rgba(255, 255, 255, 0.05);
   color: white;
 }
+
 .toggleSenha svg {
   width: 18px;
   height: 18px;
 }
 
-/* ========================= OPTIONS ROW ========================= */
 .optionsRow {
   display: flex;
   align-items: center;
@@ -500,7 +513,6 @@ body::before {
   text-decoration: underline;
 }
 
-/* ========================= BUTTONS ========================= */
 .actionButton {
   width: 100%;
   height: 54px;
@@ -511,22 +523,28 @@ body::before {
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   transition:
     opacity 0.2s,
     transform 0.1s;
 }
+
 .actionButton:hover {
   opacity: 0.92;
 }
+
 .actionButton:active {
   transform: scale(0.99);
 }
+
 .actionButton:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
-/* Google Button */
 .googleButton {
   width: 100%;
   height: 52px;
@@ -544,25 +562,28 @@ body::before {
   transition: 0.2s ease;
   margin-top: 14px;
 }
+
 .googleButton:hover {
   background: rgba(255, 255, 255, 0.07);
   border-color: rgba(255, 255, 255, 0.2);
 }
+
 .googleIcon {
   width: 18px;
   height: 18px;
 }
 
-/* ========================= FOOTER ========================= */
 .footerActions {
   margin-top: 20px;
   text-align: center;
 }
+
 .subLink {
   color: var(--muted);
   margin-top: 8px;
   font-size: 0.9rem;
 }
+
 .subLink a {
   color: #c084fc;
   font-weight: 600;
@@ -571,12 +592,12 @@ body::before {
   text-decoration: none;
   transition: 0.2s;
 }
+
 .subLink a:hover {
   color: white;
   text-decoration: underline;
 }
 
-/* ========================= SEPARATOR ========================= */
 .separator {
   display: flex;
   align-items: center;
@@ -585,6 +606,7 @@ body::before {
   margin: 16px 0 4px 0;
   font-size: 0.85rem;
 }
+
 .separator::before,
 .separator::after {
   content: "";
@@ -593,51 +615,714 @@ body::before {
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* ========================= SEÇÃO SOBRE NÓS / CONTATE-NOS ========================= */
-.sectionContentBox {
+/* ========================= SOBRE NÓS (PRINT 1) ========================= */
+.aboutSectionFull {
   width: 100%;
-  max-width: 900px;
-  background: linear-gradient(
-    180deg,
-    rgba(25, 16, 42, 0.92),
-    rgba(15, 10, 28, 0.96)
-  );
+  min-height: 100vh;
+  padding: 140px 24px 80px 24px;
+  background: var(--bg);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.aboutContainerInner {
+  width: 100%;
+  max-width: 1300px;
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+  z-index: 2;
+}
+
+.aboutHeroTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.aboutHeroText {
+  flex: 1;
+}
+
+.aboutTag {
+  color: #c084fc;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.aboutMainTitle {
+  font-size: clamp(2.5rem, 4.5vw, 4.2rem);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -2px;
+  color: white;
+  margin-bottom: 24px;
+}
+
+.aboutMainTitle span {
+  background: linear-gradient(135deg, #a855f7, #9333ea);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.aboutMainDesc {
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.8;
+  max-width: 600px;
+  margin-bottom: 35px;
+}
+
+.aboutBtnGroup {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.purpleBtn {
+  background: linear-gradient(135deg, #7e22ce, #9333ea);
+  color: white;
+  padding: 14px 28px;
+  border-radius: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: opacity 0.2s ease;
+  box-shadow: 0 8px 25px rgba(147, 51, 234, 0.35);
+}
+
+.purpleBtn:hover {
+  opacity: 0.9;
+}
+
+.btnArrow {
+  width: 18px;
+  height: 18px;
+}
+
+.chatLinkBtn {
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s ease;
+}
+
+.chatLinkBtn:hover {
+  color: #c084fc;
+}
+
+.chatIcon {
+  width: 18px;
+  height: 18px;
+  color: #a855f7;
+}
+
+.aboutHeroImageWrapper {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  position: relative;
+}
+
+.groupMainImg {
+  width: 100%;
+  max-width: 700px;
+  height: auto;
+  border-radius: 24px;
+  object-fit: cover;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.missionValuesCard {
+  background: rgba(18, 10, 35, 0.85);
   border: 1px solid var(--border);
   border-radius: 34px;
-  padding: 60px 40px;
-  backdrop-filter: blur(35px);
-  -webkit-backdrop-filter: blur(35px);
+  padding: 50px;
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 50px;
+  backdrop-filter: blur(30px);
   box-shadow: var(--shadow);
+}
+
+.missionColumn {
+  display: flex;
+  flex-direction: column;
+}
+
+.cardTag {
+  color: #c084fc;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.cardHeading {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: white;
+  line-height: 1.15;
+  margin-bottom: 16px;
+}
+
+.cardText {
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+.purpleBtnSmall {
+  background: linear-gradient(135deg, #7e22ce, #9333ea);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  display: inline-block;
+  width: fit-content;
+  margin-bottom: 30px;
+  transition: opacity 0.2s;
+}
+
+.purpleBtnSmall:hover {
+  opacity: 0.9;
+}
+
+.missionImageContainer {
+  position: relative;
+  width: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.girlMainImg {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+.excellenceBadge {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(18, 6, 41, 0.92);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 12px 18px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.badgeStar {
+  width: 24px;
+  height: 24px;
+  color: #c084fc;
+}
+
+.excellenceBadge strong {
+  display: block;
+  font-size: 0.95rem;
+  color: white;
+}
+
+.excellenceBadge span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.valuesColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.valueItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.valueItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.valueIconBox {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(147, 51, 234, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c084fc;
+  flex-shrink: 0;
+}
+
+.valueIcon {
+  width: 20px;
+  height: 20px;
+}
+
+.valueContent h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.valueContent p {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ========================= CONTATE-NOS (PRINT 2) ========================= */
+.contactSectionFull {
+  width: 100%;
+  min-height: 100vh;
+  padding: 140px 24px 80px 24px;
+  background: var(--bg);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.contactContainerInner {
+  width: 100%;
+  max-width: 1300px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  z-index: 2;
+}
+
+.contactHeaderArea {
+  text-align: left;
+}
+
+.contactMainTitle {
+  font-size: clamp(2.5rem, 4.5vw, 3.8rem);
+  font-weight: 800;
+  letter-spacing: -2px;
+  color: white;
+  margin-bottom: 12px;
+}
+
+.contactMainTitle span {
+  background: linear-gradient(135deg, #a855f7, #9333ea);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.contactMainSubtitle {
+  color: var(--muted);
+  font-size: 1.05rem;
+  max-width: 700px;
+  line-height: 1.6;
+}
+
+.contactGridCard {
+  background: rgba(18, 10, 35, 0.85);
+  border: 1px solid var(--border);
+  border-radius: 34px;
+  padding: 50px;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 60px;
+  backdrop-filter: blur(30px);
+  box-shadow: var(--shadow);
+}
+
+.contactInfoCol {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.contactColTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.contactInfoItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.contactIconBox {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(147, 51, 234, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c084fc;
+  flex-shrink: 0;
+}
+
+.contactIcon {
+  width: 20px;
+  height: 20px;
+}
+
+.contactInfoItem strong {
+  display: block;
+  font-size: 0.92rem;
+  color: white;
+  margin-bottom: 2px;
+}
+
+.contactInfoItem p {
+  font-size: 0.95rem;
+  color: white;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.contactInfoItem span {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.locationSection {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.locationTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: white;
+}
+
+.mapCardBox {
+  width: 100%;
+  height: 140px;
+  border-radius: 16px;
+  background: linear-gradient(
+    135deg,
+    rgba(30, 15, 55, 0.9),
+    rgba(15, 8, 30, 0.9)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mapPreviewOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 3, 26, 0.4);
+}
+
+.mapBtn {
+  background: rgba(18, 10, 35, 0.9);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  transition: background 0.2s;
+}
+
+.mapBtn:hover {
+  background: rgba(147, 51, 234, 0.3);
+}
+
+.mapPinSmall {
+  width: 16px;
+  height: 16px;
+  color: #c084fc;
+}
+
+.contactFormCol {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.contactForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  field-sizing: content;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.inputContact {
+  width: 100%;
+  height: 52px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: var(--input);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: white;
+  font-size: 0.92rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.inputContact:focus {
+  border-color: var(--purple);
+}
+.inputContact input {
+  field-sizing: content;
+}
+
+.inputContact::placeholder,
+.textareaContact::placeholder {
+  color: #7f7a8d;
+}
+
+.textareaContact {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--input);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: white;
+  font-size: 0.92rem;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s;
+  font-family: "Poppins", sans-serif;
+}
+
+.textareaContact:focus {
+  border-color: var(--purple);
+}
+
+.checkboxGroup {
+  margin: 4px 0;
+}
+
+.checkboxLabelContact {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  line-height: 1.4;
+  user-select: none;
+}
+
+.checkboxLabelContact input[type="checkbox"] {
+  accent-color: var(--purple);
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.contactSuccessBox {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 20px;
+  padding: 40px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.successCheckBig {
+  width: 56px;
+  height: 56px;
+  color: var(--success);
+}
+
+.contactSuccessBox h4 {
+  font-size: 1.5rem;
+  color: white;
+}
+
+.contactSuccessBox p {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* ========================= FOOTER ========================= */
+.footer {
+  width: 100%;
+  background: #06020f;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 80px 48px 30px 48px;
   position: relative;
   z-index: 2;
 }
 
-.sectionContentBox h2 {
+.footerContainer {
+  max-width: 1300px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 50px;
+  padding-bottom: 50px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.footerBrandCol {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.footerLogoImg {
+  width: 50px;
+  height: auto;
+}
+
+.footerBrandText {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  max-width: 320px;
+}
+
+.socialIconsRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.socialIconLink {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  transition: 0.2s;
+}
+
+.socialIconLink:hover {
+  background: var(--purple);
   color: white;
-  font-size: 2.8rem;
-  letter-spacing: -1.5px;
+  border-color: var(--purple);
+}
+
+.socialSvg {
+  width: 18px;
+  height: 18px;
+}
+
+.footerLinksCol h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
   margin-bottom: 20px;
 }
 
-.sectionContentBox h2 span {
-  background: linear-gradient(135deg, #a855f7, #9333ea);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  display: inline-block;
+.footerLinksCol ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.sectionContentBox p {
+.footerLinksCol ul li a {
   color: var(--muted);
-  font-size: 1.1rem;
-  line-height: 1.8;
-  margin-bottom: 30px;
+  text-decoration: none;
+  font-size: 0.88rem;
+  transition: color 0.2s;
+}
+
+.footerLinksCol ul li a:hover {
+  color: white;
+}
+
+.atendimentoList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.atendimentoList li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footerMiniIcon {
+  width: 16px;
+  height: 16px;
+  color: #c084fc;
+}
+
+.footerBottomBar {
+  max-width: 1300px;
+  margin: 30px auto 0 auto;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.82rem;
 }
 
 /* ========================= SHAKE & SUCCESS ========================= */
 .shake {
   animation: shake 0.45s;
 }
+
 @keyframes shake {
   0% {
     transform: translateX(0);
@@ -733,12 +1418,27 @@ body::before {
 }
 
 /* ========================= RESPONSIVIDADE ========================= */
+@media (max-width: 1200px) {
+  .missionValuesCard {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .contactGridCard {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .footerContainer {
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+  }
+}
+
 @media (max-width: 1100px) {
   .header {
     padding: 0 24px;
   }
   .navMenu {
-    gap: 20px;
+    display: none; /* Em telas menores pode ocultar ou ajustar conforme menu mobile existente */
   }
   .bgBoyImage {
     width: 100%;
@@ -756,6 +1456,16 @@ body::before {
   .featureItem {
     text-align: left;
   }
+  .aboutHeroTop {
+    flex-direction: column;
+    text-align: center;
+  }
+  .aboutBtnGroup {
+    justify-content: center;
+  }
+  .aboutHeroImageWrapper {
+    justify-content: center;
+  }
 }
 
 @media (max-width: 768px) {
@@ -763,27 +1473,34 @@ body::before {
     height: 70px;
     padding: 0 16px;
   }
-  .navMenu {
-    gap: 12px;
-  }
-  .navLink {
+  .entrarHeaderBtn {
+    padding: 8px 16px;
     font-size: 0.85rem;
   }
-  .contactButtonHeader {
-    padding: 8px 14px;
-    font-size: 0.82rem;
-  }
-  .section {
+  .section,
+  .aboutSectionFull,
+  .contactSectionFull {
     padding: 100px 16px 40px 16px;
   }
   .left h1 {
     font-size: clamp(2.3rem, 8vw, 3.5rem);
     letter-spacing: -2px;
   }
-  .loginCard {
+  .loginCard,
+  .missionValuesCard,
+  .contactGridCard {
     max-width: 100%;
-    min-height: 540px;
     padding: 30px 20px;
     border-radius: 26px;
+  }
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+  .footerContainer {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .footer {
+    padding: 60px 20px 20px 20px;
   }
 }

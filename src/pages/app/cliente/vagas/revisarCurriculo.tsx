@@ -1302,7 +1302,7 @@ const RevisarCurriculo: React.FC = () => {
                       <strong style={{ color: "#a78bfa" }}>
                         1 revisão por dia
                       </strong>{" "}
-                      validada diretamente pelo banco de dados no servidor.
+                      validada diretamente pelo servidor.
                     </p>
                   </div>
                 </div>
