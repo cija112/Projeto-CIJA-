@@ -4,7 +4,8 @@ import { Sidebar } from "../../../../components/sideBar/sideBar";
 import { supabase } from "../../../../supabaseClient";
 import styles from "./vagaSelecionada.module.css";
 import { useDocumentTitle } from "Hooks/useDocumentTitle";
-// --- ÍCONES (Mantidos exatamente como no seu original) ---
+
+// --- ÍCONES ---
 const MapPinIcon = () => (
   <svg
     viewBox="0 0 24 24"
@@ -18,6 +19,7 @@ const MapPinIcon = () => (
     <circle cx="12" cy="10" r="3" />
   </svg>
 );
+
 const ClockIcon = () => (
   <svg
     viewBox="0 0 24 24"
@@ -31,6 +33,7 @@ const ClockIcon = () => (
     <polyline points="12 6 12 12 16 14" />
   </svg>
 );
+
 const BrainIcon = () => (
   <svg
     width="24"
@@ -47,6 +50,7 @@ const BrainIcon = () => (
     <path d="M8 20h8" />
   </svg>
 );
+
 const sendIcon = () => (
   <svg
     width="24"
@@ -62,6 +66,7 @@ const sendIcon = () => (
     <path d="M22 2 11 13" />
   </svg>
 );
+
 const UserCheckIcon = () => (
   <svg
     width="24"
@@ -78,6 +83,7 @@ const UserCheckIcon = () => (
     <polyline points="16 11 18 13 22 9" />
   </svg>
 );
+
 const ShieldIcon = () => (
   <svg
     viewBox="0 0 24 24"
@@ -93,6 +99,7 @@ const ShieldIcon = () => (
     <path d="m9 12 2 2 4-4" />
   </svg>
 );
+
 const BriefcaseIcon = () => (
   <svg
     viewBox="0 0 24 24"
@@ -106,6 +113,7 @@ const BriefcaseIcon = () => (
     <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
   </svg>
 );
+
 const DollarIcon = () => (
   <svg
     viewBox="0 0 24 24"
@@ -119,6 +127,7 @@ const DollarIcon = () => (
     <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
   </svg>
 );
+
 const ArrowLeftIcon = () => (
   <svg
     viewBox="0 0 24 24"
@@ -132,6 +141,7 @@ const ArrowLeftIcon = () => (
     <polyline points="12 19 5 12 12 5" />
   </svg>
 );
+
 const BookmarkIcon = ({ fill = "none" }: { fill?: string }) => (
   <svg
     viewBox="0 0 24 24"
@@ -144,6 +154,7 @@ const BookmarkIcon = ({ fill = "none" }: { fill?: string }) => (
     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
   </svg>
 );
+
 const SendIcon = () => (
   <svg
     viewBox="0 0 24 24"
@@ -188,12 +199,16 @@ const VagaSelecionada: React.FC = () => {
   const [jaCandidatado, setJaCandidatado] = useState(false);
   const [isModeloOpen, setModeloOpen] = useState(false);
   const [favoritos, setFavoritos] = useState<string[]>([]);
-  const [ativa, setAtiva] = useState<string | null>(null);
   const [notificacao, setNotificacao] = useState<string | null>(null);
+
   useDocumentTitle("CIJA - Vaga Selecionada");
+
   const mostrarNotificacao = (mensagem: string) => {
     setNotificacao(mensagem);
-    setTimeout(() => setNotificacao(null), 3000);
+
+    setTimeout(() => {
+      setNotificacao(null);
+    }, 3000);
   };
 
   useEffect(() => {
@@ -201,59 +216,82 @@ const VagaSelecionada: React.FC = () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
       if (user) {
         setUserId(user.id);
+
         const { data: fav } = await supabase
           .from("vagas_favoritas")
           .select("id_vag")
           .eq("id_ja", user.id);
-        if (fav) setFavoritos(fav.map((f) => f.id_vag));
+
+        if (fav) {
+          setFavoritos(fav.map((f) => f.id_vag));
+        }
       }
     }
+
     inicializar();
   }, []);
 
   useEffect(() => {
     async function carregarDetalhesVaga() {
       if (!id) return;
+
       setLoading(true);
+
       const { data: vagaData, error: vagaError } = await supabase
         .from("vaga")
         .select("*")
         .eq("id_vag", id)
         .single();
+
       if (vagaError || !vagaData) {
         setLoading(false);
         return;
       }
 
       let empresaCompleta: Empresa | null = null;
+
       if (vagaData.id_em) {
         const { data: empData } = await supabase
           .from("empresa")
           .select("id_em, nome, avatarempresa_url")
           .eq("id_em", vagaData.id_em)
           .single();
-        if (empData) empresaCompleta = empData;
+
+        if (empData) {
+          empresaCompleta = empData;
+        }
       }
 
-      setVaga({ ...vagaData, empresa: empresaCompleta });
+      setVaga({
+        ...vagaData,
+        empresa: empresaCompleta,
+      });
 
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
       if (user) {
         setUserId(user.id);
+
         const { data: cand } = await supabase
           .from("candidaturas")
           .select("id_candidatura")
-          .eq("id_vaga", id)
+          .eq("id_vag", id)
           .eq("id_candidato", user.id)
           .maybeSingle();
-        if (cand) setJaCandidatado(true);
+
+        if (cand) {
+          setJaCandidatado(true);
+        }
       }
+
       setLoading(false);
     }
+
     carregarDetalhesVaga();
   }, [id]);
 
@@ -262,23 +300,34 @@ const VagaSelecionada: React.FC = () => {
       mostrarNotificacao("Você precisa estar logado para favoritar.");
       return;
     }
+
     const isFav = favoritos.includes(idVag);
+
     if (isFav) {
       const { error } = await supabase
         .from("vagas_favoritas")
         .delete()
         .eq("id_ja", userId)
         .eq("id_vag", idVag);
+
       if (!error) {
-        setFavoritos((prev) => prev.filter((id) => id !== idVag));
+        setFavoritos((prev) =>
+          prev.filter((id) => id !== idVag)
+        );
+
         mostrarNotificacao("Vaga removida dos favoritos!");
       }
     } else {
       const { error } = await supabase
         .from("vagas_favoritas")
-        .insert({ id_ja: userId, id_vag: idVag });
+        .insert({
+          id_ja: userId,
+          id_vag: idVag,
+        });
+
       if (!error) {
         setFavoritos((prev) => [...prev, idVag]);
+
         mostrarNotificacao("Vaga favoritada com sucesso!");
       }
     }
@@ -286,18 +335,28 @@ const VagaSelecionada: React.FC = () => {
 
   const handleCandidatura = async () => {
     if (!userId || !vaga) {
-      mostrarNotificacao("Você precisa estar logado para se candidatar.");
+      mostrarNotificacao(
+        "Você precisa estar logado para se candidatar."
+      );
       return;
     }
+
     if (jaCandidatado) {
-      if (window.confirm("Tem certeza que deseja cancelar sua candidatura?")) {
+      if (
+        window.confirm(
+          "Tem certeza que deseja cancelar sua candidatura?"
+        )
+      ) {
         const { error } = await supabase
           .from("candidaturas")
           .delete()
-          .eq("id_vaga", vaga.id_vag)
+          .eq("id_vag", vaga.id_vag)
           .eq("id_candidato", userId);
+
         if (error) {
-          mostrarNotificacao("Não foi possível cancelar a candidatura.");
+          mostrarNotificacao(
+            "Não foi possível cancelar a candidatura."
+          );
         } else {
           setJaCandidatado(false);
           mostrarNotificacao("Candidatura cancelada.");
@@ -306,246 +365,507 @@ const VagaSelecionada: React.FC = () => {
     } else {
       if (
         window.confirm(
-          `Deseja confirmar sua candidatura para "${vaga.titulo}"?`,
+          `Deseja confirmar sua candidatura para "${vaga.titulo}"?`
         )
       ) {
-        const { error } = await supabase.from("candidaturas").insert({
-          id_vaga: vaga.id_vag,
-          id_candidato: userId,
-          data_candidatura: new Date().toISOString(),
-        });
+        const { error } = await supabase
+          .from("candidaturas")
+          .insert({
+            id_vag: vaga.id_vag,
+            id_candidato: userId,
+            data_candidatura: new Date().toISOString(),
+          });
+
         if (error) {
-          mostrarNotificacao("Erro ao realizar a candidatura.");
+          mostrarNotificacao(
+            "Erro ao realizar a candidatura."
+          );
         } else {
           setJaCandidatado(true);
-          mostrarNotificacao("Candidatura realizada com sucesso!");
+          mostrarNotificacao(
+            "Candidatura realizada com sucesso!"
+          );
         }
       }
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
       <div className={styles.container}>
         <Sidebar />
+
         <main className={styles.contentLoading}>
           <p>Carregando detalhes da vaga...</p>
         </main>
       </div>
     );
-  if (!vaga)
+  }
+
+  if (!vaga) {
     return (
       <div className={styles.container}>
         <Sidebar />
+
         <main className={styles.contentLoading}>
           <p>Vaga não encontrada.</p>
         </main>
       </div>
     );
+  }
 
-  const nomeEmpresa = vaga.empresa?.nome || "Empresa Parceira";
-  const letraInicial = nomeEmpresa.charAt(0).toUpperCase();
-  const estaFavoritada = favoritos.includes(vaga.id_vag);
+  const nomeEmpresa =
+    vaga.empresa?.nome || "Empresa Parceira";
+
+  const letraInicial =
+    nomeEmpresa.charAt(0).toUpperCase();
+
+  const estaFavoritada =
+    favoritos.includes(vaga.id_vag);
 
   return (
     <div className={styles.container}>
       <Sidebar />
+
       {notificacao && (
-        <div className={styles.toastNotification}>{notificacao}</div>
+        <div className={styles.toastNotification}>
+          {notificacao}
+        </div>
       )}
+
       <main className={styles.content}>
         <div className={styles.topActions}>
-          <button onClick={() => navigate("/vagas")} className={styles.backBtn}>
-            <ArrowLeftIcon /> <span>Voltar para vagas</span>
-          </button>
           <button
-            className={`${styles.saveBtn} ${estaFavoritada ? styles.saved : ""}`}
-            onClick={() => toggleFavorito(vaga.id_vag)}
+            onClick={() => navigate("/vagas")}
+            className={styles.backBtn}
           >
-            <BookmarkIcon fill={estaFavoritada ? "currentColor" : "none"} />
+            <ArrowLeftIcon />
+            <span>Voltar para vagas</span>
+          </button>
+
+          <button
+            className={`${styles.saveBtn} ${
+              estaFavoritada ? styles.saved : ""
+            }`}
+            onClick={() =>
+              toggleFavorito(vaga.id_vag)
+            }
+          >
+            <BookmarkIcon
+              fill={
+                estaFavoritada
+                  ? "currentColor"
+                  : "none"
+              }
+            />
+
             <span>
-              {estaFavoritada ? "Vaga favoritada" : "Favoritar esta vaga"}
+              {estaFavoritada
+                ? "Vaga favoritada"
+                : "Favoritar esta vaga"}
             </span>
           </button>
         </div>
+
         <div className={styles.mainGrid}>
           <div className={styles.leftColumn}>
-            <h1 className={styles.jobTitle}>{vaga.titulo}</h1>
+            <h1 className={styles.jobTitle}>
+              {vaga.titulo}
+            </h1>
+
             <div className={styles.quickSpecs}>
               <div className={styles.specBadge}>
-                <MapPinIcon />{" "}
+                <MapPinIcon />
+
                 <span>
                   {vaga.cidade} - {vaga.estado}{" "}
-                  {vaga.tipo ? `(${vaga.tipo})` : ""}
+                  {vaga.tipo
+                    ? `(${vaga.tipo})`
+                    : ""}
                 </span>
               </div>
+
               <div className={styles.specBadge}>
-                <BriefcaseIcon /> <span>{nomeEmpresa}</span>
+                <BriefcaseIcon />
+
+                <span>{nomeEmpresa}</span>
               </div>
+
               <div className={styles.specBadge}>
-                <ClockIcon />{" "}
-                <span>Carga Horária: {vaga.carga_horaria}h/semana</span>
-              </div>
-              <div className={styles.specBadge}>
-                <DollarIcon />{" "}
+                <ClockIcon />
+
                 <span>
-                  Salário: R$ {Number(vaga.salario).toLocaleString("pt-BR")}
+                  Carga Horária:{" "}
+                  {vaga.carga_horaria}h/semana
+                </span>
+              </div>
+
+              <div className={styles.specBadge}>
+                <DollarIcon />
+
+                <span>
+                  Salário: R${" "}
+                  {Number(
+                    vaga.salario
+                  ).toLocaleString("pt-BR")}
                 </span>
               </div>
             </div>
+
             <section
               className={styles.sectionBlock}
-              style={{ borderTop: "1px solid #1e1b4b", paddingTop: "24px" }}
+              style={{
+                borderTop:
+                  "1px solid #1e1b4b",
+                paddingTop: "24px",
+              }}
             >
-              <h3 className={styles.sectionTitle}>Descrição da vaga:</h3>
-              <div className={styles.descriptionText}>{vaga.descricao}</div>
+              <h3 className={styles.sectionTitle}>
+                Descrição da vaga:
+              </h3>
+
+              <div
+                className={
+                  styles.descriptionText
+                }
+              >
+                {vaga.descricao}
+              </div>
             </section>
           </div>
+
           <div className={styles.rightColumn}>
-            <div className={styles.sidebarCardCompany}>
-              <h4 className={styles.cardHeaderTitle}>Sobre a empresa</h4>
+            <div
+              className={
+                styles.sidebarCardCompany
+              }
+            >
+              <h4
+                className={
+                  styles.cardHeaderTitle
+                }
+              >
+                Sobre a empresa
+              </h4>
+
               <div className={styles.companyRow}>
-                <div className={styles.companyLogo}>
-                  {vaga.empresa?.avatarempresa_url ? (
+                <div
+                  className={
+                    styles.companyLogo
+                  }
+                >
+                  {vaga.empresa
+                    ?.avatarempresa_url ? (
                     <img
-                      src={vaga.empresa.avatarempresa_url}
+                      src={
+                        vaga.empresa
+                          .avatarempresa_url
+                      }
                       alt={nomeEmpresa}
                     />
                   ) : (
-                    <span>{letraInicial}</span>
+                    <span>
+                      {letraInicial}
+                    </span>
                   )}
                 </div>
-                <div className={styles.companyMeta}>
+
+                <div
+                  className={
+                    styles.companyMeta
+                  }
+                >
                   <h5>{nomeEmpresa}</h5>
-                  <p className={styles.companyDescription}>
-                    Parceira integrada ao ecossistema do Centro de Integração
-                    Jovem Aprendiz.
+
+                  <p
+                    className={
+                      styles.companyDescription
+                    }
+                  >
+                    Parceira integrada ao
+                    ecossistema do Centro de
+                    Integração Jovem
+                    Aprendiz.
                   </p>
                 </div>
               </div>
+
               <button
                 onClick={() =>
-                  navigate(`/perfilEmpresa/${vaga.empresa?.id_em}`)
+                  navigate(
+                    `/perfilEmpresa/${vaga.empresa?.id_em}`
+                  )
                 }
-                className={styles.outlineLinkBtn}
+                className={
+                  styles.outlineLinkBtn
+                }
               >
                 Ver perfil da empresa
               </button>
             </div>
+
             <div className={styles.sidebarCard}>
-              <h4 className={styles.cardHeaderTitle}>Informações da vaga</h4>
+              <h4
+                className={
+                  styles.cardHeaderTitle
+                }
+              >
+                Informações da vaga
+              </h4>
+
               <div className={styles.infoMetaRow}>
-                <div className={styles.infoMetaIcon}>
+                <div
+                  className={
+                    styles.infoMetaIcon
+                  }
+                >
                   <BriefcaseIcon />
                 </div>
-                <div className={styles.infoMetaContent}>
-                  <span>Tipo de contrato</span>
-                  <strong>{vaga.contrato}</strong>
+
+                <div
+                  className={
+                    styles.infoMetaContent
+                  }
+                >
+                  <span>
+                    Tipo de contrato
+                  </span>
+
+                  <strong>
+                    {vaga.contrato}
+                  </strong>
                 </div>
               </div>
+
               {vaga.data_publicada && (
-                <div className={styles.infoMetaRow}>
-                  <div className={styles.infoMetaIcon}>
+                <div
+                  className={
+                    styles.infoMetaRow
+                  }
+                >
+                  <div
+                    className={
+                      styles.infoMetaIcon
+                    }
+                  >
                     <ClockIcon />
                   </div>
-                  <div className={styles.infoMetaContent}>
-                    <span>Publicado em</span>
+
+                  <div
+                    className={
+                      styles.infoMetaContent
+                    }
+                  >
+                    <span>
+                      Publicado em
+                    </span>
+
                     <strong>
-                      {new Date(vaga.data_publicada).toLocaleDateString(
+                      {new Date(
+                        vaga.data_publicada
+                      ).toLocaleDateString(
                         "pt-BR",
-                        { day: "numeric", month: "long", year: "numeric" },
+                        {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        }
                       )}
                     </strong>
                   </div>
                 </div>
               )}
             </div>
+
             <button
               onClick={() =>
-                !jaCandidatado ? setModeloOpen(true) : handleCandidatura()
+                !jaCandidatado
+                  ? setModeloOpen(true)
+                  : handleCandidatura()
               }
-              className={`${styles.applyPrimaryBtn} ${jaCandidatado ? styles.applied : ""}`}
+              className={`${styles.applyPrimaryBtn} ${
+                jaCandidatado
+                  ? styles.applied
+                  : ""
+              }`}
             >
-              <SendIcon />{" "}
+              <SendIcon />
+
               <span>
-                {jaCandidatado ? "Cancelar Candidatura" : "Candidatar-se"}
+                {jaCandidatado
+                  ? "Cancelar Candidatura"
+                  : "Candidatar-se"}
               </span>
             </button>
+
             {isModeloOpen && (
-              <div className={styles.modalOverlay}>
+              <div
+                className={
+                  styles.modalOverlay
+                }
+              >
                 <div
-                  className={styles.modalContainer}
+                  className={
+                    styles.modalContainer
+                  }
                 >
-                  <header className={styles.modalHeader}>
+                  <header
+                    className={
+                      styles.modalHeader
+                    }
+                  >
                     <div>
-                      <h2>Como funciona sua candidatura?</h2>
+                      <h2>
+                        Como funciona sua
+                        candidatura?
+                      </h2>
+
                       <p>
-                        Entenda cada etapa do processo até você conquistar a sua
-                        vaga!
+                        Entenda cada etapa do
+                        processo até você
+                        conquistar a sua vaga!
                       </p>
                     </div>
+
                     <button
-                      className={styles.closeBtn}
-                      onClick={() => setModeloOpen(false)}
+                      className={
+                        styles.closeBtn
+                      }
+                      onClick={() =>
+                        setModeloOpen(false)
+                      }
                     >
                       ×
                     </button>
                   </header>
-                  <div className={styles.stepsGrid}>
+
+                  <div
+                    className={
+                      styles.stepsGrid
+                    }
+                  >
                     {[
                       {
                         icon: <BrainIcon />,
-                        title: "Revisão com IA do  CIJA ",
-                        desc: "Você será redirecionado para revisar seu currículo com a inteligência artificial.",
+                        title:
+                          "Revisão com IA do CIJA",
+                        desc:
+                          "Você será redirecionado para revisar seu currículo com a inteligência artificial.",
                       },
                       {
                         icon: <SendIcon />,
-                        title: "Currículo enviado",
-                        desc: "Após revisado, seu currículo será enviado para a empresa responsável.",
+                        title:
+                          "Currículo enviado",
+                        desc:
+                          "Após revisado, seu currículo será enviado para a empresa responsável.",
                       },
                       {
-                        icon: <UserCheckIcon />,
-                        title: "Aprovação e acesso",
-                        desc: "Se a empresa aprovar, você terá acesso total aos detalhes da vaga.",
+                        icon:
+                          <UserCheckIcon />,
+                        title:
+                          "Aprovação e acesso",
+                        desc:
+                          "Se a empresa aprovar, você terá acesso total aos detalhes da vaga.",
                       },
                     ].map((step, idx) => (
-                      <div key={idx} className={styles.stepCard}>
-                        <div className={styles.iconWrapper}>
-                          <div className={styles.stepNumber}>0{idx + 1}</div>
+                      <div
+                        key={idx}
+                        className={
+                          styles.stepCard
+                        }
+                      >
+                        <div
+                          className={
+                            styles.iconWrapper
+                          }
+                        >
+                          <div
+                            className={
+                              styles.stepNumber
+                            }
+                          >
+                            0{idx + 1}
+                          </div>
+
                           {step.icon}
                         </div>
-                        <div className={styles.stepInfo}>
-                          <h4>{step.title}</h4>
-                          <p>{step.desc}</p>
+
+                        <div
+                          className={
+                            styles.stepInfo
+                          }
+                        >
+                          <h4>
+                            {step.title}
+                          </h4>
+
+                          <p>
+                            {step.desc}
+                          </p>
                         </div>
                       </div>
                     ))}
                   </div>
-                  <div className={styles.securityBanner}>
+
+                  <div
+                    className={
+                      styles.securityBanner
+                    }
+                  >
                     <ShieldIcon />
+
                     <span>
                       <strong>
-                        Transparência e segurança em todo o processo.
-                      </strong>{" "}
-                      <br /> Você acompanha cada etapa da sua candidatura
-                      diretamente pela plataforma.
+                        Transparência e
+                        segurança em todo o
+                        processo.
+                      </strong>
+
+                      <br />
+
+                      Você acompanha cada etapa
+                      da sua candidatura
+                      diretamente pela
+                      plataforma.
                     </span>
                   </div>
-                  <footer className={styles.modalFooter}>
-                    <button
-                      onClick={() => setModeloOpen(false)}
-                      className={styles.secondaryBtn}
-                    >
-                      Fechar
-                    </button>
+
+                  {/* BOTÕES DO MODAL */}
+                  <footer
+                    className={
+                      styles.modalFooter
+                    }
+                  >
+                    {/* CONTINUAR → CANDIDATAR PADRÃO */}
                     <button
                       onClick={() => {
-                        navigate(`/revisar-curriculo/${vaga.id_vag}`);
                         setModeloOpen(false);
+
+                        navigate(
+                          `/candidatarPadrao/${vaga.id_vag}`
+                        );
                       }}
-                      className={styles.primaryBtn}
+                      className={
+                        styles.secondaryBtn
+                      }
                     >
-                      Continuar →
+                      Continuar
+                    </button>
+
+                    {/* CONTINUAR PARA REVISÃO → REVISAR CURRÍCULO */}
+                    <button
+                      onClick={() => {
+                        setModeloOpen(false);
+
+                        navigate(
+                          `/revisar-curriculo/${vaga.id_vag}`
+                        );
+                      }}
+                      className={
+                        styles.primaryBtn
+                      }
+                    >
+                      Continuar para revisão
                     </button>
                   </footer>
                 </div>
@@ -557,4 +877,5 @@ const VagaSelecionada: React.FC = () => {
     </div>
   );
 };
+
 export default VagaSelecionada;
