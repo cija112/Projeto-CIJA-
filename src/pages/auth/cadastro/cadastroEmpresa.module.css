@@ -1,530 +1,466 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap");
-
-:root {
-  --bg: #07010f;
-  --card: linear-gradient(
-    180deg,
-    rgba(24, 12, 42, 0.94) 0%,
-    rgba(11, 4, 20, 0.98) 100%
-  );
-  --purple: #9333ea;
-  --purple-light: #a855f7;
-  --border: rgba(255, 255, 255, 0.08);
-  --muted: #a8a3b7;
-  --success: #22c55e;
-  --danger: #ff4d4d;
-  --shadow: 0 30px 120px rgba(0, 0, 0, 0.72), 0 0 60px rgba(147, 51, 234, 0.12);
-  --input: rgba(255, 255, 255, 0.03);
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-body {
-  font-family: "Poppins", sans-serif;
-  background: radial-gradient(circle at top, #18052d 0%, #07010f 45%);
-  color: white;
-  -webkit-font-smoothing: antialiased;
-}
-
 .wrapper {
-  width: 100%;
   min-height: 100vh;
+  width: 100%;
+  background-color: #0b0714;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 30px 20px;
+  font-family: inherit;
+  color: #fff;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.topLogo {
+  position: absolute;
+  top: 32px;
+  left: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 50px 26px;
-  position: relative;
-  overflow: hidden;
 }
 
-.desktopLogo {
-  position: fixed;
-  top: 24px;
-  left: 24px;
-  width: 72px;
-  z-index: 20;
-}
-.mobileLogo {
-  display: none;
+.topLogo img {
+  width: 52px;
+  height: auto;
+  object-fit: contain;
 }
 
 .alert {
-  position: fixed;
-  top: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 14px 22px;
-  border-radius: 16px;
-  background: var(--danger);
-  color: white;
-  font-weight: 600;
-  z-index: 100;
-  box-shadow: 0 15px 40px rgba(255, 77, 77, 0.35);
+  background-color: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  padding: 10px 20px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
 }
 
-.loginContainer {
-  width: 100%;
-  max-width: 1320px;
+.container {
   display: flex;
-  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 70px;
+  gap: 40px;
+  box-sizing: border-box;
+  margin-top: 45px;
 }
-.left {
+
+.leftSection {
   flex: 1;
-  max-width: 720px;
-  margin-top: -70px;
-}
-.badge {
-  display: inline-flex;
-  padding: 11px 20px;
-  border-radius: 999px;
-  background: rgba(147, 51, 234, 0.12);
-  border: 1px solid rgba(168, 85, 247, 0.24);
-  color: #d8b4fe;
-  font-size: 0.86rem;
-  font-weight: 600;
-  margin-bottom: 26px;
-  backdrop-filter: blur(12px);
-}
-.left h1 {
-  font-size: clamp(4rem, 8vw, 7rem);
-  line-height: 0.92;
-  letter-spacing: -5px;
-  font-weight: 800;
-  text-shadow: 0 0 40px rgba(147, 51, 234, 0.12);
-}
-.left h1 span {
-  background: linear-gradient(180deg, #6f14cf 0%, #8e24f1 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.tagline {
-  margin-top: 28px;
-  max-width: 580px;
-  color: var(--muted);
-  font-size: 1.05rem;
-  line-height: 1.8;
-}
-
-.loginCard {
-  position: relative;
-  width: 100%;
-  max-width: 480px;
-  border-radius: 32px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  backdrop-filter: blur(26px);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  padding: 28px;
-  z-index: 2;
-}
-.loginCard::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    140deg,
-    rgba(255, 255, 255, 0.05),
-    transparent 40%
-  );
-  pointer-events: none;
-}
-.cardContent {
-  position: relative;
-  z-index: 2;
-}
-.cardContent h2 {
-  font-size: 2.2rem;
-  font-weight: 800;
-  margin-bottom: 6px;
-}
-.subtitle {
-  color: var(--muted);
-  margin-bottom: 18px;
-  font-size: 0.97rem;
-}
-
-.validationBox {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 20px;
-  padding: 16px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-.validationItem {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #7f7990;
-  font-size: 0.87rem;
-  font-weight: 500;
-  transition: 0.25s;
-}
-.checkIcon {
-  width: 23px;
-  height: 23px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.16);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.78rem;
-  transition: 0.25s;
-}
-.valid {
-  color: white;
-}
-.valid.checkIcon {
-  background: var(--success);
-  border-color: var(--success);
-  color: white;
-  box-shadow: 0 0 18px rgba(34, 197, 94, 0.35);
-}
-
-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  justify-content: flex-start;
+  padding-left: 10px;
+  gap: 5px;
+  padding-top: 40px;
 }
-.inputGroup {
-  width: 100%;
-  position: relative;
+
+.leftSection h1 {
+  font-size: clamp(2.8rem, 6vw, 5.7rem);
+  font-weight: 800;
+  line-height: 1.04;
+  margin-bottom: 20px;
+  gap: 20px;
+  padding-top: 100px;
+  color: #ffffff;
 }
-.inputIcon {
-  position: absolute;
-  left: 90%;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #7f7a8d;
-  pointer-events: none;
-  z-index: 2;
-  width: clamp(20px, 2.5vw, 24px); /*  min 20px, max 24px */
-  height: clamp(20px, 2.5vw, 24px);
+
+.highlightText {
+  color: #a855f7;
 }
-.input {
-  width: 100%;
-  height: 58px;
-  border-radius: 18px;
+
+.tagline {
+  font-size: 1.05rem;
+  color: #94a3b8;
+  line-height: 1.5;
+  max-width: 440px;
+  margin: 0;
+}
+
+.rightSection {
+  flex: 1.1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.formCard {
+  background: #130e26;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: var(--input);
-  color: white;
-  padding: 0 18px;
-  outline: none;
-  font-size: 0.96rem;
-  transition: 0.2s;
-}
-.input::placeholder {
-  color: #726b83;
-}
-.input:focus {
-  border-color: var(--purple);
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.12);
-}
-.input.error {
-  border-color: var(--danger);
-}
-.errorMessage {
-  color: var(--danger);
-  font-size: 0.82rem;
-  margin-top: 6px;
-  margin-left: 4px;
+  border-radius: 20px;
+  padding: 40px;
+  width: 100%;
+  max-width: 540px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
 }
 
-.senhaBox {
+/* Título do formulário bem maior */
+.formHeader h2 {
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  color: #ffffff;
+}
+
+.formHeader p {
+  font-size: 0.92rem;
+  color: #94a3b8;
+  margin: 0 0 24px 0;
+}
+
+.rowGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.inputGroup {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Títulos dos campos maiores dentro do container */
+.inputGroup label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 6px;
+}
+
+.inputWrapper {
   position: relative;
-}
-.senhaBox.input {
-  padding-right: 58px;
-}
-.toggleSenha {
-  position: absolute;
-  top: 10%;
-  right: 15px;
-
-  width: 25px;
-  height: 48px;
-  border: none;
-  background: transparent;
-  color: #aaa;
-  cursor: pointer;
-  border-radius: 14px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: 0.2s;
-}
-.toggleSenha:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
 }
 
-.passwordStrength {
+.input {
+  width: 100%;
+  background: #0b0714;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 13px 42px 13px 14px;
+  font-size: 0.95rem;
+  color: #ffffff;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.input::placeholder {
+  color: #475569;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #a855f7;
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+}
+
+.errorBorder {
+  border-color: #ef4444 !important;
+}
+
+.inputIcon {
+  position: absolute;
+  right: 14px;
+  color: #64748b;
+  pointer-events: none;
+}
+
+/* Botão do olhinho garantido e clicável */
+.togglePass {
+  position: absolute;
+  right: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  z-index: 10;
+}
+
+.togglePass:hover {
+  color: #ffffff;
+}
+
+/* Password Strength Bar */
+.passwordStrengthWrapper {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 8px;
+  margin-top: 6px;
 }
-.strengthBar {
+
+.strengthBarContainer {
   flex: 1;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 99px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
   overflow: hidden;
 }
-.strengthFill {
+
+.strengthBarFill {
   height: 100%;
-  width: 0;
-  transition: 0.3s;
-  border-radius: 99px;
-}
-.weak {
-  width: 25%;
-  background: #ef4444;
-}
-.medium {
-  width: 50%;
-  background: #f59e0b;
-}
-.strong {
-  width: 75%;
-  background: #22c55e;
-}
-.veryStrong {
-  width: 100%;
-  background: #16a34a;
-}
-.passwordStrength span {
-  font-size: 0.78rem;
-  color: var(--muted);
-  min-width: 80px;
-  text-align: right;
+  transition:
+    width 0.3s ease,
+    background-color 0.3s ease;
 }
 
-.actionButton {
-  width: 100%;
-  height: 60px;
-  border: none;
-  border-radius: 18px;
+.strengthText {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.helperText {
+  font-size: 0.75rem;
+  color: #64748b;
   margin-top: 6px;
-  background: linear-gradient(135deg, #952cf1, #6615b3);
-  color: white;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.25s;
+  line-height: 1.3;
 }
 
-.actionButton:disabled {
-  opacity: 0.6;
+.errorMsg {
+  font-size: 0.75rem;
+  color: #f87171;
+  margin-top: 4px;
+}
+
+.termsBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 16px 0 8px 0;
+}
+
+.termsBox input[type="checkbox"] {
+  accent-color: #9333ea;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+.termsBox label {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.termsBox a {
+  color: #c084fc;
+  text-decoration: none;
+}
+
+.termsBox a:hover {
+  text-decoration: underline;
+}
+
+.submitBtn {
+  width: 100%;
+  background: #9333ea;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  margin-top: 10px;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: #7e22ce;
+}
+
+.submitBtn:disabled {
+  opacity: 0.7;
   cursor: not-allowed;
 }
 
-.footerActions {
-  margin-top: 22px;
-}
-.separator {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #817b91;
-  margin-bottom: 18px;
-}
-.separator::before,
-.separator::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.08);
-}
-.subLink {
+.loginFooter {
   text-align: center;
-  color: var(--muted);
-  font-size: 0.95rem;
-}
-.subLink a {
-  color: #c084fc;
-  font-weight: 700;
-  margin-left: 6px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-.subLink a:hover {
-  color: white;
+  margin-top: 20px;
 }
 
-.successAnimation {
-  padding: 40px 22px;
-  text-align: center;
-  position: relative;
+.loginFooter p {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin: 0;
 }
-.checkmark {
-  width: 90px;
-  height: 90px;
+
+.loginFooter a {
+  color: #c084fc;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.loginFooter a:hover {
+  text-decoration: underline;
+}
+
+/* Shake Animation on Error */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+
+.shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+
+.successAnimationContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 40px;
+  text-align: center;
+  min-height: 700px;
+  animation: fadeIn 0.4s ease;
+}
+
+.checkmarkSvg {
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   display: block;
-  stroke-width: 3;
-  stroke: #fff;
+  stroke-width: 2.5;
+  stroke: #10b981;
   stroke-miterlimit: 10;
-  margin: 0 auto 20px;
-  box-shadow: 0 0 40px rgba(34, 197, 94, 0.28);
+  box-shadow: inset 0px 0px 0px #10b981;
   animation:
-    fill.4s ease-in-out.4s forwards,
-    scale.3s ease-in-out.9s both;
+    fillCircle 0.4s ease-in-out 0.4s forwards,
+    scaleUp 0.3s ease-in-out 0.9s both;
+  margin-bottom: 24px;
 }
+
 .checkmarkCircle {
   stroke-dasharray: 166;
   stroke-dashoffset: 166;
-  stroke-width: 3;
-  stroke: #22c55e;
+  stroke-width: 2.5;
+  stroke-miterlimit: 10;
+  stroke: #10b981;
   fill: none;
-  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+  animation: strokeAnim 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
 }
+
 .checkmarkCheck {
   transform-origin: 50% 50%;
   stroke-dasharray: 48;
   stroke-dashoffset: 48;
-  stroke: #22c55e;
-  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
+  stroke-width: 3;
+  stroke: #10b981;
+  fill: none;
+  animation: strokeAnim 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
 }
-@keyframes stroke {
+
+.successTitle {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.successText {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+@keyframes strokeAnim {
   100% {
     stroke-dashoffset: 0;
   }
 }
-@keyframes scale {
+
+@keyframes scaleUp {
   0%,
   100% {
     transform: none;
   }
   50% {
-    transform: scale3d(1.1, 1.1, 1);
-  }
-}
-@keyframes fill {
-  100% {
-    box-shadow: inset 0 0 0 45px #22c55e;
+    transform: scale3d(1.08, 1.08, 1);
   }
 }
 
-.successParticles {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.successParticles span {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: #a855f7;
-  border-radius: 50%;
-  opacity: 0;
-  animation: particle 1.2s ease-out forwards;
-}
-.successParticles span:nth-child(1) {
-  left: 20%;
-  top: 30%;
-  animation-delay: 0.1s;
-}
-.successParticles span:nth-child(2) {
-  left: 80%;
-  top: 25%;
-  animation-delay: 0.2s;
-}
-.successParticles span:nth-child(3) {
-  left: 50%;
-  top: 15%;
-  animation-delay: 0.15s;
-}
-@keyframes particle {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+@keyframes fillCircle {
   100% {
+    box-shadow: inset 0px 0px 0px 50px rgba(16, 185, 129, 0.1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
     opacity: 0;
-    transform: translateY(-40px) scale(0);
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.successAnimation h2 {
-  font-size: 2rem;
-  margin-bottom: 10px;
-}
-.successAnimation p {
-  color: var(--muted);
-}
-
-.shake {
-  animation: shake 0.4s;
-}
-@keyframes shake {
-  25% {
-    transform: translateX(-5px);
+/* Responsividade */
+@media (max-width: 968px) {
+  .topLogo {
+    top: 20px;
+    left: 20px;
   }
-  50% {
-    transform: translateX(5px);
-  }
-  75% {
-    transform: translateX(-3px);
-  }
-}
-
-@media (max-width: 1100px) {
-  .loginContainer {
+  .container {
     flex-direction: column;
-    gap: 50px;
+    align-items: center;
+    gap: 30px;
+    margin-top: 50px;
   }
-  .left {
+  .leftSection {
     text-align: center;
-    margin-top: 0;
+    padding-left: 0;
+    padding-top: 0;
   }
   .tagline {
-    margin-inline: auto;
-  }
-}
-@media (max-width: 768px) {
-  .desktopLogo {
-    display: none;
-  }
-  .mobileLogo {
-    display: block;
-    width: 74px;
-    margin: 0 auto 18px;
-  }
-  .wrapper {
-    padding: 24px 14px;
-  }
-  .left h1 {
-    font-size: clamp(3rem, 14vw, 5rem);
-    letter-spacing: -3px;
-  }
-  .loginCard {
     max-width: 100%;
-    padding: 24px 18px;
-    border-radius: 26px;
   }
-  .validationBox {
-    grid-template-columns: 1fr;
+  .rightSection {
+    justify-content: center;
+    width: 100%;
   }
 }
-@media (max-width: 480px) {
-  .left h1 {
-    font-size: 3.3rem;
+
+@media (max-width: 600px) {
+  .rowGrid {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
-  .input {
-    height: 56px;
+  .formCard {
+    padding: 24px;
   }
-  .actionButton {
-    height: 56px;
+  .leftSection h1 {
+    font-size: 3.4rem;
+  }
+  .inputGroup label {
+    font-size: 0.95rem;
   }
 }

@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback } from "react";
-// Import do CSS correto do seu projeto
 import styles from "./Sidebar.module.css";
 import cijaLogo from "../../assets/logo2.png";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -68,11 +67,24 @@ const DocumentIcon = () => (
   </svg>
 );
 
-const SidebarEmpresa: React.FC = () => {
+export const SidebarEmpresa: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [userId, setUserId] = useState("");
   const [naoLidas, setNaoLidas] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  useEffect(() => {
+    document.body.classList.toggle(
+      styles.sidebarOpenBody,
+      isOpen && window.innerWidth <= 992,
+    );
+
+    return () => {
+      document.body.classList.remove(styles.sidebarOpenBody);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     const init = async () => {
@@ -116,7 +128,7 @@ const SidebarEmpresa: React.FC = () => {
         },
         () => {
           carregarNaoLidas();
-        }
+        },
       )
       .subscribe();
 
@@ -127,9 +139,17 @@ const SidebarEmpresa: React.FC = () => {
 
   const menuItems: MenuItem[] = [
     { label: "Início", path: "/menuEmpresa", icon: <HomeIcon /> },
-    { label: "Minhas Vagas", path: "/vagasEmpresa", icon: <BriefcaseIcon /> },
+    {
+      label: "Vagas Cadastradas",
+      path: "/vagasEmpresa",
+      icon: <BriefcaseIcon />,
+    },
     { label: "Candidatos", path: "/candidatosEmpresa", icon: <UsersIcon /> },
-    { label: "Pré-Entrevistas", path: "/preEntrevista", icon: <DocumentIcon /> },
+    {
+      label: "Pré-Entrevistas",
+      path: "/preEntrevista",
+      icon: <DocumentIcon />,
+    },
     {
       label: "Mensagens",
       path: "/mensagemEmpresa",
@@ -139,6 +159,18 @@ const SidebarEmpresa: React.FC = () => {
     { label: "Perfil Empresa", path: "/perfilEmpresa", icon: <UserIcon /> },
   ];
 
+  const handleNavigation = (path: string) => {
+    if (isNavigating || location.pathname === path) return;
+
+    setIsNavigating(true);
+    navigate(path);
+    setIsOpen(false);
+
+    setTimeout(() => {
+      setIsNavigating(false);
+    }, 300);
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     localStorage.clear();
@@ -146,46 +178,64 @@ const SidebarEmpresa: React.FC = () => {
   };
 
   return (
-    <aside className={styles.sidebar}>
-      <div className={styles.topContent}>
-        <div className={styles.logoContainer}>
-          <img src={cijaLogo} alt="CIJA" className={styles.logo} />
-          <p className={styles.subtitle}>Centro de Integração</p>
+    <>
+      <button
+        className={styles.hamburger}
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label="Menu"
+      >
+        <div className={`${styles.bar} ${isOpen ? styles.bar1 : ""}`} />
+        <div className={`${styles.bar} ${isOpen ? styles.bar2 : ""}`} />
+        <div className={`${styles.bar} ${isOpen ? styles.bar3 : ""}`} />
+      </button>
 
+      {isOpen && (
+        <div className={styles.overlay} onClick={() => setIsOpen(false)} />
+      )}
+
+      <aside
+        className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ""}`}
+      >
+        <div className={styles.topContent}>
+          <div className={styles.logoContainer}>
+            <img src={cijaLogo} alt="CIJA" className={styles.logo} />
+            <p className={styles.subtitle}>Centro de Integração</p>
+          </div>
+
+          <nav className={styles.menu}>
+            {menuItems.map((item) => (
+              <button
+                key={item.path}
+                className={`${styles.menuItem} ${
+                  location.pathname === item.path ? styles.active : ""
+                }`}
+                onClick={() => handleNavigation(item.path)}
+                disabled={isNavigating}
+              >
+                <span className={styles.iconWrapper}>{item.icon}</span>
+                <span className={styles.menuLabel}>{item.label}</span>
+                {item.badge ? (
+                  <span className={styles.badge}>
+                    {item.badge > 99 ? "99+" : item.badge}
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </nav>
         </div>
 
-        <nav className={styles.menu}>
-          {menuItems.map((item) => (
-            <button
-              key={item.path}
-              className={`${styles.menuItem} ${
-                location.pathname === item.path ? styles.active : ""
-              }`}
-              onClick={() => navigate(item.path)}
-            >
-              <span className={styles.iconWrapper}>{item.icon}</span>
-              <span className={styles.menuLabel}>{item.label}</span>
-              {item.badge ? (
-                <span className={styles.badge}>
-                  {item.badge > 99 ? "99+" : item.badge}
-                </span>
-              ) : null}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      <div className={styles.bottomContent}>
-        <button className={styles.logout} onClick={handleLogout}>
-          <span className={styles.iconWrapper}>
-            <LogoutIcon />
-          </span>
-          <span>Sair</span>
-        </button>
-      </div>
-    </aside>
+        <div className={styles.bottomContent}>
+          <button className={styles.logout} onClick={handleLogout}>
+            <span className={styles.iconWrapper}>
+              <LogoutIcon />
+            </span>
+            <span>Sair</span>
+          </button>
+        </div>
+      </aside>
+    </>
   );
 };
 
-export { SidebarEmpresa };
+
 export default SidebarEmpresa;

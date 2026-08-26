@@ -158,7 +158,7 @@ const MenuEmpresa: React.FC = () => {
       <div className={styles.mainWrapper}>
         <main className={styles.content}>
           <div className={styles.header}>
-            <h1>Olá, {empresa.nome.split(" ")[0]}! 👋</h1>
+            <h1>Olá, {empresa.nome.split(" ")[0]}!</h1>
             <p>
               Acompanhe em tempo real o desempenho das suas oportunidades
               publicadas.
@@ -260,7 +260,7 @@ const MenuEmpresa: React.FC = () => {
                     Conta verificada
                   </span>
                   <span className={styles.perfilData}>
-                     Cadastrado em{" "}
+                    Cadastrado em{" "}
                     {new Date(empresa.data_cadastro).toLocaleDateString(
                       "pt-BR",
                     )}
@@ -425,7 +425,6 @@ const MenuEmpresa: React.FC = () => {
               </div>
             </div>
           </div>
-
         </main>
       </div>
     </div>

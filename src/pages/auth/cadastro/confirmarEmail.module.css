@@ -148,19 +148,19 @@ body {
 ========================================= */
 
 .leftContent {
-  flex: 1;
+  flex: 1.5;
 
-  max-width: 580px;
+  max-width: 620px;
 }
 
 .leftContent h1 {
-  font-size: clamp(3.8rem, 7vw, 7rem);
-
+  font-size: clamp(3.8rem, 6vw, 6.7rem);
+  
   line-height: 0.95;
 
   font-weight: 800;
 
-  letter-spacing: -3px;
+  letter-spacing: -1.5px;
 
   color: white;
 
@@ -168,7 +168,7 @@ body {
 }
 
 .leftContent h1 span {
-  background: linear-gradient(180deg, #d8b4fe 0%, #a855f7 50%, #7e22ce 100%);
+  background: #7e22ce;
 
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -392,12 +392,12 @@ body {
 
   transition: 0.25s ease;
 
-  box-shadow: 0 14px 35px rgba(126, 34, 206, 0.3);
+  
 }
 
 .actionButton:hover:not(:disabled) {
-  transform: translateY(-2px);
 
+  background-color: #8b38eb;
   filter: brightness(1.05);
 }
 

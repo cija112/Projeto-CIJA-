@@ -5,6 +5,7 @@
   max-width: 100%;
   background-color: #0b0712;
   overflow-x: hidden;
+  position: relative;
 }
 
 .content {
@@ -17,13 +18,80 @@
   overflow-x: hidden;
 }
 
+/* Sistema de Notificações estilo LinkedIn */
+.toastContainer {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 380px;
+  width: 100%;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background-color: #161122;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.toastSuccess {
+  border-left: 4px solid #4ade80;
+}
+
+.toastError {
+  border-left: 4px solid #f87171;
+}
+
+.toastIconSuccess {
+  color: #4ade80;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.toastIconError {
+  color: #f87171;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.toastMessage {
+  flex: 1;
+  line-height: 1.4;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .headerArea {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
   gap: 30px;
-  margin-top: 40px;
-  margin-bottom: 32px;
+  margin-top: 20px;
+  margin-bottom: 24px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -42,111 +110,246 @@
 
 .headerArea p {
   color: #94a3b8;
-  font-size: 16px;
+  font-size: 15px;
   margin: 8px 0 0;
   line-height: 1.5;
 }
 
+.btnExportar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #161122;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btnExportar:hover {
+  background-color: rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.6);
+}
+
+.filterBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 28px;
+  width: 100%;
+}
+
+.tabsContainer {
+  display: flex;
+  gap: 8px;
+  background-color: #161122;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(168, 85, 247, 0.15);
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.tabButton {
+  background-color: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tabButton span {
+  background-color: rgba(255, 255, 255, 0.08);
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.tabButton.active {
+  background-color: #5f236b;
+  color: #ffffff;
+}
+
+.tabButton.active span {
+  background-color: rgba(0, 0, 0, 0.25);
+}
+
+.searchFilters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.searchBox {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchBox input {
+  background-color: #161122;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 10px;
+  padding: 10px 14px 10px 40px;
+  color: #ffffff;
+  font-size: 14px;
+  width: 260px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.searchBox input:focus {
+  border-color: rgba(168, 85, 247, 0.6);
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+}
+
+.vagaSelectWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.vagaSelectIcon {
+  position: absolute;
+  left: 12px;
+  color: #94a3b8;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.vagaSelect {
+  background-color: #161122;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 10px;
+  padding: 10px 14px 10px 38px;
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+}
+
 .loading {
-  min-height: 70vh;
+  min-height: 50vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #a855f7;
+  color: #c084fc;
   font-size: 18px;
   font-weight: 600;
 }
 
-.candidatosSection {
-  width: 100%;
-}
-
-.listHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.listHeader h2 {
-  color: #ffffff;
-  font-size: 20px;
-  margin: 0 0 5px;
-}
-
-.listHeader span {
-  color: #64748b;
-  font-size: 13px;
-}
-
 .candidatosGrid {
   display: grid;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(min(340px, 100%), 1fr)
-  );
+  grid-template-columns: repeat(auto-fill, minmax(min(500px, 100%), 1fr));
   gap: 24px;
   width: 100%;
 }
 
 .cardCandidato {
   background-color: #161122;
-  border: 1px solid rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.15);
   border-radius: 16px;
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  min-width: 0;
   width: 100%;
   box-sizing: border-box;
-  height: 100%;
-  transition: border-color 0.2s, transform 0.2s;
 }
 
-.cardCandidato:hover {
-  border-color: rgba(168, 85, 247, 0.4);
-  transform: translateY(-2px);
-}
-
-.cardHeader {
+.cardHeaderTop {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
   gap: 15px;
 }
 
-.cardTitleArea {
+.candidatoAvatarInfo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   min-width: 0;
-  flex: 1;
 }
 
-.cardHeader h2 {
+.avatarCircle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #4c1d95);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid rgba(168, 85, 247, 0.4);
+}
+
+.candidatoTitles {
+  min-width: 0;
+}
+
+.candidatoTitles h2 {
   color: #ffffff;
   font-size: 18px;
-  margin: 0 0 8px;
-  line-height: 1.3;
-  overflow-wrap: anywhere;
+  margin: 0 0 4px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.candidatoTitles span {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.cardHeaderRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
 }
 
 .dataTag {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: #94a3b8;
-  background-color: #0b0712;
-  padding: 5px 9px;
-  border-radius: 6px;
   font-size: 12px;
-}
-
-.statusContainer {
-  flex-shrink: 0;
 }
 
 .statusBadge {
   display: inline-flex;
   align-items: center;
-  padding: 6px 10px;
+  gap: 6px;
+  padding: 5px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 700;
@@ -171,45 +374,217 @@
   border: 1px solid rgba(168, 85, 247, 0.2);
 }
 
-.candidatoInfo {
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.infoBox {
   background-color: #0b0712;
+  border: 1px solid rgba(168, 85, 247, 0.12);
   border-radius: 10px;
-  padding: 16px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.candidatoInfo h3 {
+.infoBoxHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.infoBox strong {
   color: #ffffff;
-  font-size: 19px;
-  margin: 0 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.candidatoInfo p {
+.contactSection {
+  background-color: #0b0712;
+  border-radius: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(168, 85, 247, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contactTitle {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.contactItem {
   color: #cbd5e1;
-  font-size: 14px;
-  line-height: 1.5;
-  margin: 7px 0;
-  overflow-wrap: anywhere;
+  font-size: 13px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.candidatoInfo strong {
-  color: #a855f7;
+.contactItem svg {
+  color: #c084fc;
+  flex-shrink: 0;
+}
+
+.curriculoBox {
+  background-color: #0b0712;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.curriculoInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fileIcon {
+  font-size: 24px;
+  color: #c084fc;
+  display: flex;
+  align-items: center;
+}
+
+.curriculoInfo div span {
+  display: block;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.curriculoInfo div small {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.btnDownloadCurriculo {
+  background: transparent;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: #c084fc;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btnDownloadCurriculo:hover {
+  background-color: rgba(168, 85, 247, 0.15);
+  color: #ffffff;
+  border-color: rgba(168, 85, 247, 0.6);
+}
+
+.mensagemBox {
+  background-color: #0b0712;
+  border-radius: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(168, 85, 247, 0.1);
+}
+
+.mensagemHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.mensagemHeader span {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mensagemHeader small {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.mensagemBox p {
+  color: #cbd5e1;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .cardFooter {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: auto;
+  grid-template-columns: repeat(3, 1fr) auto auto;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 .cardFooter button {
-  min-width: 0;
-  padding: 10px;
-  border-radius: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s, opacity 0.2s;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+}
+
+.btnChat {
+  background-color: rgba(168, 85, 247, 0.08);
+  border: 1px solid rgba(168, 85, 247, 0.3) !important;
+  color: #ffffff;
+}
+
+.btnChat:hover {
+  background-color: rgba(168, 85, 247, 0.2);
+}
+
+.btnVisualizar {
+  background-color: #5f236b;
+  color: #ffffff;
+}
+
+.btnVisualizar:hover {
+  background-color: #722880;
+}
+
+.btnAceitar {
+  background-color: #14532d;
+  color: #bbf7d0;
+  border: 1px solid rgba(34, 197, 94, 0.3) !important;
+}
+
+.btnAceitar:hover:not(:disabled) {
+  background-color: #166534;
+}
+
+.btnRejeitar {
+  background-color: #7f1d1d;
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+.btnRejeitar:hover:not(:disabled) {
+  background-color: #991b1b;
 }
 
 .cardFooter button:disabled {
@@ -217,44 +592,40 @@
   cursor: not-allowed;
 }
 
-.btnChat {
-  background-color: transparent;
-  border: 1px solid rgba(168, 85, 247, 0.4);
+.paginationContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 36px;
+}
+
+.pageBtn {
+  background-color: #161122;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  color: #94a3b8;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pageBtn:hover:not(:disabled) {
+  border-color: rgba(168, 85, 247, 0.6);
   color: #ffffff;
 }
 
-.btnChat:hover {
-  background-color: rgba(168, 85, 247, 0.1);
-}
-
-.btnVisualizar {
+.pageBtn.active {
   background-color: #5f236b;
-  border: none;
+  border-color: #5f236b;
   color: #ffffff;
 }
 
-.btnVisualizar:hover {
-  background-color: #792e87;
-}
-
-.btnAceitar {
-  background-color: #166534;
-  border: none;
-  color: #bbf7d0;
-}
-
-.btnAceitar:hover {
-  background-color: #15803d;
-}
-
-.btnRejeitar {
-  background-color: #7f1d1d;
-  border: none;
-  color: #fca5a5;
-}
-
-.btnRejeitar:hover {
-  background-color: #991b1b;
+.pageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .semCandidatos {
@@ -282,7 +653,6 @@
   border-radius: 14px;
   background-color: rgba(168, 85, 247, 0.12);
   color: #c084fc;
-  font-size: 28px;
 }
 
 .semCandidatos h2 {
@@ -325,15 +695,6 @@
   box-sizing: border-box;
 }
 
-.modalContainer::-webkit-scrollbar {
-  width: 6px;
-}
-
-.modalContainer::-webkit-scrollbar-thumb {
-  background-color: rgba(168, 85, 247, 0.3);
-  border-radius: 6px;
-}
-
 .modalActions {
   display: flex;
   justify-content: space-between;
@@ -352,13 +713,12 @@
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.btnImprimir:hover {
-  background-color: #1d4ed8;
-}
-
-.modalActions .btnFechar {
+.btnFechar {
   width: 36px;
   height: 36px;
   border: none;
@@ -367,10 +727,9 @@
   color: #475569;
   cursor: pointer;
   font-size: 18px;
-}
-
-.modalActions .btnFechar:hover {
-  background-color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cvHeader {
@@ -434,254 +793,6 @@
   font-size: 11px;
 }
 
-@media (max-width: 1024px) {
-  .content {
-    margin-left: 0;
-    width: 100%;
-    padding: 24px 20px;
-  }
-}
-
-@media (max-width: 768px) {
-  .content {
-    width: 100%;
-    padding: 20px 16px;
-  }
-
-  .headerArea {
-    margin-top: 65px;
-  }
-
-  .headerArea h1 {
-    font-size: 28px;
-  }
-
-  .candidatosGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .cardFooter {
-    grid-template-columns: 1fr;
-  }
-
-  .cardHeader {
-    flex-direction: column;
-  }
-
-  .statusContainer {
-    align-self: flex-start;
-  }
-
-  .modalContainer {
-    max-height: 90vh;
-    padding: 22px;
-  }
-
-  .cvContact {
-    flex-direction: column;
-    gap: 7px;
-  }
-}
-
-@media (max-width: 480px) {
-  .content {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-
-  .headerArea h1 {
-    font-size: 25px;
-  }
-
-  .headerArea p {
-    font-size: 14px;
-  }
-
-  .cardCandidato {
-    padding: 18px;
-  }
-
-  .semCandidatos {
-    padding: 40px 20px;
-  }
-
-  .modalOverlay {
-    padding: 10px;
-  }
-
-  .modalContainer {
-    padding: 18px;
-    border-radius: 12px;
-  }
-
-  .modalActions {
-    align-items: stretch;
-  }
-
-  .btnImprimir {
-    flex: 1;
-  }
-}
-
-.preEntrevistaSection {
-  margin-top: 30px;
-  page-break-inside: auto;
-}
-
-.preEntrevistasContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.preEntrevistaCard {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 16px;
-  box-sizing: border-box;
-}
-
-.preEntrevistaHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 15px;
-  margin-bottom: 14px;
-}
-
-.preEntrevistaHeader h4 {
-  color: #1e293b;
-  font-size: 15px;
-  margin: 0 0 5px;
-  line-height: 1.4;
-}
-
-.preEntrevistaHeader span {
-  color: #64748b;
-  font-size: 11px;
-}
-
-.preEntrevistaStatus {
-  background-color: #dcfce7;
-  color: #166534 !important;
-  border: 1px solid #bbf7d0;
-  padding: 5px 9px;
-  border-radius: 20px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.preEntrevistaDescricao {
-  color: #64748b;
-  font-size: 12px;
-  line-height: 1.5;
-  margin: 0 0 16px;
-}
-
-.preEntrevistaPerguntas {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.respostaItem {
-  display: flex;
-  gap: 12px;
-  padding: 12px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  page-break-inside: avoid;
-}
-
-.respostaNumero {
-  width: 26px;
-  height: 26px;
-  min-width: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background-color: #5f236b;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.respostaConteudo {
-  flex: 1;
-  min-width: 0;
-}
-
-.respostaConteudo strong {
-  display: block;
-  color: #334155;
-  font-size: 12px;
-  line-height: 1.5;
-  margin-bottom: 5px;
-}
-
-.respostaConteudo p {
-  color: #475569;
-  font-size: 13px;
-  line-height: 1.6;
-  margin: 0;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.preEntrevistaNaoRespondida {
-  color: #92400e;
-  background-color: #fffbeb;
-  border: 1px solid #fde68a;
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 12px;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.preEntrevistaVazia {
-  color: #64748b;
-  background-color: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  border-radius: 8px;
-  padding: 15px;
-}
-
-.preEntrevistaVazia p {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-@media (max-width: 768px) {
-  .preEntrevistaHeader {
-    flex-direction: column;
-  }
-
-  .preEntrevistaStatus {
-    align-self: flex-start;
-  }
-
-  .respostaItem {
-    padding: 10px;
-  }
-}
-
-@media print {
-  .preEntrevistaCard {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  .respostaItem {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-}
-
 .preEntrevista {
   margin-top: 15px;
   padding: 18px;
@@ -708,7 +819,6 @@
 .preEntrevistaHeader span {
   color: #64748b;
   font-size: 11px;
-  white-space: nowrap;
 }
 
 .preEntrevistaDescricao {
@@ -783,25 +893,41 @@
   font-size: 13px;
 }
 
-/* Indicador no card do candidato */
-
-.candidatoInfo p strong {
-  color: #a855f7;
+/* Responsividade Completa para todos os dispositivos */
+@media (max-width: 1024px) {
+  .content {
+    margin-left: 0;
+    width: 100%;
+    padding: 24px 20px;
+  }
 }
 
-/* Responsividade */
-
 @media (max-width: 768px) {
-  .preEntrevistaHeader {
+  .candidatosGrid {
+    grid-template-columns: 1fr;
+  }
+  .cardFooter {
+    grid-template-columns: 1fr;
+  }
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+  .filterBar {
     flex-direction: column;
-    gap: 6px;
+    align-items: stretch;
   }
-
-  .preEntrevistaHeader span {
-    white-space: normal;
+  .searchBox input {
+    width: 100%;
   }
-
-  .respostaPreEntrevista {
-    padding: 12px;
+  .headerArea {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .searchFilters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .vagaSelect {
+    width: 100%;
   }
 }

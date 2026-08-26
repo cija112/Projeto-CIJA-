@@ -55,15 +55,12 @@ const validateCpf = (cpf: string) => {
 
 const validatePhoneBrazil = (phoneStr: string) => {
   let cleanPhone = phoneStr.replace(/\D/g, "");
-
-  // Se o número tiver 12 ou 13 dígitos e começar com 55 (DDI do Brasil), removemos o 55 para validar o DDD e número
   if (
     (cleanPhone.length === 12 || cleanPhone.length === 13) &&
     cleanPhone.startsWith("55")
   ) {
     cleanPhone = cleanPhone.slice(2);
   }
-
   if (cleanPhone.length !== 10 && cleanPhone.length !== 11) return false;
   const ddd = parseInt(cleanPhone.slice(0, 2), 10);
   if (ddd < 11 || ddd > 99) return false;
@@ -134,6 +131,21 @@ export default function Perfil() {
   const [loading, setLoading] = useState(true);
   const [uid, setUid] = useState<string | null>(null);
 
+  const [banner, setBanner] = useState<{
+    text: string;
+    type: "success" | "error";
+  }>({
+    text: "",
+    type: "success",
+  });
+
+  const showFeedback = (text: string, type: "success" | "error") => {
+    setBanner({ text, type });
+    setTimeout(() => {
+      setBanner({ text: "", type: "success" });
+    }, 6000);
+  };
+
   const [profile, setProfile] = useState({
     nome: "",
     email: "",
@@ -154,6 +166,7 @@ export default function Perfil() {
 
   const [editingSummary, setEditingSummary] = useState(false);
   const [summary, setSummary] = useState("");
+  const [summaryCompetencias, setSummaryCompetencias] = useState("");
 
   const [editingPersonal, setEditingPersonal] = useState(false);
   const [editNome, setEditNome] = useState("");
@@ -161,7 +174,6 @@ export default function Perfil() {
   const [editCpf, setEditCpf] = useState("");
   const [editCity, setEditCity] = useState("");
   const [savingPersonal, setSavingPersonal] = useState(false);
-  const [personalError, setPersonalError] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [avatarVersion, setAvatarVersion] = useState(0);
@@ -169,7 +181,6 @@ export default function Perfil() {
   const [candidaturasCount, setCandidaturasCount] = useState(0);
   const [activeTab, setActiveTab] = useState("visao");
 
-  // Formação states
   const [showAddFormacao, setShowAddFormacao] = useState(false);
   const [editingFormIndex, setEditingFormIndex] = useState<number | null>(null);
   const [newCurso, setNewCurso] = useState("");
@@ -177,14 +188,12 @@ export default function Perfil() {
   const [newInicio, setNewInicio] = useState("");
   const [newFim, setNewFim] = useState("");
 
-  // Competência states
   const [showAddCompetencia, setShowAddCompetencia] = useState(false);
   const [editingSkillIndex, setEditingSkillIndex] = useState<number | null>(
     null,
   );
   const [newCompetencia, setNewCompetencia] = useState("");
 
-  // Experiência states
   const [showAddExperiencia, setShowAddExperiencia] = useState(false);
   const [editingExpIndex, setEditingExpIndex] = useState<number | null>(null);
   const [newCargo, setNewCargo] = useState("");
@@ -292,6 +301,7 @@ export default function Perfil() {
           pdfUrl: c.data.pdf_url || "",
         });
         setSummary(c.data.descricao || "");
+        setSummaryCompetencias(c.data.competencias || "");
       }
     } finally {
       setLoading(false);
@@ -384,32 +394,35 @@ export default function Perfil() {
         avatar: `${data.publicUrl}?v=${Date.now()}`,
       }));
       setAvatarVersion((v) => v + 1);
+      showFeedback("Foto de perfil atualizada com sucesso!", "success");
     } catch (err) {
-      setPersonalError("Erro ao atualizar foto de perfil.");
+      showFeedback("Erro ao atualizar foto de perfil.", "error");
     }
   };
 
   const savePersonalData = async () => {
     if (!uid) return;
-    setPersonalError("");
 
     if (!editNome.trim()) {
-      setPersonalError("Por favor, preencha o nome completo.");
+      showFeedback("Por favor, preencha o nome completo.", "error");
       return;
     }
-
     if (!validatePhoneBrazil(editTel)) {
-      setPersonalError(
+      showFeedback(
         "Número de telefone inválido. Informe um número válido do Brasil.",
+        "error",
       );
       return;
     }
-    if (!editCity) {
-      setPersonalError("Cidade invalida, digite uma cidade valida do Brasil.");
+    if (!editCity.trim()) {
+      showFeedback(
+        "Cidade inválida, digite uma cidade válida do Brasil.",
+        "error",
+      );
       return;
     }
     if (!validateCpf(editCpf)) {
-      setPersonalError("CPF inválido. Verifique os dígitos informados.");
+      showFeedback("CPF inválido. Verifique os dígitos informados.", "error");
       return;
     }
 
@@ -425,7 +438,7 @@ export default function Perfil() {
       .eq("id_ja", uid);
 
     if (error) {
-      setPersonalError("Erro ao salvar dados pessoais no banco de dados.");
+      showFeedback("Erro ao salvar dados pessoais no banco de dados.", "error");
     } else {
       setProfile((p) => ({
         ...p,
@@ -435,38 +448,101 @@ export default function Perfil() {
         endereco: editCity,
       }));
       setEditingPersonal(false);
+      showFeedback("Dados pessoais salvos com sucesso!", "success");
     }
     setSavingPersonal(false);
   };
 
   const saveSummary = async () => {
     if (!uid) return;
+    if (!summary.trim()) {
+      showFeedback(
+        "O campo 'Sobre mim' não pode estar nulo ou vazio.",
+        "error",
+      );
+      return;
+    }
+    if (summary.length > 250) {
+      showFeedback(
+        "O texto do 'Sobre mim' deve ter no máximo 250 caracteres.",
+        "error",
+      );
+      return;
+    }
+
     setSaving(true);
-    await supabase.from("curriculo_ja").upsert(
+    const { error } = await supabase.from("curriculo_ja").upsert(
       {
         id_ja: uid,
         descricao: summary,
-        competencias: cv.comp,
+        competencias: summaryCompetencias || cv.comp,
         experiencias: cv.exp,
         curso: cv.cur,
         pdf_url: cv.pdfUrl,
       },
       { onConflict: "id_ja" },
     );
-    setCv((c) => ({ ...c, desc: summary }));
-    setEditingSummary(false);
+
+    if (error) {
+      showFeedback("Erro ao salvar as informações do perfil.", "error");
+    } else {
+      setCv((c) => ({
+        ...c,
+        desc: summary,
+        comp: summaryCompetencias || c.comp,
+      }));
+      setEditingSummary(false);
+      showFeedback("Perfil e competências salvos com sucesso!", "success");
+    }
     setSaving(false);
   };
 
-  // --- FORMAÇÃO CRUD ---
   const handleSaveFormacao = async () => {
-    if (!uid || !newCurso || !newInstituicao) return;
+    if (!uid) return;
+
+    if (
+      !newCurso.trim() ||
+      !newInstituicao.trim() ||
+      !newInicio.trim() ||
+      !newFim.trim()
+    ) {
+      showFeedback(
+        "Preencha todos os campos da formação (Curso, Instituição, Início e Fim não podem ser nulos).",
+        "error",
+      );
+      return;
+    }
+
+    const inicioNum = parseInt(newInicio.trim(), 10);
+    const fimNum = parseInt(newFim.trim(), 10);
+
+    if (
+      isNaN(inicioNum) ||
+      isNaN(fimNum) ||
+      inicioNum < 1950 ||
+      fimNum > 2100
+    ) {
+      showFeedback(
+        "Insira anos válidos para o início e fim da formação (ex: 2022 a 2026).",
+        "error",
+      );
+      return;
+    }
+
+    if (inicioNum > fimNum) {
+      showFeedback(
+        "A data de início não pode ser posterior à data de fim.",
+        "error",
+      );
+      return;
+    }
+
     let updated = [...curList];
     const newFormItem = {
-      curso: newCurso,
-      instituicao: newInstituicao,
-      inicio: newInicio,
-      fim: newFim,
+      curso: newCurso.trim(),
+      instituicao: newInstituicao.trim(),
+      inicio: newInicio.trim(),
+      fim: newFim.trim(),
     };
 
     if (editingFormIndex !== null) {
@@ -476,7 +552,7 @@ export default function Perfil() {
     }
 
     const str = JSON.stringify(updated);
-    await supabase.from("curriculo_ja").upsert(
+    const { error } = await supabase.from("curriculo_ja").upsert(
       {
         id_ja: uid,
         curso: str,
@@ -487,8 +563,14 @@ export default function Perfil() {
       },
       { onConflict: "id_ja" },
     );
-    setCv((c) => ({ ...c, cur: str }));
-    resetFormacaoForm();
+
+    if (error) {
+      showFeedback("Erro ao salvar formação acadêmica.", "error");
+    } else {
+      setCv((c) => ({ ...c, cur: str }));
+      resetFormacaoForm();
+      showFeedback("Formação acadêmica salva com sucesso!", "success");
+    }
   };
 
   const handleEditFormacaoClick = (index: number) => {
@@ -518,6 +600,7 @@ export default function Perfil() {
     );
     setCv((c) => ({ ...c, cur: str }));
     resetFormacaoForm();
+    showFeedback("Formação excluída com sucesso!", "success");
   };
 
   const resetFormacaoForm = () => {
@@ -529,9 +612,14 @@ export default function Perfil() {
     setShowAddFormacao(false);
   };
 
-  // --- COMPETÊNCIAS CRUD ---
   const handleSaveCompetencia = async () => {
-    if (!uid || !newCompetencia.trim()) return;
+    if (!uid || !newCompetencia.trim()) {
+      showFeedback(
+        "O campo de competência não pode estar nulo ou vazio.",
+        "error",
+      );
+      return;
+    }
     let updatedList = [...skillsList];
 
     if (editingSkillIndex !== null) {
@@ -543,7 +631,7 @@ export default function Perfil() {
     }
 
     const str = updatedList.join(", ");
-    await supabase.from("curriculo_ja").upsert(
+    const { error } = await supabase.from("curriculo_ja").upsert(
       {
         id_ja: uid,
         competencias: str,
@@ -554,8 +642,15 @@ export default function Perfil() {
       },
       { onConflict: "id_ja" },
     );
-    setCv((c) => ({ ...c, comp: str }));
-    resetCompetenciaForm();
+
+    if (error) {
+      showFeedback("Erro ao salvar competências.", "error");
+    } else {
+      setCv((c) => ({ ...c, comp: str }));
+      setSummaryCompetencias(str);
+      resetCompetenciaForm();
+      showFeedback("Competência salva com sucesso!", "success");
+    }
   };
 
   const handleEditCompetenciaClick = (index: number) => {
@@ -580,7 +675,9 @@ export default function Perfil() {
       { onConflict: "id_ja" },
     );
     setCv((c) => ({ ...c, comp: str }));
+    setSummaryCompetencias(str);
     resetCompetenciaForm();
+    showFeedback("Competência excluída com sucesso!", "success");
   };
 
   const resetCompetenciaForm = () => {
@@ -589,16 +686,47 @@ export default function Perfil() {
     setShowAddCompetencia(false);
   };
 
-  // --- EXPERIÊNCIA CRUD ---
   const handleSaveExperiencia = async () => {
-    if (!uid || !newCargo || !newEmpresa) return;
+    if (
+      !uid ||
+      !newCargo.trim() ||
+      !newEmpresa.trim() ||
+      !newExpInicio.trim() ||
+      !newExpFim.trim()
+    ) {
+      showFeedback(
+        "Preencha todos os campos obrigatórios da experiência (nenhum campo pode ser nulo).",
+        "error",
+      );
+      return;
+    }
+
+    const inicioNum = parseInt(newExpInicio.trim(), 10);
+    const fimNum = parseInt(newExpFim.trim(), 10);
+
+    if (isNaN(inicioNum) || isNaN(fimNum)) {
+      showFeedback(
+        "Insira valores numéricos válidos para os anos de início e fim da experiência.",
+        "error",
+      );
+      return;
+    }
+
+    if (inicioNum > fimNum) {
+      showFeedback(
+        "A data de início da experiência não pode ser posterior à data de fim.",
+        "error",
+      );
+      return;
+    }
+
     let updatedExps = [...expList];
     const newExpObj = {
-      cargo: newCargo,
-      empresa: newEmpresa,
-      inicio: newExpInicio,
-      fim: newExpFim,
-      descricao: newExpDesc,
+      cargo: newCargo.trim(),
+      empresa: newEmpresa.trim(),
+      inicio: newExpInicio.trim(),
+      fim: newExpFim.trim(),
+      descricao: newExpDesc.trim(),
     };
 
     if (editingExpIndex !== null) {
@@ -608,7 +736,7 @@ export default function Perfil() {
     }
 
     const payload = JSON.stringify({ experiencias: updatedExps });
-    await supabase.from("curriculo_ja").upsert(
+    const { error } = await supabase.from("curriculo_ja").upsert(
       {
         id_ja: uid,
         experiencias: payload,
@@ -619,8 +747,14 @@ export default function Perfil() {
       },
       { onConflict: "id_ja" },
     );
-    setCv((c) => ({ ...c, exp: payload }));
-    resetExperienciaForm();
+
+    if (error) {
+      showFeedback("Erro ao salvar experiência profissional.", "error");
+    } else {
+      setCv((c) => ({ ...c, exp: payload }));
+      resetExperienciaForm();
+      showFeedback("Experiência profissional salva com sucesso!", "success");
+    }
   };
 
   const handleEditExperienciaClick = (index: number) => {
@@ -651,6 +785,7 @@ export default function Perfil() {
     );
     setCv((c) => ({ ...c, exp: payload }));
     resetExperienciaForm();
+    showFeedback("Experiência excluída com sucesso!", "success");
   };
 
   const resetExperienciaForm = () => {
@@ -684,10 +819,12 @@ export default function Perfil() {
         );
         setCv((c) => ({ ...c, pdfUrl: base64Pdf }));
         setUploadingPdf(false);
+        showFeedback("Currículo em PDF enviado com sucesso!", "success");
       };
       reader.readAsDataURL(file);
     } catch (err) {
       setUploadingPdf(false);
+      showFeedback("Erro ao enviar currículo em PDF.", "error");
     }
   };
 
@@ -766,6 +903,7 @@ export default function Perfil() {
             .eq("id_ja", uid);
         }
         setPasswordSuccess("Senha alterada com sucesso!");
+        showFeedback("Senha alterada com sucesso!", "success");
         setOldPassword("");
         setNewPassword("");
         setConfirmPassword("");
@@ -789,7 +927,6 @@ export default function Perfil() {
     ? `${profile.avatar}${profile.avatar.includes("?") ? "&" : "?"}v=${avatarVersion}`
     : "";
 
-  // Estilzacao do botao de edit
   const softEditBtnStyle: React.CSSProperties = {
     background: "rgba(168, 85, 247, 0.12)",
     color: "#c084fc",
@@ -820,6 +957,44 @@ export default function Perfil() {
     <div className={styles.page}>
       {!visualizacaoEmpresa && <Sidebar />}
       <main className={styles.main}>
+        {/* Notificação Flutuante Estilo iPhone */}
+        {banner.text && (
+          <div
+            className={`${styles.topBanner} ${
+              banner.type === "success"
+                ? styles.topBannerSuccess
+                : styles.topBannerError
+            }`}
+          >
+            {banner.type === "success" ? (
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+            ) : (
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            )}
+            <span>{banner.text}</span>
+          </div>
+        )}
+
         <div className={styles.topGrid}>
           <section className={styles.headerCard}>
             <div className={styles.avatarBox}>
@@ -830,7 +1005,7 @@ export default function Perfil() {
               )}
               <span className={styles.online} />
               {!visualizacaoEmpresa && (
-                <label className={styles.cam}>
+                <label className={styles.cam} title="Alterar foto de perfil">
                   <input
                     type="file"
                     hidden
@@ -858,7 +1033,6 @@ export default function Perfil() {
                   <button
                     onClick={() => {
                       setEditingPersonal(!editingPersonal);
-                      setPersonalError("");
                     }}
                     style={softEditBtnStyle}
                   >
@@ -881,18 +1055,6 @@ export default function Perfil() {
 
               {editingPersonal ? (
                 <div className={`${styles.formBox} ${styles.mt10}`}>
-                  {personalError && (
-                    <div
-                      style={{
-                        color: "#ef4444",
-                        fontSize: "13px",
-                        fontWeight: "500",
-                        marginBottom: "8px",
-                      }}
-                    >
-                      {personalError}
-                    </div>
-                  )}
                   <input
                     type="text"
                     placeholder="Nome completo"
@@ -906,7 +1068,6 @@ export default function Perfil() {
                     value={editTel}
                     onChange={(e) => {
                       const val = e.target.value;
-                      // Limita silenciosamente até 13 dígitos
                       if (val.replace(/\D/g, "").length > 13) return;
                       setEditTel(formatarTelefone(val));
                     }}
@@ -969,7 +1130,6 @@ export default function Perfil() {
                   </svg>
                   {phone(profile.tel)}
                 </span>
-
                 {!visualizacaoEmpresa && (
                   <span>
                     <svg
@@ -986,7 +1146,6 @@ export default function Perfil() {
                     CPF: {cpfMask(profile.cpf)}
                   </span>
                 )}
-
                 <span>
                   <svg
                     width="13"
@@ -1061,11 +1220,19 @@ export default function Perfil() {
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                         <circle cx="12" cy="7" r="4" />
                       </svg>
-                      Sobre mim
+                      Sobre mim e Competências
                     </h3>
                     {!visualizacaoEmpresa && (
                       <button
-                        onClick={() => setEditingSummary(!editingSummary)}
+                        onClick={() => {
+                          if (editingSummary) {
+                            setEditingSummary(false);
+                          } else {
+                            setSummary(cv.desc);
+                            setSummaryCompetencias(cv.comp);
+                            setEditingSummary(true);
+                          }
+                        }}
                         style={softEditBtnStyle}
                       >
                         {editingSummary ? "Cancelar" : "Editar"}
@@ -1074,29 +1241,115 @@ export default function Perfil() {
                   </div>
                   {editingSummary ? (
                     <>
+                      <label
+                        style={{
+                          fontSize: "12px",
+                          color: "var(--txt-2)",
+                          marginBottom: "4px",
+                          display: "block",
+                        }}
+                      >
+                        Sobre mim (limitado a 250 caracteres):
+                      </label>
                       <textarea
                         value={summary}
+                        maxLength={250}
                         onChange={(e) => setSummary(e.target.value)}
-                        rows={4}
-                        className={styles.textarea}
+                        rows={3}
+                        className={`${styles.textarea} ${styles.textareaAuto}`}
                         placeholder="Fale sobre suas expectativas profissionais e objetivos..."
                       />
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          fontSize: "11px",
+                          color: "var(--txt-3)",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        <span>Máximo de 250 caracteres</span>
+                        <span>{summary.length}/250</span>
+                      </div>
+
+                      <label
+                        style={{
+                          fontSize: "12px",
+                          color: "var(--txt-2)",
+                          marginBottom: "4px",
+                          display: "block",
+                        }}
+                      >
+                        Competências (separadas por vírgula | Mínimo
+                        recomendado: 5):
+                      </label>
+                      <input
+                        type="text"
+                        value={summaryCompetencias}
+                        onChange={(e) => setSummaryCompetencias(e.target.value)}
+                        className={styles.input}
+                        placeholder="Ex: JavaScript, React, Comunicação, Pacote Office"
+                      />
+
                       <button
                         className={styles.save}
                         onClick={saveSummary}
                         disabled={saving}
                       >
-                        {saving ? "Salvando..." : "Salvar"}
+                        {saving ? "Salvando..." : "Salvar alterações"}
                       </button>
                     </>
                   ) : (
-                    <p>{cv.desc || "Nenhuma descrição informada."}</p>
+                    <>
+                      <p>{cv.desc || "Nenhuma descrição informada."}</p>
+
+                      <div
+                        style={{
+                          marginTop: "16px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            color: "var(--txt-2)",
+                            fontWeight: "600",
+                          }}
+                        >
+                          Competências cadastradas:
+                        </span>
+                        {skillsList.length < 5 && (
+                          <span
+                            title="O perfil exige no mínimo 5 competências cadastradas para melhor destaque."
+                            style={{
+                              fontSize: "11px",
+                              color: "#f59e0b",
+                              background: "rgba(245, 158, 11, 0.1)",
+                              padding: "2px 8px",
+                              borderRadius: "4px",
+                              border: "1px solid rgba(245, 158, 11, 0.3)",
+                              cursor: "help",
+                            }}
+                          >
+                            ⚠️ Mínimo de 5 competências (Atual:{" "}
+                            {skillsList.length})
+                          </span>
+                        )}
+                      </div>
+
+                      <div className={styles.tags}>
+                        {skillsList.length ? (
+                          skillsList.map((s) => <span key={s}>{s}</span>)
+                        ) : (
+                          <span style={{ color: "var(--txt-3)" }}>
+                            Nenhuma competência cadastrada.
+                          </span>
+                        )}
+                      </div>
+                    </>
                   )}
-                  <div className={styles.tags}>
-                    {skillsList.slice(0, 5).map((s) => (
-                      <span key={s}>{s}</span>
-                    ))}
-                  </div>
                 </section>
 
                 <section className={`${styles.card} ${styles.formacao}`}>
@@ -1182,7 +1435,11 @@ export default function Perfil() {
 
                   {curList.length ? (
                     curList.map((c: any, i: number) => (
-                      <div key={i} className={styles.item}>
+                      <div
+                        key={i}
+                        className={styles.item}
+                        title={`Curso: ${c.curso} | Instituição: ${c.instituicao}`}
+                      >
                         {editingFormIndex === i ? (
                           <div
                             className={styles.formBox}
@@ -1224,7 +1481,6 @@ export default function Perfil() {
                               className={styles.formActions}
                               style={{
                                 display: "flex",
-                                gap: "8px",
                                 justifyContent: "space-between",
                                 width: "100%",
                               }}
@@ -1254,17 +1510,6 @@ export default function Perfil() {
                                   gap: "6px",
                                 }}
                               >
-                                <svg
-                                  width="12"
-                                  height="12"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="#ffffff"
-                                  strokeWidth="2"
-                                >
-                                  <polyline points="3 6 5 6 21 6" />
-                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                </svg>
                                 Excluir
                               </button>
                             </div>
@@ -1285,7 +1530,22 @@ export default function Perfil() {
                                 alignItems: "flex-start",
                               }}
                             >
-                              <div className={styles.dot} />
+                              <div
+                                className={styles.schoolIconBox}
+                                title="Formação Acadêmica"
+                              >
+                                <svg
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                >
+                                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                                </svg>
+                              </div>
                               <div>
                                 <strong>{c.curso}</strong>
                                 <p>{c.instituicao}</p>
@@ -1294,8 +1554,34 @@ export default function Perfil() {
                                     style={{
                                       color: "#c084fc",
                                       fontWeight: "500",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "5px",
+                                      marginTop: "3px",
                                     }}
+                                    title={`Período: Início em ${c.inicio} até ${c.fim || "o momento"}`}
                                   >
+                                    {/* Ícone SVG de calendário profissional */}
+                                    <svg
+                                      width="12"
+                                      height="12"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                    >
+                                      <rect
+                                        x="3"
+                                        y="4"
+                                        width="18"
+                                        height="18"
+                                        rx="2"
+                                        ry="2"
+                                      />
+                                      <line x1="16" y1="2" x2="16" y2="6" />
+                                      <line x1="8" y1="2" x2="8" y2="6" />
+                                      <line x1="3" y1="10" x2="21" y2="10" />
+                                    </svg>
                                     {c.inicio} {c.fim ? `- ${c.fim}` : ""}
                                   </small>
                                 )}
@@ -1305,19 +1591,8 @@ export default function Perfil() {
                               <button
                                 onClick={() => handleEditFormacaoClick(i)}
                                 style={softEditBtnStyle}
-                                title="Editar"
+                                title="Editar formação"
                               >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="#ffffff"
-                                  strokeWidth="2"
-                                >
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                </svg>
                                 Editar
                               </button>
                             )}
@@ -1346,7 +1621,7 @@ export default function Perfil() {
                         <polyline points="16 18 22 12 16 6" />
                         <polyline points="8 6 2 12 8 18" />
                       </svg>
-                      Competências
+                      Competências (Mínimo de 5)
                     </h3>
                     {!visualizacaoEmpresa && (
                       <button
@@ -1428,25 +1703,8 @@ export default function Perfil() {
                           onClick={() =>
                             handleDeleteCompetencia(editingSkillIndex)
                           }
-                          style={{
-                            color: "#ef4444",
-                            borderColor: "#ef4444",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                          }}
+                          style={{ color: "#ef4444", borderColor: "#ef4444" }}
                         >
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#ffffff"
-                            strokeWidth="2"
-                          >
-                            <line x1="18" y1="6" x2="6" y2="18" />
-                            <line x1="6" y1="6" x2="18" y2="18" />
-                          </svg>
                           Excluir
                         </button>
                       </div>
@@ -1456,35 +1714,30 @@ export default function Perfil() {
                   <div className={styles.skillsContainer}>
                     {skillsList.length ? (
                       skillsList.map((s, idx) => (
-                        <div
-                          key={s}
-                          className={styles.skillChip}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
+                        <div key={s} className={styles.skillChip}>
                           <span>{s}</span>
                           {!visualizacaoEmpresa && (
                             <button
                               onClick={() => handleEditCompetenciaClick(idx)}
-                              title="Editar"
+                              title="Editar competência"
                               style={{
                                 background: "none",
                                 border: "none",
                                 cursor: "pointer",
-                                padding: 0,
+                                padding: "2px",
                                 color: "#c084fc",
                                 display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
                               }}
                             >
+                              {/* Ícone SVG profissional de editar IDÊNTICO ao do perfil */}
                               <svg
-                                width="11"
-                                height="11"
+                                width="12"
+                                height="12"
                                 viewBox="0 0 24 24"
                                 fill="none"
-                                stroke="#ffffff"
+                                stroke="currentColor"
                                 strokeWidth="2"
                               >
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -1496,7 +1749,8 @@ export default function Perfil() {
                       ))
                     ) : (
                       <p className={styles.textCenter}>
-                        Nenhuma competência cadastrada.
+                        Nenhuma competência cadastrada. O recomendado é ter pelo
+                        menos 5 competências.
                       </p>
                     )}
                   </div>
@@ -1523,8 +1777,8 @@ export default function Perfil() {
                           height="14"
                           rx="2"
                           ry="2"
-                        ></rect>
-                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        />
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
                       </svg>
                     </span>
                     Ver vagas recomendadas
@@ -1539,8 +1793,8 @@ export default function Perfil() {
                         stroke="#ffffff"
                         strokeWidth="2"
                       >
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                        <polyline points="22,6 12,13 2,6"></polyline>
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                        <polyline points="22,6 12,13 2,6" />
                       </svg>
                     </span>
                     Ver mensagens
@@ -1565,8 +1819,8 @@ export default function Perfil() {
                           height="11"
                           rx="2"
                           ry="2"
-                        ></rect>
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                       </svg>
                     </span>
                     Alterar Senha
@@ -1600,31 +1854,7 @@ export default function Perfil() {
                             className={styles.eyeBtn}
                             onClick={() => setShowOld(!showOld)}
                           >
-                            {showOld ? (
-                              <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                width="18"
-                                height="11"
-                                stroke="#ffffff"
-                                strokeWidth="2"
-                              >
-                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                                <line x1="1" y1="1" x2="23" y2="23"></line>
-                              </svg>
-                            ) : (
-                              <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                width="18"
-                                height="11"
-                                stroke="#ffffff"
-                                strokeWidth="2"
-                              >
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                              </svg>
-                            )}
+                            👁️
                           </button>
                         </div>
 
@@ -1642,27 +1872,7 @@ export default function Perfil() {
                             className={styles.eyeBtn}
                             onClick={() => setShowNew(!showNew)}
                           >
-                            {showNew ? (
-                              <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="#ffffff"
-                                strokeWidth="2"
-                              >
-                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                                <line x1="1" y1="1" x2="23" y2="23"></line>
-                              </svg>
-                            ) : (
-                              <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="#ffffff"
-                                strokeWidth="2"
-                              >
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                              </svg>
-                            )}
+                            👁️
                           </button>
                         </div>
 
@@ -1680,27 +1890,7 @@ export default function Perfil() {
                             className={styles.eyeBtn}
                             onClick={() => setShowConfirm(!showConfirm)}
                           >
-                            {showConfirm ? (
-                              <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="#ffffff"
-                                strokeWidth="2"
-                              >
-                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                                <line x1="1" y1="1" x2="23" y2="23"></line>
-                              </svg>
-                            ) : (
-                              <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="#ffffff"
-                                strokeWidth="2"
-                              >
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                              </svg>
-                            )}
+                            👁️
                           </button>
                         </div>
                         <div className={styles.separator}>ou</div>
@@ -1874,25 +2064,8 @@ export default function Perfil() {
                           <button
                             className={styles.cancelBtn}
                             onClick={() => handleDeleteFormacao(i)}
-                            style={{
-                              color: "#ef4444",
-                              borderColor: "#ef4444",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "6px",
-                            }}
+                            style={{ color: "#ef4444", borderColor: "#ef4444" }}
                           >
-                            <svg
-                              width="12"
-                              height="12"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="#ffffff"
-                              strokeWidth="2"
-                            >
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
                             Excluir
                           </button>
                         </div>
@@ -1913,14 +2086,57 @@ export default function Perfil() {
                             alignItems: "flex-start",
                           }}
                         >
-                          <div className={styles.dot} />
+                          <div
+                            className={styles.schoolIconBox}
+                            title="Formação Acadêmica"
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                            </svg>
+                          </div>
                           <div>
                             <strong>{c.curso}</strong>
                             <p>{c.instituicao}</p>
                             {(c.inicio || c.fim) && (
                               <small
-                                style={{ color: "#c084fc", fontWeight: "500" }}
+                                style={{
+                                  color: "#c084fc",
+                                  fontWeight: "500",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "5px",
+                                  marginTop: "3px",
+                                }}
+                                title={`Período: ${c.inicio} até ${c.fim}`}
                               >
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                >
+                                  <rect
+                                    x="3"
+                                    y="4"
+                                    width="18"
+                                    height="18"
+                                    rx="2"
+                                    ry="2"
+                                  />
+                                  <line x1="16" y1="2" x2="16" y2="6" />
+                                  <line x1="8" y1="2" x2="8" y2="6" />
+                                  <line x1="3" y1="10" x2="21" y2="10" />
+                                </svg>
                                 {c.inicio} {c.fim ? `- ${c.fim}` : ""}
                               </small>
                             )}
@@ -1931,17 +2147,6 @@ export default function Perfil() {
                             onClick={() => handleEditFormacaoClick(i)}
                             style={softEditBtnStyle}
                           >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="#ffffff"
-                              strokeWidth="2"
-                            >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
                             Editar
                           </button>
                         )}
@@ -1963,7 +2168,7 @@ export default function Perfil() {
               style={{ gridColumn: "1 / -1" }}
             >
               <div className={styles.cardHead}>
-                <h3>Competências</h3>
+                <h3>Competências (Recomendado: Mínimo 5)</h3>
                 {!visualizacaoEmpresa && (
                   <button
                     onClick={() => {
@@ -2040,25 +2245,8 @@ export default function Perfil() {
                     <button
                       className={styles.cancelBtn}
                       onClick={() => handleDeleteCompetencia(editingSkillIndex)}
-                      style={{
-                        color: "#ef4444",
-                        borderColor: "#ef4444",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                      }}
+                      style={{ color: "#ef4444", borderColor: "#ef4444" }}
                     >
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#ffffff"
-                        strokeWidth="2"
-                      >
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
                       Excluir
                     </button>
                   </div>
@@ -2068,15 +2256,7 @@ export default function Perfil() {
               <div className={styles.skillsContainer}>
                 {skillsList.length ? (
                   skillsList.map((s, idx) => (
-                    <div
-                      key={s}
-                      className={styles.skillChip}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
-                    >
+                    <div key={s} className={styles.skillChip}>
                       <span>{s}</span>
                       {!visualizacaoEmpresa && (
                         <button
@@ -2086,17 +2266,19 @@ export default function Perfil() {
                             background: "none",
                             border: "none",
                             cursor: "pointer",
-                            padding: 0,
+                            padding: "2px",
                             color: "#c084fc",
                             display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                           }}
                         >
                           <svg
-                            width="11"
-                            height="11"
+                            width="12"
+                            height="12"
                             viewBox="0 0 24 24"
                             fill="none"
-                            stroke="#ffffff"
+                            stroke="currentColor"
                             strokeWidth="2"
                           >
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -2108,7 +2290,7 @@ export default function Perfil() {
                   ))
                 ) : (
                   <p className={styles.textCenter}>
-                    Nenhuma competência cadastrada.
+                    Nenhuma competência cadastrada. Adicione pelo menos 5.
                   </p>
                 )}
               </div>
@@ -2189,7 +2371,11 @@ export default function Perfil() {
               )}
               {expList.length ? (
                 expList.map((e: any, i: number) => (
-                  <div key={i} className={`${styles.item} ${styles.mb14}`}>
+                  <div
+                    key={i}
+                    className={`${styles.item} ${styles.mb14}`}
+                    title={`Cargo: ${e.cargo} na empresa ${e.empresa}`}
+                  >
                     {editingExpIndex === i ? (
                       <div className={styles.formBox} style={{ width: "100%" }}>
                         <input
@@ -2253,25 +2439,8 @@ export default function Perfil() {
                           <button
                             className={styles.cancelBtn}
                             onClick={() => handleDeleteExperiencia(i)}
-                            style={{
-                              color: "#ef4444",
-                              borderColor: "#ef4444",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "6px",
-                            }}
+                            style={{ color: "#ef4444", borderColor: "#ef4444" }}
                           >
-                            <svg
-                              width="12"
-                              height="12"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="#ffffff"
-                              strokeWidth="2"
-                            >
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
                             Excluir
                           </button>
                         </div>
@@ -2292,14 +2461,64 @@ export default function Perfil() {
                             alignItems: "flex-start",
                           }}
                         >
-                          <div className={styles.dot} />
+                          <div
+                            className={styles.schoolIconBox}
+                            title="Experiência Profissional"
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <rect
+                                x="2"
+                                y="7"
+                                width="20"
+                                height="14"
+                                rx="2"
+                                ry="2"
+                              />
+                              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                            </svg>
+                          </div>
                           <div>
                             <strong>{e.cargo}</strong>
                             <p>{e.empresa}</p>
                             {(e.inicio || e.fim) && (
                               <small
-                                style={{ color: "#c084fc", fontWeight: "500" }}
+                                style={{
+                                  color: "#c084fc",
+                                  fontWeight: "500",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "5px",
+                                  marginTop: "3px",
+                                }}
+                                title={`Período: ${e.inicio} até ${e.fim}`}
                               >
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                >
+                                  <rect
+                                    x="3"
+                                    y="4"
+                                    width="18"
+                                    height="18"
+                                    rx="2"
+                                    ry="2"
+                                  />
+                                  <line x1="16" y1="2" x2="16" y2="6" />
+                                  <line x1="8" y1="2" x2="8" y2="6" />
+                                  <line x1="3" y1="10" x2="21" y2="10" />
+                                </svg>
                                 {e.inicio} {e.fim ? `- ${e.fim}` : ""}
                               </small>
                             )}
@@ -2313,17 +2532,6 @@ export default function Perfil() {
                             onClick={() => handleEditExperienciaClick(i)}
                             style={softEditBtnStyle}
                           >
-                            <svg
-                              width="12"
-                              height="12"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="#ffffff"
-                              strokeWidth="2"
-                            >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
                             Editar
                           </button>
                         )}

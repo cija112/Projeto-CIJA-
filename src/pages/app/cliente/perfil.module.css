@@ -58,6 +58,63 @@
   text-align: center;
 }
 
+/* Notificação flutuante estilo iPhone (iOS Toast Banner) */
+.topBanner {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  min-width: 320px;
+  max-width: 420px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.5),
+    0 1px 3px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: slideInDown 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.topBannerSuccess {
+  background: rgba(22, 20, 30, 0.9);
+  color: var(--txt);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.topBannerSuccess svg {
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.topBannerError {
+  background: rgba(22, 20, 30, 0.9);
+  color: var(--txt);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.topBannerError svg {
+  color: var(--danger);
+  flex-shrink: 0;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .topGrid {
   display: grid;
   grid-template-columns: 1.8fr 0.7fr;
@@ -332,32 +389,6 @@
   color: white;
 }
 
-.editPersonalBtn {
-  background: var(--bg-2);
-  border: 1px solid var(--line);
-  padding: 6px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: var(--txt);
-  font-size: 12px;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s;
-}
-
-.editPersonalBtn svg {
-  width: 13px;
-  height: 13px;
-  color: var(--primary-2);
-}
-
-.editPersonalBtn:hover {
-  border-color: var(--primary);
-  background: var(--card);
-}
-
 .about {
   grid-column: span 2;
 }
@@ -382,6 +413,12 @@
   margin-bottom: 10px;
   box-sizing: border-box;
   transition: border-color 0.2s;
+}
+
+.textareaAuto {
+  resize: none;
+  field-sizing: content;
+  max-height: 150px;
 }
 
 .textarea:focus,
@@ -444,7 +481,7 @@
   font-weight: 500;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .formacao .item {
@@ -454,24 +491,17 @@
   align-items: flex-start;
 }
 
-.dot {
-  width: 28px;
-  height: 28px;
+.schoolIconBox {
+  width: 34px;
+  height: 34px;
   background: var(--bg);
-  border-radius: 50%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 1px solid var(--line);
-}
-
-.dot::after {
-  content: "";
-  width: 8px;
-  height: 8px;
-  background: var(--primary-2);
-  border-radius: 50%;
+  color: var(--primary-2);
 }
 
 .item strong {
@@ -644,7 +674,7 @@
   border: none;
   color: var(--txt-2);
   cursor: pointer;
-  width: 45px  !important;
+  width: 45px !important;
   height: 45px !important;
   display: flex;
   align-items: center;
@@ -676,10 +706,6 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-.spanFull {
-  grid-column: 1 / -1;
 }
 
 .mb14 {
@@ -746,8 +772,7 @@
     justify-content: center;
   }
 }
-/*separator * /
-*/
+
 .separator {
   display: flex;
   align-items: center;
@@ -764,12 +789,15 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
-
 .forgotLink {
   color: #c084fc;
   text-decoration: none;
   cursor: pointer;
+  font-size: 0.9rem;
   text-align: center;
+  display: flex;
+  margin: 0 auto;
+  justify-content: center;
   font-weight: 600;
   transition: 0.2s;
 }

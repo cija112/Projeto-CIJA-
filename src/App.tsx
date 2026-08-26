@@ -189,6 +189,19 @@ function App() {
           }
           />
 
+            {/* ================================================= */}
+        {/* EMPRESA VISUALIZANDO PERFIL DE  JOVEM APRENDIZ */}
+        {/* ================================================= */}
+           <Route
+          path="/perfil/:idJa"
+          element={
+            <ProtectedRoute tipoEsperado="empresa">
+              <Perfil />
+            </ProtectedRoute>
+          }
+        />
+
+
 
 
         {/* ================================================= */}
@@ -196,7 +209,7 @@ function App() {
         {/* ================================================= */}
 
         <Route
-          path="/empresa/:id_em"
+          path="/perfilEmpresa/:id_em"
           element={
             <ProtectedRoute tipoEsperado="jovem_aprendiz">
               <PerfilEmpresa />
@@ -296,15 +309,7 @@ function App() {
 
         {/* Mantém compatibilidade com a rota antiga */}
 
-        <Route
-          path="/preEntrevisas"
-          element={
-            <ProtectedRoute tipoEsperado="empresa">
-              <PreEntrevistas />
-            </ProtectedRoute>
-          }
-        />
-
+     
         {/* Pré-entrevista específica */}
 
         <Route

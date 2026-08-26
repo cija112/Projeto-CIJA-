@@ -1,18 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap");
 
 :root {
-  --bg: #240947;
-  --card: rgba(18, 10, 34, 0.88);
-  --white: #ffffff;
-  --muted: #9f9fb4;
-  --purple: #8b2cf5;
-  --purple-light: #a855f7;
-  --purple-dark: #4c1d95;
-  --green: #22c55e;
-  --danger: #ff4d4d;
-  --border: rgba(255, 255, 255, 0.06);
-  --shadow: 0 25px 80px rgba(0, 0, 0, 0.65);
-  --input: rgba(255, 255, 255, 0.035);
+  --purple-primary: #560fcf;
+  --purple-hover: #4b02be;
+  --text-main: #111827;
+  --text-muted: #4b5058;
+  --border-color: #d1d5db;
+  --input-bg: #1b1c1d;
 }
 
 * {
@@ -20,630 +14,497 @@
   padding: 0;
   box-sizing: border-box;
 }
-html {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+
 body {
   font-family: "Poppins", sans-serif;
-  background: var(--bg);
+  background: #eceaea;
+  color: var(--text-main);
+  min-height: 100vh;
   overflow-x: hidden;
-  color: white;
 }
 
-/* =========================================
-   WRAPPER
-========================================= */
 .wrapper {
   position: relative;
   width: 100%;
   min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 24px;
-  overflow: hidden;
 }
 
 /* =========================================
-   LOGO
+   TOP RIGHT LOGIN & LOGO
 ========================================= */
-.desktopLogo {
-  position: fixed;
-  top: 28px;
-  left: 28px;
-  width: 72px;
+.topRightLogin {
+  position: absolute;
+  top: 32px;
+  right: 48px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
   z-index: 50;
+}
+.topRightLogin a {
+  margin-left: 6px;
+  color: var(--purple-primary);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.topRightLogin a:hover {
+  text-decoration: underline;
+}
+
+.desktopLogo {
+  position: absolute;
+  top: 28px;
+  left: 48px;
+  height: 60px;
+  width: 60px;
+  z-index: 50;
+  object-fit: contain;
 }
 .mobileLogo {
   display: none;
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  margin-bottom: 24px;
 }
 
 /* =========================================
-   ALERT
+   CONTAINER SPLIT
 ========================================= */
-.alert {
-  position: fixed;
-  top: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(92%, 420px);
-  padding: 15px 18px;
-  border-radius: 16px;
-  background: var(--danger);
-  color: white;
-  font-size: 0.95rem;
-  font-weight: 600;
-  text-align: center;
-  z-index: 999;
-  box-shadow: 0 12px 40px rgba(255, 77, 0.35);
-  animation: fadeDown 0.35s ease;
-}
-@keyframes fadeDown {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-/* =========================================
-   CONTAINER
-========================================= */
-.loginContainer {
-  width: 100%;
-  max-width: 1500px;
+.container {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 80px;
-  position: relative;
-  z-index: 2;
-  padding-inline: 60px;
+  width: 100%;
+  min-height: 100vh;
 }
 
 /* =========================================
-   LEFT
+   LEFT SECTION 
 ========================================= */
-.left {
+.leftSection {
   flex: 1;
-  width: 100%;
-  max-width: 760px;
+  background: #0f061d69;
+  color: #ffffff;
+  padding: 0 60px 60px 80px;
   display: flex;
+  margin-top: 40px;
   flex-direction: column;
   justify-content: center;
   position: relative;
-  z-index: 2;
 }
-.left h1 {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  font-size: clamp(5.7rem, 7vw, 7rem);
-  line-height: 0.92;
-  font-weight: 800;
-  letter-spacing: -5px;
-  color: white;
-  text-align: left;
-  white-space: normal;
-  overflow-wrap: break-word;
-  word-break: normal;
-  text-shadow: 0 10px 35px rgba(118, 29, 219, 0.14);
+.leftSection h1 {
+  font-size: clamp(3.8rem, 5vw, 4.8rem);
+  line-height: 1.1;
+  font-weight: 700;
+  margin-bottom: 20px;
+  letter-spacing: -1px;
 }
-.titleTop {
+.leftSection h1 span {
   display: block;
 }
-.titleBottom {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-.titleHighlight {
-  position: relative;
-  display: inline-block;
-  padding-bottom: 29px;
-  background: linear-gradient(180deg, #d8b4fe 0%, #a855f7 50%, #7e22ce 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow:
-    0 0 10px rgba(139, 47, 224, 0.25),
-    0 0 20px rgba(126, 34, 206, 0.18);
-}
-
-
-.titleExclamation {
-  color: white;
-
-  margin-left: 0.2rem; /* cola o ! no agora */
-  display: inline; /* garante que fica na mesma linha */
-
-  -webkit-text-fill-color: white;
+.highlightText {
+  color: #7732e7;
 }
 .tagline {
-  margin-top: 30px;
-  max-width: 560px;
-  color: #9f9fb4;
   font-size: 1.05rem;
-  line-height: 1.9;
-  text-align: left;
+  color: #9ca3af;
+  line-height: 1.6;
+  max-width: 480px;
+  margin-bottom: 40px;
 }
 
-/* =========================================
-   CARD
-========================================= */
-.loginCard {
-  position: relative;
-  width: 100%;
-  max-width: 470px;
-  height: 760px;
-  border-radius: 30px;
-  background: linear-gradient(
-    180deg,
-    rgba(22, 10, 40, 0.92) 0%,
-    rgba(12, 5, 24, 0.96) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(30px);
-  box-shadow:
-    0 25px 80px rgba(0, 0, 0, 0.65),
-    0 0 40px rgba(147, 51, 234, 0.08);
-  padding: 30px 24px;
-  overflow: hidden;
-  z-index: 3;
+.featureList {
   display: flex;
   flex-direction: column;
+  gap: 28px;
+  max-width: 480px;
 }
-.loginCard::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    140deg,
-    rgba(255, 255, 255, 0.04),
-    transparent 40%
-  );
-  pointer-events: none;
+.featureItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
 }
-.cardContent {
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  padding-right: 6px;
+.featureIcon {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  border-radius: 10px;
+  background: rgba(124, 58, 237, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a78bfa;
+}
+.featureItem h3 {
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+.featureItem p {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  line-height: 1.5;
 }
 
 /* =========================================
-   SCROLL
+   RIGHT SECTION 
 ========================================= */
-.cardContent::-webkit-scrollbar {
-  width: 7px;
+.rightSection {
+  flex: 1;
+  background: #340572a2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px 40px 40px;
+  overflow-y: auto;
 }
-.cardContent::-webkit-scrollbar-track {
-  background: transparent;
+.formWrapper {
+  width: 100%;
+  max-width: 500px;
 }
-.cardContent::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #4b098a, #6d28d9);
-  border-radius: 20px;
-}
-.cardContent h2 {
-  font-size: 2.3rem;
-  font-weight: 700;
+.formHeader {
   text-align: center;
   margin-bottom: 28px;
 }
+.formHeader h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.formHeader p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
 
-/* =========================================
-   FORM
-========================================= */
 form {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
 }
+
 .inputGroup {
-  width: 100%;
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.passwordGroup {
+  gap: 2px !important;
+  margin-bottom: 0 !important;
+}
+
+.inputGroup label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #374151;
 }
 .inputWrapper {
   position: relative;
 }
 .input {
   width: 100%;
-  height: 60px;
-  border-radius: 18px;
-  border: 1px solid var(--border);
-  background: var(--input);
-  position: relative;
-  padding: 0 18px;
-  color: white;
-  font-size: 0.97rem;
+  height: 48px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  padding: 0 16px 0 44px;
+  color: var(--text-main);
+  font-size: 0.95rem;
   outline: none;
-  transition: 0.25s ease;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+.input:focus {
+  border-color: var(--purple-primary);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 .inputIcon {
   position: absolute;
-  left: 88%;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #7f7a8d;
+  color: #c8c9ca;
+  width: 20px;
+  height: 20px;
   pointer-events: none;
-  z-index: 2;
-  width: clamp(20px, 2.5vw, 24px); /*  min 20px, max 24px */
-  height: clamp(20px, 2.5vw, 24px);
-}
-.input::placeholder {
-  color: #67677d;
-}
-.input:focus {
-  border-color: var(--purple);
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow: 0 0 0 4px rgba(139, 44, 245, 0.13);
 }
 
 /* =========================================
-   DATE INPUT
-========================================= */
-.dateInput {
-  color: white;
-}
-.dateInput::-webkit-datetime-edit {
-  color: white;
-}
-.dateInput::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  cursor: pointer;
-}
-
-/* =========================================
-   CHECK
-========================================= */
-.inputCheckWrapper {
-  position: absolute;
-  top: 50%;
-  right: 16px;
-  transform: translateY(-50%);
-  width: 23px;
-  height: 23px;
-  border-radius: 50%;
-  background: var(--green);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.animatedCheck {
-  width: 13px;
-  height: 13px;
-}
-
-/* =========================================
-   PASSWORD
+   PASSWORD 
 ========================================= */
 .senhaBox {
   position: relative;
+  justify-content: flex-start;
+ 
 }
 .toggleSenha {
   position: absolute;
-  top: 8px;
-  right: 25px;
-  width: 20px;
-  height: 70%;
+  top: 0;
+  right: 14px;
+  width: 24px;
+  height: 100%;
   border: none;
   background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #9595ad;
+  color: #bbbdc0;
 }
 .toggleSenha:hover {
-  color: white;
+  color: var(--text-main);
 }
 
-/* =========================================
-   VALIDATION
-========================================= */
-.passwordValidation {
-  margin-top: 12px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(255, 255, 255, 0.025);
-  padding: 16px;
+.strengthContainer {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
+  margin-top: 6px;
 }
-.validationItem {
+.strengthBars {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.88rem;
-}
-.validationIcon {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.validationDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #66667b;
-}
-.valid {
-  color: #d1fae5;
-}
-.invalid {
-  color: #77778c;
-}
-
-/* =========================================
-   PASSWORD STRENGTH
-========================================= */
-.passwordStrength {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  gap: 4px;
+  height: 5px;
+  width: 100%;
 }
 .strengthBar {
   flex: 1;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 99px;
-  overflow: hidden;
-}
-.strengthFill {
   height: 100%;
-  width: 0;
-  border-radius: 99px;
-  transition:
-    width 0.3s ease,
-    background-color 0.3s ease;
+  background: #e5e7eb;
+  border-radius: 3px;
+  transition: background 0.3s ease;
 }
-.strengthFill.weak {
-  background: #ef4444;
-}
-.strengthFill.medium {
-  background: #f59e0b;
-}
-.strengthFill.strong {
-  background: #22c55e;
-}
-.strengthFill.veryStrong {
-  background: #16a34a;
-}
-.strengthLabel {
+.strengthText {
   font-size: 0.78rem;
-  color: var(--muted);
-  min-width: 85px;
-  text-align: right;
-  font-weight: 500;
+  color: var(--text-muted);
 }
 
 /* =========================================
-   BUTTON
+   TERMS CHECKBOX
+========================================= */
+.termsGroup {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+.termsGroup input[type="checkbox"] {
+  margin-top: 4px;
+  accent-color: var(--purple-primary);
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+.termsGroup label {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+.termsGroup a {
+  color: var(--purple-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+.termsGroup a:hover {
+  text-decoration: underline;
+}
+
+/* =========================================
+   BUTTON & FOOTER
 ========================================= */
 .actionButton {
   width: 100%;
-  height: 60px;
+  height: 50px;
   margin-top: 8px;
   border: none;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #7e22ce, #9333ea);
-  color: white;
+  border-radius: 10px;
+  background: var(--purple-primary);
+  color: #ffffff;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.25s ease;
-  box-shadow: 0 14px 34px rgba(126, 34, 206, 0.3);
+  transition:
+    background 0.2s,
+    transform 0.1s;
 }
 .actionButton:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.05);
+  background: var(--purple-hover);
 }
 .actionButton:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
-/* =========================================
-   FOOTER
-========================================= */
 .footerActions {
   margin-top: 24px;
+  text-align: center;
 }
 .separator {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #707087;
+  gap: 15px;
+  color: #9ca3af;
   font-size: 0.85rem;
+  margin-bottom: 18px;
 }
 .separator::before,
 .separator::after {
   content: "";
   flex: 1;
   height: 1px;
-  background: rgba(255, 255, 255, 0.06);
+  background: #e5e7eb;
 }
 .subLink {
-  margin-top: 16px;
-  text-align: center;
-  color: var(--muted);
   font-size: 0.92rem;
+  color: var(--text-muted);
 }
 .subLink a {
-  margin-left: 6px;
-  color: var(--purple-light);
+  color: var(--purple-primary);
   font-weight: 600;
+  text-decoration: none;
   cursor: pointer;
+  margin-left: 4px;
+}
+.subLink a:hover {
+  text-decoration: underline;
 }
 
 /* =========================================
-   ERROR
+   ALERTS & VALIDATION
 ========================================= */
 .error {
-  border-color: var(--danger) !important;
+  border-color: #ef4444 !important;
 }
 .errorMessage {
-  margin-top: 8px;
-  margin-left: 4px;
-  color: var(--danger);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
+  color: #ef4444;
+  margin-top: 3px;
+  font-weight: 500;
 }
-
-/* =========================================
-   SUCCESS
-========================================= */
-.successAnimation {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 30px;
-  background: rgba(10, 6, 18, 0.96);
-  backdrop-filter: blur(20px);
-}
-.checkmark {
-  width: 100px;
-  height: 100px;
-  margin-bottom: 16px;
-}
-.checkmarkCircle {
-  stroke: var(--green);
-  stroke-width: 3;
-  fill: none;
-  stroke-dasharray: 166;
-  stroke-dashoffset: 166;
-  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
-}
-.checkmarkCheck {
-  stroke: white;
-  stroke-width: 4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 48;
-  stroke-dashoffset: 48;
-  animation: stroke 0.35s cubic-bezier(0.65, 0, 0.45, 1) 0.55s forwards;
-}
-@keyframes stroke {
-  to {
-    stroke-dashoffset: 0;
-  }
+.alert {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ef4444;
+  color: white;
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  z-index: 1000;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 .shake {
-  animation: shake 0.45s;
+  animation: shake 0.4s ease-in-out;
 }
 @keyframes shake {
-  25% {
-    transform: translateX(-5px);
+  0%,
+  100% {
+    transform: translateX(0);
   }
-  50% {
-    transform: translateX(5px);
+  25% {
+    transform: translateX(-6px);
   }
   75% {
-    transform: translateX(-4px);
+    transform: translateX(6px);
   }
 }
 
 /* =========================================
-   RESPONSIVE
+   RESPONSIVIDADE COM PADDINGS EXAGERADOS E TEXTOS MAIS VISÍVEIS
 ========================================= */
-@media (max-width: 1200px) {
-  .loginContainer {
+@media (max-width: 1024px) {
+  .container {
     flex-direction: column;
-    justify-content: center;
-    gap: 50px;
-    padding-inline: 20px;
   }
-  .left {
-    align-items: center;
-    max-width: 100%;
+  .leftSection {
+    padding: 20px 48px 50px 48px;
+    align-items: flex-start;
+    text-align: left;
+    margin-top: 0;
   }
-  .left h1 {
-    text-align: center;
-    align-items: center;
-    font-size: clamp(3rem, 8vw, 6rem);
-  }
-  .titleBottom {
-    justify-content: center;
-  }
-  .tagline {
-    text-align: center;
+  .mobileLogo {
+    display: block;
+    width: 60px;
+    height: 60px;
   }
   .desktopLogo {
     display: none;
   }
-  .mobileLogo {
-    display: block;
-    width: 74px;
-    margin: 0 auto 24px;
+  .leftSection h1 {
+    font-size: 2.8rem;
+    line-height: 1.2;
+  }
+  .tagline {
+    font-size: 1.1rem;
+  }
+  .topRightLogin {
+    top: 28px;
+    right: 36px;
+    font-size: 0.95rem;
+  }
+  .rightSection {
+    padding: 115px 36px 80px 36px;
   }
 }
 
 @media (max-width: 768px) {
-  .wrapper {
-    padding: 24px 2px;
+  .leftSection {
+    padding: 20px 32px 40px 32px;
   }
-
-  .left h1 {
-    font-size: clamp(4.5rem, 10vw, 4.5rem);
-    line-height: 1;
-    letter-spacing: -2px;
+  .leftSection h1 {
+    font-size: 2.3rem;
+    line-height: 1.25;
   }
   .tagline {
-    font-size: 0.95rem;
-    line-height: 1.2;
+    font-size: 1rem;
   }
-  .loginCard {
-    height: auto;
-    min-height: 88vh;
-    max-width: 100%;
+  .topRightLogin {
+    font-size: 0.9rem;
+    top: 24px;
+    right: 24px;
   }
-  .blobTop {
-    width: 320px;
-    height: 320px;
-  }
-  .blobBottom {
-    width: 360px;
-    height: 360px;
-  }
-  .checkmark {
-    width: 90px;
-    height: 90px;
+  .rightSection {
+    padding: 115px 28px 70px 28px;
   }
 }
 
 @media (max-width: 480px) {
-  .left h1 {
-    font-size: clamp(2rem, 11vw, 3.4rem);
-    letter-spacing: -1px;
+  .leftSection {
+    padding: 20px 24px 36px 24px;
+  }
+  .rightSection {
+    padding: 115px 20px 60px 20px;
+  }
+  .formHeader {
+    margin-bottom: 24px;
+  }
+  .formHeader h2 {
+    font-size: 1.8rem;
+  }
+  .leftSection h1 {
+    font-size: 2rem;
+    line-height: 1.3;
   }
   .tagline {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    margin-bottom: 28px;
   }
-  .loginCard {
-    padding: 22px 16px;
+  .featureItem h3 {
+    font-size: 0.98rem;
   }
-  .input {
-    height: 56px;
-    font-size: 16px;
+  .featureItem p {
+    font-size: 0.85rem;
   }
-  .actionButton {
-    height: 56px;
-  }
-  .checkmark {
-    width: 80px;
-    height: 80px;
+  .topRightLogin {
+    top: 20px;
+    right: 20px;
+    font-size: 0.85rem;
   }
 }

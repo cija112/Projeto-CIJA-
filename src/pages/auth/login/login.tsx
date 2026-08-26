@@ -5,7 +5,7 @@ import styles from "./login.module.css";
 import { supabase } from "supabaseClient";
 import emailjs from "@emailjs/browser";
 import cija_logo from "../../../assets/logo2.png";
-import youngmanImage from "../../../assets/youngman.jpg";
+
 import groupMain from "../../../assets/groupMain.png";
 import girlMain from "../../../assets/girlMain.png";
 import EyeOpenIcon from "../../../components/icons/EyeOpenIcon";
@@ -66,12 +66,14 @@ export default function Login() {
   }, [globalNotificacao]);
 
   useEffect(() => {
+    // troca de page pela rolagem no scroll
     const sections = document.querySelectorAll("section[id]");
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setActiveSection(entry.target.id);
+            window.history.replaceState(null, "", `#${entry.target.id}`);
           }
         });
       },
@@ -132,10 +134,15 @@ export default function Login() {
         .maybeSingle();
       if (clienteError) throw clienteError;
       if (!cliente) {
+        setTimeout(() => navigate("/loginEmpresa", { replace: true }), 2000);
         await supabase.auth.signOut();
-        throw new Error("E-mail ou senha inválidos.");
+        throw new Error("Conta empresarial detectada, redirecionando...");
       }
-
+      if (!authData.user.id) {
+        throw new Error(
+          "Conta não encontrada,verifique os dados digitados e tente novamente.",
+        );
+      }
       const emailConfirmado =
         cliente.email_confirmado === true ||
         cliente.email_confirmado === "true";
@@ -183,7 +190,7 @@ export default function Login() {
     }
   };
 
-  // Sistema de Envio de E-mail via EmailJS integrado com Alerta Verde/Vermelho
+  // Sistema de Envio de email
   const handleContactSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!contactConsent) {
@@ -290,14 +297,8 @@ export default function Login() {
         <div className={styles.alert}>{globalNotificacao}</div>
       )}
 
-      {/* SEÇÃO INÍCIO / HERO & LOGIN */}
+      {/* SEÇÃO INÍCIO */}
       <section className={styles.section} id="inicio">
-        <div
-          className={styles.bgBoyImage}
-          style={{
-            backgroundImage: `url(${youngmanImage})`,
-          }}
-        ></div>
         <div className={styles.bgDecorations}>
           <div className={styles.bgArc1}></div>
           <div className={styles.bgArc2}></div>

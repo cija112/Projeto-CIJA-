@@ -5,6 +5,7 @@ import { supabase } from "../../../supabaseClient";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDocumentTitle } from "Hooks/useDocumentTitle";
 
+// Funções de formatação e validação robustas
 function formatarTelefone(telefone: string) {
   if (!telefone) return "Número de telefone não informado pela empresa.";
   const formatNumeros = telefone.replace(/\D/g, "");
@@ -25,6 +26,24 @@ function formatarTelefone(telefone: string) {
   return telefone;
 }
 
+function formatarCNPJ(cnpj: string) {
+  if (!cnpj) return "";
+  const nums = cnpj.replace(/\D/g, "");
+  if (nums.length !== 14) return cnpj;
+  return nums.replace(
+    /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
+    "$1.$2.$3/$4-$5",
+  );
+}
+
+function validarCNPJ(cnpj: string) {
+  const nums = cnpj.replace(/\D/g, "");
+  if (nums.length !== 14) return false;
+  // Validação básica contra sequências repetidas inválidas
+  if (/^(\d)\1+$/.test(nums)) return false;
+  return true;
+}
+
 export default function PerfilEmpresa() {
   const navigate = useNavigate();
   useDocumentTitle("CIJA - Perfil da Empresa");
@@ -32,14 +51,20 @@ export default function PerfilEmpresa() {
   const params = useParams();
   const pathSegments = window.location.pathname.split("/").filter(Boolean);
 
-  // Captura o ID de forma blindada (independente de estar como :id, :id_em ou vindo da URL)
   const urlId = Object.values(params)[0] || pathSegments[1];
-
-  // Se houver um ID extra na URL além do caminho base, identifica como visualização externa do jovem
   const isVisualizacaoDoJovem = pathSegments.length > 1 || !!urlId;
 
   const [empresa, setEmpresa] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+
+  // Estados do Modo de Edição
+  const [isEditing, setIsEditing] = useState(false);
+  const [editNome, setEditNome] = useState("");
+  const [editTelefone, setEditTelefone] = useState("");
+  const [editCnpj, setEditCnpj] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [stats, setStats] = useState({
     vagas: 0,
@@ -49,7 +74,6 @@ export default function PerfilEmpresa() {
   });
 
   const [atividades, setAtividades] = useState<any[]>([]);
-  const [uploading, setUploading] = useState(false);
 
   function getTempoRelativo(dateString: string | Date) {
     if (!dateString) return "recente";
@@ -79,7 +103,6 @@ export default function PerfilEmpresa() {
       let empError = null;
 
       if (isVisualizacaoDoJovem && urlId) {
-        // Busca a empresa específica selecionada pelo jovem aprendiz
         const { data, error } = await supabase
           .from("empresa")
           .select("*")
@@ -88,7 +111,6 @@ export default function PerfilEmpresa() {
         empData = data;
         empError = error;
       } else {
-        // Fluxo padrão da própria empresa logada visualizando seu painel interno
         const {
           data: { user },
         } = await supabase.auth.getUser();
@@ -123,9 +145,18 @@ export default function PerfilEmpresa() {
       }
 
       setEmpresa(empData);
+
+      // Inicializa os campos editáveis
+      setEditNome(empData.nome || "");
+      setEditTelefone(empData.telefone || "");
+      setEditCnpj(empData.cnpj || "");
+      setEditDesc(
+        empData.descricao ||
+          "Conectamos jovens talentos a oportunidades de aprendizado e crescimento profissional.",
+      );
+
       const alvoId = empData.id_em;
 
-      // Buscando as vagas e contadores para os cards informativos
       const { data: vagas } = await supabase
         .from("vaga")
         .select("id_vag, titulo, data_publicada")
@@ -170,7 +201,6 @@ export default function PerfilEmpresa() {
         contratados: h,
       });
 
-      // Se for jovem aprendiz tentando acessar, n libera funcoes e tals
       if (isVisualizacaoDoJovem) {
         setLoading(false);
         return;
@@ -217,6 +247,84 @@ export default function PerfilEmpresa() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  // Manipulador de digitação e máscara automática de Telefone (+55 e DDD)
+  function handleTelefoneChange(e: React.ChangeEvent<HTMLInputElement>) {
+    let val = e.target.value.replace(/\D/g, "");
+
+    // Garante que comece com 55 se o usuário digitar os dígitos locais
+    if (!val.startsWith("55") && val.length > 0) {
+      val = "55" + val;
+    }
+
+    // Limita o total de dígitos a 13
+    if (val.length > 13) {
+      val = val.substring(0, 13);
+    }
+
+    setEditTelefone(val);
+  }
+
+  // Salvamento das informações editadas com validações completas
+  async function handleSaveInfo(e: React.FormEvent) {
+    e.preventDefault();
+    setErrorMessage("");
+
+    // 1. Validação do Nome
+    if (!editNome.trim()) {
+      setErrorMessage("O nome da empresa não pode estar vazio.");
+      return;
+    }
+
+    // 2. Validação do Telefone (Deve conter exatamente 13 dígitos: 55 + 2 DDD + 9 número)
+    const telNums = editTelefone.replace(/\D/g, "");
+    if (telNums.length !== 13) {
+      setErrorMessage(
+        "O telefone deve conter exatamente 13 dígitos no padrão internacional (+55 + DDD + Número).",
+      );
+      return;
+    }
+
+    // 3. Validação do CNPJ
+    const cnpjNums = editCnpj.replace(/\D/g, "");
+    if (cnpjNums.length !== 14 || !validarCNPJ(cnpjNums)) {
+      setErrorMessage("Por favor, insira um CNPJ válido com 14 dígitos.");
+      return;
+    }
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("empresa")
+        .update({
+          nome: editNome.trim(),
+          telefone: telNums,
+          cnpj: cnpjNums,
+          descricao: editDesc.trim(),
+        })
+        .eq("id_em", user.id);
+
+      if (error) {
+        setErrorMessage("Erro ao atualizar dados no banco: " + error.message);
+        return;
+      }
+
+      setEmpresa({
+        ...empresa,
+        nome: editNome.trim(),
+        telefone: telNums,
+        cnpj: cnpjNums,
+        descricao: editDesc.trim(),
+      });
+      setIsEditing(false);
+    } catch (err: any) {
+      setErrorMessage("Ocorreu um erro inesperado: " + err.message);
     }
   }
 
@@ -287,20 +395,28 @@ export default function PerfilEmpresa() {
     }
   }
 
+  // Validação e formatação segura da Data de Cadastro automática
   const formatDate = (d: string) => {
-    if (!d) return "-";
-    return new Date(d).toLocaleDateString("pt-BR", {
+    if (!d) return "Data não informada";
+    const dataObj = new Date(d);
+    if (isNaN(dataObj.getTime())) return "Data inválida";
+
+    const ano = dataObj.getFullYear();
+    const anoAtual = new Date().getFullYear();
+
+    // Verificando se a data cadastrada está fora de limites lógicos (ex: muito antiga ou no futuro)
+    if (ano < 2000 || ano > anoAtual + 1) {
+      return "Data cadastrada fora do intervalo válido";
+    }
+
+    return dataObj.toLocaleDateString("pt-BR", {
       day: "numeric",
       month: "long",
       year: "numeric",
     });
   };
 
-  // ==================== TELA DE CARREGAMENTO ====================
-  if (loading){
-    setTimeout(() => {
-
-  },3500);
+  if (loading) {
     return (
       <div
         style={{
@@ -315,32 +431,6 @@ export default function PerfilEmpresa() {
           fontFamily: "'Poppins', system-ui, sans-serif",
         }}
       >
-        {/* Blobs */}
-        <div
-          style={{
-            position: "absolute",
-            width: 420,
-            height: 420,
-            top: "-15%",
-            right: "-10%",
-            background: "rgba(147,51,234,0.18)",
-            filter: "blur(110px)",
-            borderRadius: "50%",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            width: 380,
-            height: 380,
-            bottom: "-15%",
-            left: "-10%",
-            background: "rgba(88,28,135,0.16)",
-            filter: "blur(110px)",
-            borderRadius: "50%",
-          }}
-        />
-
         <div
           style={{
             position: "relative",
@@ -358,7 +448,6 @@ export default function PerfilEmpresa() {
             textAlign: "center",
           }}
         >
-          {/* Spinner */}
           <div
             style={{
               width: 64,
@@ -386,66 +475,14 @@ export default function PerfilEmpresa() {
                 animation: "spin 0.85s linear infinite",
               }}
             />
-            <div
-              style={{
-                position: "absolute",
-                inset: 10,
-                borderRadius: "50%",
-                background: "rgba(168,85,247,0.1)",
-                animation: "pulse 2s ease-in-out infinite",
-              }}
-            />
           </div>
-
           <h2
-            style={{
-              margin: 0,
-              color: "white",
-              fontSize: 20,
-              fontWeight: 700,
-              letterSpacing: "-0.3px",
-            }}
+            style={{ margin: 0, color: "white", fontSize: 20, fontWeight: 700 }}
           >
-            Carregando perfil da empresa
+            Carregando perfil...
           </h2>
-          <p
-            style={{
-              margin: "8px 0 0",
-              color: "#a8a3b7",
-              fontSize: 14,
-              lineHeight: 1.5,
-            }}
-          >
-            Buscando informações e métricas no ambiente CIJA...
-          </p>
-
-          {/* Barra de progresso */}
-          <div
-            style={{
-              marginTop: 28,
-              height: 4,
-              background: "rgba(255,255,255,0.06)",
-              borderRadius: 99,
-              overflow: "hidden",
-            }}
-          >
-            <div
-              style={{
-                height: "100%",
-                width: "40%",
-                background: "linear-gradient(90deg, #9333ea, #c084fc)",
-                borderRadius: 99,
-                animation: "load 2.5s ease-in-out infinite",
-              }}
-            />
-          </div>
         </div>
-
-        <style>{`
-          @keyframes spin { to { transform: rotate(360deg); } }
-          @keyframes pulse { 0%,100% { opacity: 0.6; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1); } }
-          @keyframes load { 0% { transform: translateX(-120%); } 50% { transform: translateX(250%); } 100% { transform: translateX(-120%); } }
-        `}</style>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
@@ -467,21 +504,8 @@ export default function PerfilEmpresa() {
             <button
               className={styles.btnVoltar}
               onClick={() => navigate(-1)}
-              style={{ marginTop: 200 }}
+              style={{ marginTop: 20 }}
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="19" y1="12" x2="5" y2="12"></line>
-                <polyline points="12 19 5 12 12 5"></polyline>
-              </svg>
               <span>Voltar</span>
             </button>
           </div>
@@ -492,13 +516,11 @@ export default function PerfilEmpresa() {
 
   return (
     <div className={isVisualizacaoDoJovem ? styles.pagePublica : styles.page}>
-      {/* Sidebar removida completamente se for visualização do jovem */}
       {!isVisualizacaoDoJovem && <SidebarEmpresa />}
 
       <main
         className={isVisualizacaoDoJovem ? styles.mainPublico : styles.main}
       >
-        {/* Topbar com botão Voltar se for  Jovem Aprendiz */}
         {isVisualizacaoDoJovem && (
           <div className={styles.topBarPublica}>
             <button className={styles.btnVoltar} onClick={() => navigate(-1)}>
@@ -515,7 +537,7 @@ export default function PerfilEmpresa() {
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
               </svg>
-              <span className={styles.btnVoltar2}>Voltar</span>
+              <span>Voltar</span>
             </button>
           </div>
         )}
@@ -530,7 +552,6 @@ export default function PerfilEmpresa() {
                 }
                 alt={empresa.nome}
               />
-              {/* Opção de alterar foto removida para o jovem */}
               {!isVisualizacaoDoJovem && (
                 <label className={styles.editAvatar}>
                   <input
@@ -555,14 +576,12 @@ export default function PerfilEmpresa() {
             </div>
 
             <div className={styles.heroInfo}>
-              <h1>
-                {empresa.nome} <span className={styles.star}>★</span>
-              </h1>
+              <h1>{empresa.nome}</h1>
               <p className={styles.heroEmail}>{empresa.email}</p>
               <span className={styles.heroTag}>Empresa</span>
               <p className={styles.heroDesc}>
-                Conectamos jovens talentos a oportunidades de aprendizado e
-                crescimento profissional.
+                {empresa.descricao ||
+                  "Conectamos jovens talentos a oportunidades de aprendizado e crescimento profissional."}
               </p>
             </div>
           </div>
@@ -572,7 +591,7 @@ export default function PerfilEmpresa() {
           <div
             className={isVisualizacaoDoJovem ? styles.fullCol : styles.leftCol}
           >
-            {/* Informações da Empresa */}
+            {/* Card de Informações / Edição */}
             <div className={styles.card}>
               <div className={styles.cardHeader}>
                 <h2>
@@ -588,11 +607,15 @@ export default function PerfilEmpresa() {
                   </svg>
                   Informações da empresa
                 </h2>
-                {/* Botão de editar removido completamente para o Jovem */}
-                {!isVisualizacaoDoJovem && (
+
+                {/* Botão de alternar edição (apenas para a própria empresa) */}
+                {!isVisualizacaoDoJovem && !isEditing && (
                   <button
                     className={styles.btnEdit}
-                    onClick={() => navigate("/perfilEmpresa/editar")}
+                    onClick={() => {
+                      setIsEditing(true);
+                      setErrorMessage("");
+                    }}
                   >
                     <svg
                       width="14"
@@ -609,109 +632,103 @@ export default function PerfilEmpresa() {
                   </button>
                 )}
               </div>
-              <div className={styles.infoGrid}>
-                <div className={styles.infoItem}>
-                  <div className={styles.infoIcon}>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                    >
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
-                    </svg>
-                  </div>
-                  <div>
-                    <label>Nome da empresa</label>
-                    <p>{empresa.nome}</p>
-                  </div>
-                </div>
-                <div className={styles.infoItem}>
-                  <div className={styles.infoIcon}>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                    >
-                      <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-                      <line x1="12" y1="18" x2="12" y2="18" />
-                    </svg>
-                  </div>
-                  <div>
-                    <label>Telefone</label>
-                    <p className={styles.phoneText}>
-                      {formatarTelefone(empresa.telefone)}
-                    </p>
-                  </div>
-                </div>
-                <div className={styles.infoItem}>
-                  <div className={styles.infoIcon}>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                    >
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                  </div>
-                  <div>
-                    <label>Endereço</label>
-                    <p>{empresa.endereco || "Não informado"}</p>
-                  </div>
-                </div>
-                <div className={styles.infoItem}>
-                  <div className={styles.infoIcon}>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                    >
-                      <rect x="2" y="4" width="20" height="16" rx="2" />
-                      <path d="M22 7l-10 5L2 7" />
-                    </svg>
-                  </div>
-                  <div>
-                    <label>E-mail</label>
-                    <p>{empresa.email}</p>
-                  </div>
-                </div>
-                <div className={styles.infoItem}>
-                  <div className={styles.infoIcon}>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#a78bfa"
-                      strokeWidth="2"
-                    >
-                      <rect x="3" y="4" width="18" height="18" rx="2" />
-                      <line x1="16" y1="2" x2="16" y2="6" />
-                      <line x1="8" y1="2" x2="8" y2="6" />
-                      <line x1="3" y1="10" x2="21" y2="10" />
-                    </svg>
-                  </div>
-                  <div>
-                    <label>Data cadastrada</label>
-                    <p>{formatDate(empresa.data_cadastro)}</p>
-                  </div>
-                </div>
 
-                {/* CNPJ Ocultado completamente para o Jovem Aprendiz */}
-                {!isVisualizacaoDoJovem && (
+              {errorMessage && (
+                <div className={styles.errorMsg}>{errorMessage}</div>
+              )}
+
+              {isEditing && !isVisualizacaoDoJovem ? (
+                <form onSubmit={handleSaveInfo} className={styles.editForm}>
+                  <div className={styles.inputGroup}>
+                    <label>Nome da empresa</label>
+                    <input
+                      type="text"
+                      value={editNome}
+                      onChange={(e) => setEditNome(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label>Telefone (+55 e 13 dígitos)</label>
+                    <input
+                      type="text"
+                      value={editTelefone}
+                      onChange={handleTelefoneChange}
+                      placeholder="5511988887777"
+                      maxLength={13}
+                      required
+                    />
+                    <small>
+                      Formato esperado: 55 + DDD + Número (Ex: 5511999998888)
+                    </small>
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label>CNPJ</label>
+                    <input
+                      type="text"
+                      value={editCnpj}
+                      onChange={(e) => setEditCnpj(e.target.value)}
+                      placeholder="00.000.000/0000-00"
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label>Sobre a empresa (Descrição)</label>
+                    <textarea
+                      value={editDesc}
+                      onChange={(e) => setEditDesc(e.target.value)}
+                      placeholder="Conectando jovens talentos..."
+                    />
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label>E-mail (Não editável)</label>
+                    <input
+                      type="email"
+                      value={empresa.email}
+                      disabled
+                      style={{ opacity: 0.6, cursor: "not-allowed" }}
+                    />
+                  </div>
+
+                  <div className={styles.editActions}>
+                    <button type="submit" className={styles.btnSave}>
+                      Salvar alterações
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.btnCancel}
+                      onClick={() => setIsEditing(false)}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className={styles.infoGrid}>
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#a78bfa"
+                        strokeWidth="2"
+                      >
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                    </div>
+                    <div>
+                      <label>Nome da empresa</label>
+                      <p>{empresa.nome}</p>
+                    </div>
+                  </div>
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoIcon}>
                       <svg
@@ -723,26 +740,98 @@ export default function PerfilEmpresa() {
                         strokeWidth="2"
                       >
                         <rect
-                          x="2"
-                          y="7"
-                          width="20"
-                          height="14"
+                          x="5"
+                          y="2"
+                          width="14"
+                          height="20"
                           rx="2"
                           ry="2"
                         />
-                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                        <line x1="12" y1="18" x2="12" y2="18" />
                       </svg>
                     </div>
                     <div>
-                      <label>CNPJ</label>
-                      <p>{empresa.cnpj}</p>
+                      <label>Telefone</label>
+                      <p>{formatarTelefone(empresa.telefone)}</p>
                     </div>
                   </div>
-                )}
-              </div>
+
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#a78bfa"
+                        strokeWidth="2"
+                      >
+                        <rect x="2" y="4" width="20" height="16" rx="2" />
+                        <path d="M22 7l-10 5L2 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <label>E-mail</label>
+                      <p>{empresa.email}</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#a78bfa"
+                        strokeWidth="2"
+                      >
+                        <rect x="3" y="4" width="18" height="18" rx="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                    </div>
+                    <div>
+                      <label>Data cadastrada (Automática)</label>
+                      <p>{formatDate(empresa.data_cadastro)}</p>
+                    </div>
+                  </div>
+
+                  {/* CNPJ exibido apenas para a própria empresa */}
+                  {!isVisualizacaoDoJovem && (
+                    <div className={styles.infoItem}>
+                      <div className={styles.infoIcon}>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#a78bfa"
+                          strokeWidth="2"
+                        >
+                          <rect
+                            x="2"
+                            y="7"
+                            width="20"
+                            height="14"
+                            rx="2"
+                            ry="2"
+                          />
+                          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                        </svg>
+                      </div>
+                      <div>
+                        <label>CNPJ</label>
+                        <p>{formatarCNPJ(empresa.cnpj)}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Injeta o Resumo de Vagas abaixo em largura cheia para o Jovem */}
+            {/* Resumo de Vagas no Modo Público */}
             {isVisualizacaoDoJovem && (
               <div className={styles.card}>
                 <div className={styles.cardHeader}>
@@ -766,43 +855,18 @@ export default function PerfilEmpresa() {
                       <strong>{stats.vagas}</strong>
                       <span>Vagas publicadas</span>
                     </div>
-                    <div className={styles.statIcon}>
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#a78bfa"
-                        strokeWidth="2"
-                      >
-                        <rect x="2" y="7" width="20" height="14" rx="2" />
-                      </svg>
-                    </div>
                   </div>
                   <div className={styles.statItem}>
                     <div>
                       <strong>{stats.candidatos}</strong>
                       <span>Candidatos</span>
                     </div>
-                    <div className={styles.statIcon}>
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#a78bfa"
-                        strokeWidth="2"
-                      >
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                      </svg>
-                    </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Atividade recente: Ocultada completamente para o jovem */}
+            {/* Atividade Recente mantida para a Empresa */}
             {!isVisualizacaoDoJovem && (
               <div className={styles.card}>
                 <div className={styles.cardHeader}>
@@ -821,34 +885,15 @@ export default function PerfilEmpresa() {
                   </h2>
                 </div>
                 <div className={styles.activityList}>
-                  {atividades.map((a, i) => (
-                    <div key={i} className={styles.activityItem}>
-                      <div className={`${styles.actIcon} ${styles[a.tipo]}`}>
-                        {a.tipo === "vaga" && (
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="white"
-                            strokeWidth="2"
-                          >
-                            <rect x="2" y="7" width="20" height="14" rx="2" />
-                          </svg>
-                        )}
-                        {a.tipo === "user" &&
-                          (a.foto ? (
-                            <img
-                              src={a.foto}
-                              alt=""
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                borderRadius: "50%",
-                                objectFit: "cover",
-                              }}
-                            />
-                          ) : (
+                  {atividades.length === 0 ? (
+                    <p style={{ color: "#6b7280", fontSize: 13 }}>
+                      Nenhuma atividade recente registrada.
+                    </p>
+                  ) : (
+                    atividades.map((a, i) => (
+                      <div key={i} className={styles.activityItem}>
+                        <div className={`${styles.actIcon} ${styles[a.tipo]}`}>
+                          {a.tipo === "vaga" && (
                             <svg
                               width="14"
                               height="14"
@@ -857,24 +902,49 @@ export default function PerfilEmpresa() {
                               stroke="white"
                               strokeWidth="2"
                             >
-                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                              <circle cx="12" cy="7" r="4" />
+                              <rect x="2" y="7" width="20" height="14" rx="2" />
                             </svg>
-                          ))}
+                          )}
+                          {a.tipo === "user" &&
+                            (a.foto ? (
+                              <img
+                                src={a.foto}
+                                alt=""
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  borderRadius: "50%",
+                                  objectFit: "cover",
+                                }}
+                              />
+                            ) : (
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="white"
+                                strokeWidth="2"
+                              >
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                              </svg>
+                            ))}
+                        </div>
+                        <div className={styles.actContent}>
+                          <strong>{a.titulo}</strong>
+                          <p>{a.desc}</p>
+                        </div>
+                        <span className={styles.actTime}>{a.tempo}</span>
                       </div>
-                      <div className={styles.actContent}>
-                        <strong>{a.titulo}</strong>
-                        <p>{a.desc}</p>
-                      </div>
-                      <span className={styles.actTime}>{a.tempo}</span>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Coluna Direita (Dashboard): Renderizada apenas para a própria Empresa */}
+          {/* Coluna Direita (Painel de Métricas e Ações para a Empresa) */}
           {!isVisualizacaoDoJovem && (
             <div className={styles.rightCol}>
               <div className={styles.card}>
@@ -899,42 +969,16 @@ export default function PerfilEmpresa() {
                       <strong>{stats.vagas}</strong>
                       <span>Vagas publicadas</span>
                     </div>
-                    <div className={styles.statIcon}>
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#a78bfa"
-                        strokeWidth="2"
-                      >
-                        <rect x="2" y="7" width="20" height="14" rx="2" />
-                      </svg>
-                    </div>
                   </div>
                   <div className={styles.statItem}>
                     <div>
                       <strong>{stats.candidatos}</strong>
                       <span>Candidatos</span>
                     </div>
-                    <div className={styles.statIcon}>
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#a78bfa"
-                        strokeWidth="2"
-                      >
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                      </svg>
-                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Ações rápidas */}
               <div className={styles.card}>
                 <div className={styles.cardHeader}>
                   <h2>

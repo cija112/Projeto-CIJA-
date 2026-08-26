@@ -105,7 +105,7 @@ export default function LoginEmpresa() {
         throw new Error("E-mail ou senha inválidos.");
       }
 
-      // CORREÇÃO DE ROTA DE EMAIL: Impede login de empresa não confirmada
+      // CORREÇÃO DE ROTA DE EMAIL
       if (!empresa.email_confirmado) {
         setLoginSuccess(false);
 

@@ -4,8 +4,6 @@ import { useNavigate } from "react-router-dom";
 import styles from "./cadastroEmpresa.module.css";
 import { supabase } from "supabaseClient";
 import cija_logo from "../../../assets/logo2.png";
-import EyeClosedIcon from "../../../components/icons/EyeClosedIcon";
-import EyeOpenIcon from "../../../components/icons/EyeOpenIcon";
 import { useDocumentTitle } from "Hooks/useDocumentTitle";
 import {
   validarTelefone,
@@ -16,18 +14,7 @@ import {
   formatarCNPJ,
   formatarTelefone,
 } from "../../../utils/validations/formatter";
-
-import {
-  Mail, // Email
-  Phone, // Telefone
-  User, // CPF/Pessoa
-  Building2, // CNPJ/Empresa
-  MapPin, // Endereço
-  Calendar, // Data
-  CheckCircle, // Check verde
-  XCircle, // X erro
-  AlertCircle, // Aviso
-} from "lucide-react";
+import { Building2, Phone, Mail, MapPin, Eye, EyeOff } from "lucide-react";
 
 export default function CadastroEmpresa() {
   const navigate = useNavigate();
@@ -43,6 +30,7 @@ export default function CadastroEmpresa() {
     confirmSenha: "",
   });
 
+  const [concordouTermos, setConcordouTermos] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [globalMessage, setGlobalMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -53,7 +41,7 @@ export default function CadastroEmpresa() {
 
   useEffect(() => {
     if (globalMessage && !success) {
-      const timer = setTimeout(() => setGlobalMessage(""), 4000);
+      const timer = setTimeout(() => setGlobalMessage(""), 5000);
       return () => clearTimeout(timer);
     }
   }, [globalMessage, success]);
@@ -69,58 +57,65 @@ export default function CadastroEmpresa() {
     if (name === "cnpj") finalValue = formatarCNPJ(value);
     if (name === "telefone") finalValue = formatarTelefone(value);
     setForm((prev) => ({ ...prev, [name]: finalValue }));
+
+    if (errors[name]) {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[name];
+        return updated;
+      });
+    }
   };
 
-  const validations = {
-    nome: form.nome.trim().length >= 3,
-    cnpj: validarCNPJ(form.cnpj),
-    telefone: validarTelefone(form.telefone),
-    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email),
-    endereco: form.endereco.trim().length >= 5,
-    senhaMin: form.senha.length >= 8,
-    senhaMaiuscula: /[A-Z]/.test(form.senha),
-    senhaNumero: /\d/.test(form.senha),
-    confirmSenha: form.senha && form.senha === form.confirmSenha,
+  const passwordRules = {
+    minLength: form.senha.length >= 8,
+    upperCase: /[A-Z]/.test(form.senha),
+    lowerCase: /[a-z]/.test(form.senha),
+    number: /\d/.test(form.senha),
+    special: /[!@#$%^&*(),.?":{}|<>\-_]/.test(form.senha),
   };
 
-  const senhaForte =
-    validations.senhaMin &&
-    validations.senhaMaiuscula &&
-    validations.senhaNumero;
-
-  const getPasswordStrength = () => {
+  const calculatePasswordStrength = () => {
     let score = 0;
-    if (validations.senhaMin) score++;
-    if (validations.senhaMaiuscula) score++;
-    if (validations.senhaNumero) score++;
-    if (/[^A-Za-z0-9]/.test(form.senha)) score++;
+    if (passwordRules.minLength) score++;
+    if (passwordRules.upperCase) score++;
+    if (passwordRules.lowerCase) score++;
+    if (passwordRules.number) score++;
+    if (passwordRules.special) score++;
     return score;
   };
 
-  const strength = getPasswordStrength();
-  const strengthLabel = ["", "Fraca", "Média", "Forte", "Muito forte"][
-    strength
-  ];
-  const strengthClass = [
-    "",
-    styles.weak,
-    styles.medium,
-    styles.strong,
-    styles.veryStrong,
-  ][strength];
+  const passwordStrength = calculatePasswordStrength();
+
+  const getStrengthLabel = () => {
+    if (passwordStrength <= 2) return { text: "Fraca", color: "#ef4444" };
+    if (passwordStrength <= 4) return { text: "Média", color: "#f59e0b" };
+    return { text: "Forte", color: "#10b981" };
+  };
 
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
-    if (!validations.nome)
-      newErrors.nome = "Nome deve ter pelo menos 3 caracteres.";
-    if (!validations.cnpj) newErrors.cnpj = "CNPJ inválido.";
-    if (!validations.telefone) newErrors.telefone = "Telefone inválido.";
-    if (!validations.email) newErrors.email = "Email inválido.";
-    if (!validations.endereco) newErrors.endereco = "Endereço muito curto.";
-    if (!senhaForte)
-      newErrors.senha = "Senha deve ter 8+ caracteres, 1 maiúscula e 1 número.";
-    if (!validations.confirmSenha)
+    if (!form.nome.trim() || form.nome.trim().length < 3)
+      newErrors.nome = "Nome da empresa obrigatório.";
+    if (!validarCNPJ(form.cnpj)) newErrors.cnpj = "CNPJ inválido.";
+    if (!validarTelefone(form.telefone))
+      newErrors.telefone = "Telefone inválido.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      newErrors.email = "E-mail inválido.";
+    if (!form.endereco.trim() || form.endereco.trim().length < 5)
+      newErrors.endereco = "Endereço obrigatório.";
+
+    if (passwordStrength < 5)
+      newErrors.senha =
+        "A senha não atende a todos os requisitos de segurança.";
+
+    if (form.senha !== form.confirmSenha)
       newErrors.confirmSenha = "As senhas não coincidem.";
+
+    if (!concordouTermos)
+      newErrors.termos =
+        "Você deve aceitar os Termos de Uso e Política de Privacidade.";
+
     return newErrors;
   };
 
@@ -129,29 +124,40 @@ export default function CadastroEmpresa() {
     setGlobalMessage("");
     const validationErrors = validate();
     setErrors(validationErrors);
+
     if (Object.keys(validationErrors).length > 0) {
+      setGlobalMessage("Por favor, corrija os erros destacados no formulário.");
       triggerError();
       return;
     }
 
     setLoading(true);
     const emailLower = form.email.trim().toLowerCase();
+    const cnpjLimpo = limparCNPJ(form.cnpj);
 
     try {
+      const { data: empresaExistente } = await supabase
+        .from("empresa")
+        .select("email, cnpj")
+        .or(`email.eq.${emailLower},cnpj.eq.${cnpjLimpo}`)
+        .maybeSingle();
+
+      if (empresaExistente) {
+        if (empresaExistente.email === emailLower) {
+          throw new Error("Este e-mail já está cadastrado no sistema.");
+        } else {
+          throw new Error("Este CNPJ já está cadastrado no sistema.");
+        }
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: emailLower,
         password: form.senha,
-        options: { data: { tipo_usuario: "empresa" } },
+        options: { data: { tipo_usuario: "empresa", nome: form.nome } },
       });
 
-      if (error || !data.user) throw error;
-
-      if (data.user.identities && data.user.identities.length === 0) {
-        setGlobalMessage("Não foi possível concluir o cadastro. Tente novamente em alguns minutos.");
-        triggerError();
-        setLoading(false);
-        return;
-      }
+      if (error) throw error;
+      if (!data.user) throw new Error("Erro ao criar credenciais de acesso.");
 
       const { error: insertError } = await supabase.from("empresa").insert([
         {
@@ -160,8 +166,9 @@ export default function CadastroEmpresa() {
           email: emailLower,
           endereco: form.endereco,
           telefone: `+55${form.telefone.replace(/\D/g, "")}`,
-          cnpj: limparCNPJ(form.cnpj),
+          cnpj: cnpjLimpo,
           email_confirmado: false,
+          senha: form.senha,
         },
       ]);
 
@@ -170,12 +177,15 @@ export default function CadastroEmpresa() {
         throw insertError;
       }
 
+      await supabase.auth.signOut();
+
       setSuccess(true);
+
       setTimeout(() => {
         navigate("/confirmar-email", {
           state: { emailAlvo: emailLower, tipoUsuario: "empresa" },
         });
-      }, 2800);
+      }, 2200);
     } catch (err: any) {
       console.error(err);
       setGlobalMessage(err.message || "Erro ao criar conta empresarial.");
@@ -187,237 +197,286 @@ export default function CadastroEmpresa() {
 
   return (
     <div className={styles.wrapper}>
-      
+      {/* Logo limpa sem fundo no topo esquerdo */}
+      <div className={styles.topLogo}>
+        <img src={cija_logo} alt="CIJA" />
+      </div>
 
-      {globalMessage && <div className={styles.alert}>{globalMessage}</div>}
-      <img src={cija_logo} alt="CIJA" className={styles.desktopLogo} />
+      {globalMessage && !success && (
+        <div className={styles.alert}>{globalMessage}</div>
+      )}
 
-      <div className={styles.loginContainer}>
-        <div className={styles.left}>
-          <span className={styles.badge}>Plataforma Empresarial</span>
+      <div className={styles.container}>
+        <div className={styles.leftSection}>
           <h1>
-            Conecte-se aos <br />
-            <span>melhores talentos</span>
+            Comece <br />
+            sua jornada <br />
+            com o <span className={styles.highlightText}>CIJA!</span>
           </h1>
           <p className={styles.tagline}>
-            Cadastre sua empresa e publique vagas em minutos. Processo validado
-            e seguro.
+            Cadastre sua empresa gratuitamente e conecte-se aos melhores
+            talentos do mercado para impulsionar o seu negócio.
           </p>
         </div>
 
-        <div className={`${styles.loginCard} ${isShaking ? styles.shake : ""}`}>
-          {success ? (
-            <div className={styles.successAnimation}>
-              <div className={styles.successParticles}>
-                {[...Array(9)].map((_, i) => (
-                  <span key={i}></span>
-                ))}
-              </div>
-              <svg
-                className={styles.checkmark}
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 52 52"
-              >
-                <circle
-                  className={styles.checkmarkCircle}
-                  cx="26"
-                  cy="26"
-                  r="25"
-                  fill="none"
-                />
-                <path
-                  className={styles.checkmarkCheck}
-                  fill="none"
-                  d="M14 27l7 7 17-17"
-                />
-              </svg>
-              <h2>Conta criada!</h2>
-              <p>
-                Enviamos o código de verificação para seu e-mail corporativo.
-              </p>
-            </div>
-          ) : (
-            <div className={styles.cardContent}>
-              <img src={cija_logo} alt="CIJA" className={styles.mobileLogo} />
-              <h2>Cadastro Empresarial</h2>
-              <p className={styles.subtitle}>Preencha os dados abaixo</p>
-
-              <div className={styles.validationBox}>
-                <div
-                  className={`${styles.validationItem} ${validations.nome ? styles.valid : ""}`}
+        <div className={styles.rightSection}>
+          <div
+            className={`${styles.formCard} ${isShaking ? styles.shake : ""}`}
+          >
+            {success ? (
+              <div className={styles.successAnimationContainer}>
+                <svg
+                  className={styles.checkmarkSvg}
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 52 52"
                 >
-                  <span className={styles.checkIcon}>✓</span> Nome válido
-                </div>
-                <div
-                  className={`${styles.validationItem} ${validations.cnpj ? styles.valid : ""}`}
-                >
-                  <span className={styles.checkIcon}>✓</span> CNPJ válido
-                </div>
-                <div
-                  className={`${styles.validationItem} ${senhaForte ? styles.valid : ""}`}
-                >
-                  <span className={styles.checkIcon}>✓</span> Senha forte
-                </div>
-                <div
-                  className={`${styles.validationItem} ${validations.confirmSenha ? styles.valid : ""}`}
-                >
-                  <span className={styles.checkIcon}>✓</span> Senhas coincidem
-                </div>
-              </div>
-
-              <form onSubmit={handleSubmit} noValidate>
-                <div className={styles.inputGroup}>
-                  <input
-                    type="text"
-                    name="nome"
-                    placeholder="Nome da empresa"
-                    value={form.nome}
-                    onChange={handleChange}
-                    className={`${styles.input} ${errors.nome ? styles.error : ""}`}
+                  <circle
+                    className={styles.checkmarkCircle}
+                    cx="26"
+                    cy="26"
+                    r="25"
+                    fill="none"
                   />
-                  <User size={45} className={styles.inputIcon} />
-                  {errors.nome && (
-                    <p className={styles.errorMessage}>{errors.nome}</p>
-                  )}
-                </div>
-
-                <div className={styles.inputGroup}>
-                  <input
-                    type="text"
-                    name="cnpj"
-                    placeholder="CNPJ (00.000.000/0000-00)"
-                    value={form.cnpj}
-                    onChange={handleChange}
-                    className={`${styles.input} ${errors.cnpj ? styles.error : ""}`}
-                    maxLength={18}
+                  <path
+                    className={styles.checkmarkCheck}
+                    fill="none"
+                    d="M14.1 27.2l7.1 7.2 16.7-16.8"
                   />
-                  <Building2 size={45} className={styles.inputIcon} />
-                  {errors.cnpj && (
-                    <p className={styles.errorMessage}>{errors.cnpj}</p>
-                  )}
-                </div>
-
-                <div className={styles.inputGroup}>
-                  <input
-                    type="text"
-                    name="telefone"
-                    placeholder="Telefone (11) 99999-9999"
-                    value={form.telefone}
-                    onChange={handleChange}
-                    className={`${styles.input} ${errors.telefone ? styles.error : ""}`}
-                  />
-                  <Phone size={45} className={styles.inputIcon} />
-                  {errors.telefone && (
-                    <p className={styles.errorMessage}>{errors.telefone}</p>
-                  )}
-                </div>
-
-                <div className={styles.inputGroup}>
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="Email empresarial"
-                    value={form.email}
-                    onChange={handleChange}
-                    className={`${styles.input} ${errors.email ? styles.error : ""}`}
-                  />
-                  <Mail size={45} className={styles.inputIcon} />
-                  {errors.email && (
-                    <p className={styles.errorMessage}>{errors.email}</p>
-                  )}
-                </div>
-
-                <div className={styles.inputGroup}>
-                  <input
-                    type="text"
-                    name="endereco"
-                    placeholder="Endereço completo"
-                    value={form.endereco}
-                    onChange={handleChange}
-                    className={`${styles.input} ${errors.endereco ? styles.error : ""}`}
-                  />
-                  <MapPin size={45} className={styles.inputIcon} />
-                  {errors.endereco && (
-                    <p className={styles.errorMessage}>{errors.endereco}</p>
-                  )}
-                </div>
-
-                <div className={styles.inputGroup}>
-                  <div className={styles.senhaBox}>
-                    <input
-                      type={showSenha ? "text" : "password"}
-                      name="senha"
-                      placeholder="Senha"
-                      value={form.senha}
-                      onChange={handleChange}
-                      className={`${styles.input} ${errors.senha ? styles.error : ""}`}
-                    />
-                    <button
-                      type="button"
-                      className={styles.toggleSenha}
-                      onClick={() => setShowSenha(!showSenha)}
-                    >
-                      {showSenha ? <EyeOpenIcon /> : <EyeClosedIcon />}
-                    </button>
-                  </div>
-                  {form.senha && (
-                    <div className={styles.passwordStrength}>
-                      <div className={styles.strengthBar}>
-                        <div
-                          className={`${styles.strengthFill} ${strengthClass}`}
-                        ></div>
-                      </div>
-                      <span>{strengthLabel}</span>
-                    </div>
-                  )}
-                  {errors.senha && (
-                    <p className={styles.errorMessage}>{errors.senha}</p>
-                  )}
-                </div>
-
-                <div className={styles.inputGroup}>
-                  <div className={styles.senhaBox}>
-                    <input
-                      type={showConfirmSenha ? "text" : "password"}
-                      name="confirmSenha"
-                      placeholder="Confirmar senha"
-                      value={form.confirmSenha}
-                      onChange={handleChange}
-                      className={`${styles.input} ${errors.confirmSenha ? styles.error : ""}`}
-                    />
-                    <button
-                      type="button"
-                      className={styles.toggleSenha}
-                      onClick={() => setShowConfirmSenha(!showConfirmSenha)}
-                    >
-                      {showConfirmSenha ? <EyeOpenIcon /> : <EyeClosedIcon />}
-                    </button>
-                  </div>
-                  {errors.confirmSenha && (
-                    <p className={styles.errorMessage}>{errors.confirmSenha}</p>
-                  )}
-                </div>
-
-                <button
-                  type="submit"
-                  className={styles.actionButton}
-                  disabled={loading}
-                >
-                  {loading ? "Criando conta..." : "Cadastrar Empresa"}
-                </button>
-              </form>
-
-              <div className={styles.footerActions}>
-                <div className={styles.separator}>ou</div>
-                <p className={styles.subLink}>
-                  Já tem conta?{" "}
-                  <a onClick={() => navigate("/loginEmpresa")}>
-                    Voltar para login empresarial
-                  </a>
+                </svg>
+                <h2 className={styles.successTitle}>
+                  Conta criada com sucesso!
+                </h2>
+                <p className={styles.successText}>
+                  Redirecionando para confirmação do e-mail...
                 </p>
               </div>
-            </div>
-          )}
+            ) : (
+              <>
+                <div className={styles.formHeader}>
+                  <h2>Cadastro da Empresa</h2>
+                  <p>
+                    Preencha os dados abaixo para registrar sua organização.
+                  </p>
+                </div>
+
+                <form onSubmit={handleSubmit} noValidate>
+                  <div className={styles.rowGrid}>
+                    <div className={styles.inputGroup}>
+                      <label>Nome da Empresa</label>
+                      <div className={styles.inputWrapper}>
+                        <input
+                          type="text"
+                          name="nome"
+                          placeholder="Digite o nome da empresa"
+                          value={form.nome}
+                          onChange={handleChange}
+                          className={`${styles.input} ${errors.nome ? styles.errorBorder : ""}`}
+                        />
+                        <Building2 size={18} className={styles.inputIcon} />
+                      </div>
+                      {errors.nome && (
+                        <span className={styles.errorMsg}>{errors.nome}</span>
+                      )}
+                    </div>
+
+                    <div className={styles.inputGroup}>
+                      <label>CNPJ</label>
+                      <div className={styles.inputWrapper}>
+                        <input
+                          type="text"
+                          name="cnpj"
+                          placeholder="00.000.000/0000-00"
+                          value={form.cnpj}
+                          onChange={handleChange}
+                          maxLength={18}
+                          className={`${styles.input} ${errors.cnpj ? styles.errorBorder : ""}`}
+                        />
+                        <Building2 size={18} className={styles.inputIcon} />
+                      </div>
+                      {errors.cnpj && (
+                        <span className={styles.errorMsg}>{errors.cnpj}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className={styles.rowGrid}>
+                    <div className={styles.inputGroup}>
+                      <label>E-mail Empresarial</label>
+                      <div className={styles.inputWrapper}>
+                        <input
+                          type="email"
+                          name="email"
+                          placeholder="empresa@email.com"
+                          value={form.email}
+                          onChange={handleChange}
+                          className={`${styles.input} ${errors.email ? styles.errorBorder : ""}`}
+                        />
+                        <Mail size={18} className={styles.inputIcon} />
+                      </div>
+                      {errors.email && (
+                        <span className={styles.errorMsg}>{errors.email}</span>
+                      )}
+                    </div>
+
+                    <div className={styles.inputGroup}>
+                      <label>Telefone</label>
+                      <div className={styles.inputWrapper}>
+                        <input
+                          type="text"
+                          name="telefone"
+                          placeholder="(00) 00000-0000"
+                          value={form.telefone}
+                          onChange={handleChange}
+                          className={`${styles.input} ${errors.telefone ? styles.errorBorder : ""}`}
+                        />
+                        <Phone size={18} className={styles.inputIcon} />
+                      </div>
+                      {errors.telefone && (
+                        <span className={styles.errorMsg}>
+                          {errors.telefone}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label>Endereço Completo</label>
+                    <div className={styles.inputWrapper}>
+                      <input
+                        type="text"
+                        name="endereco"
+                        placeholder="Digite o endereço completo"
+                        value={form.endereco}
+                        onChange={handleChange}
+                        className={`${styles.input} ${errors.endereco ? styles.errorBorder : ""}`}
+                      />
+                      <MapPin size={18} className={styles.inputIcon} />
+                    </div>
+                    {errors.endereco && (
+                      <span className={styles.errorMsg}>{errors.endereco}</span>
+                    )}
+                  </div>
+
+                  <div className={styles.rowGrid}>
+                    <div className={styles.inputGroup}>
+                      <label>Criar Senha</label>
+                      <div className={styles.inputWrapper}>
+                        <input
+                          type={showSenha ? "text" : "password"}
+                          name="senha"
+                          placeholder="Crie uma senha forte"
+                          value={form.senha}
+                          onChange={handleChange}
+                          className={`${styles.input} ${errors.senha ? styles.errorBorder : ""}`}
+                        />
+                        <button
+                          type="button"
+                          className={styles.togglePass}
+                          onClick={() => setShowSenha(!showSenha)}
+                          title={showSenha ? "Ocultar senha" : "Ver senha"}
+                        >
+                          {showSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
+
+                      {form.senha && (
+                        <div className={styles.passwordStrengthWrapper}>
+                          <div className={styles.strengthBarContainer}>
+                            <div
+                              className={styles.strengthBarFill}
+                              style={{
+                                width: `${(passwordStrength / 5) * 100}%`,
+                                backgroundColor: getStrengthLabel().color,
+                              }}
+                            />
+                          </div>
+                          <span
+                            className={styles.strengthText}
+                            style={{ color: getStrengthLabel().color }}
+                          >
+                            Força: {getStrengthLabel().text}
+                          </span>
+                        </div>
+                      )}
+
+                      <span className={styles.helperText}>
+                        Mín. 8 caracteres, 1 maiúscula, 1 minúscula, 1 número, 1
+                        especial e sem sequências.
+                      </span>
+                      {errors.senha && (
+                        <span className={styles.errorMsg}>{errors.senha}</span>
+                      )}
+                    </div>
+
+                    <div className={styles.inputGroup}>
+                      <label>Confirmar Senha</label>
+                      <div className={styles.inputWrapper}>
+                        <input
+                          type={showConfirmSenha ? "text" : "password"}
+                          name="confirmSenha"
+                          placeholder="Confirme sua senha"
+                          value={form.confirmSenha}
+                          onChange={handleChange}
+                          className={`${styles.input} ${errors.confirmSenha ? styles.errorBorder : ""}`}
+                        />
+                        <button
+                          type="button"
+                          className={styles.togglePass}
+                          onClick={() => setShowConfirmSenha(!showConfirmSenha)}
+                          title={
+                            showConfirmSenha ? "Ocultar senha" : "Ver senha"
+                          }
+                        >
+                          {showConfirmSenha ? (
+                            <EyeOff size={18} />
+                          ) : (
+                            <Eye size={18} />
+                          )}
+                        </button>
+                      </div>
+                      {errors.confirmSenha && (
+                        <span className={styles.errorMsg}>
+                          {errors.confirmSenha}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className={styles.termsBox}>
+                    <input
+                      type="checkbox"
+                      id="termos"
+                      checked={concordouTermos}
+                      onChange={(e) => setConcordouTermos(e.target.checked)}
+                    />
+                    <label htmlFor="termos">
+                      Ao criar sua conta, você concorda com nossos{" "}
+                      <a href="#">Termos de Uso</a> e{" "}
+                      <a href="#">Política de Privacidade</a>.
+                    </label>
+                  </div>
+                  {errors.termos && (
+                    <span className={styles.errorMsg}>{errors.termos}</span>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={styles.submitBtn}
+                  >
+                    {loading ? "Cadastrando..." : "Criar Conta"}
+                  </button>
+                </form>
+
+                <div className={styles.loginFooter}>
+                  <p>
+                    Já tem conta?{" "}
+                    <a onClick={() => navigate("/loginEmpresa")}>Fazer login</a>
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

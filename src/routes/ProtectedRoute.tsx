@@ -27,309 +27,215 @@ export default function ProtectedRoute({
         // =========================================================
         // 1. PEGAR A SESSÃO ATUAL
         // =========================================================
-
-        const { data, error: sessionError } =
-          await supabase.auth.getSession();
+        const { data, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) {
-          console.error(
-            "Erro ao recuperar sessão:",
-            sessionError
-          );
-
+          console.error("Erro ao recuperar sessão:", sessionError);
           if (mounted) {
             setLoading(false);
           }
-
           return;
         }
 
         const session = data.session;
 
-        console.log("========== PROTECTED ROUTE ==========");
-        console.log("Tipo esperado:", tipoEsperado);
-        console.log("Sessão:", session);
-        console.log("=====================================");
 
         // =========================================================
-        // 2. NÃO ESTÁ LOGADO
+        //  NÃO ESTÁ LOGADO
         // =========================================================
-
         if (!session?.user) {
           console.log("Nenhum usuário autenticado.");
-
           if (mounted) {
             setIsJovem(false);
             setIsEmpresa(false);
             setLoading(false);
           }
-
           return;
         }
 
         const user = session.user;
-
         const userId = user.id;
-
-        const emailAuth = user.email
-          ?.trim()
-          .toLowerCase();
-
+        const emailAuth = user.email?.trim().toLowerCase();
         const nomeAuth =
           user.user_metadata?.full_name ||
           user.user_metadata?.name ||
-          "Usuário Google";
+          ""
 
-        console.log("========== USUÁRIO AUTH ==========");
-        console.log("ID:", userId);
-        console.log("Email:", emailAuth);
-        console.log(
-          "Metadata:",
-          user.user_metadata
-        );
-        console.log("==================================");
-
-        // =========================================================
-        // RESETAR ESTADOS
-        // =========================================================
-
+        
+        // Resetar estados
         if (mounted) {
           setIsJovem(false);
           setIsEmpresa(false);
           setEmailConfirmado(true);
         }
 
-        // =========================================================
-        // 3. PROCURAR JOVEM
-        // =========================================================
-
         let jovem: any = null;
-
-        const {
-          data: jovemPorId,
-          error: jovemIdError,
-        } = await supabase
-          .from("jovem_aprendiz")
-          .select("*")
-          .eq("id_ja", userId)
-          .maybeSingle();
-
-        if (jovemIdError) {
-          console.error(
-            "Erro ao buscar jovem pelo ID:",
-            jovemIdError
-          );
-        }
-
-        jovem = jovemPorId || null;
-
-        console.log(
-          "Jovem encontrado pelo ID:",
-          jovem
-        );
+        let empresa: any = null;
 
         // =========================================================
-        // 4. SE NÃO ACHOU PELO ID, PROCURAR POR EMAIL
+        //  VERIFICAÇÃO DIRECIONADA PELO TIPO ESPERADO (EVITA CONFLITOS)
         // =========================================================
-
-        if (!jovem && emailAuth) {
-          const {
-            data: jovemPorEmail,
-            error: jovemEmailError,
-          } = await supabase
-            .from("jovem_aprendiz")
+        if (tipoEsperado === "empresa") {
+          // --- FLUXO EMPRESA ---
+          const { data: empresaPorId, error: empresaIdError } = await supabase
+            .from("empresa")
             .select("*")
-            .eq("email", emailAuth)
+            .eq("id_em", userId)
             .maybeSingle();
 
-          if (jovemEmailError) {
-            console.error(
-              "Erro ao buscar jovem pelo email:",
-              jovemEmailError
-            );
+          if (empresaIdError) {
+            console.error("Erro ao buscar empresa pelo ID:", empresaIdError);
+          }
+          empresa = empresaPorId || null;
+
+          if (!empresa && emailAuth) {
+            const { data: empresaPorEmail, error: empresaEmailError } =
+              await supabase
+                .from("empresa")
+                .select("*")
+                .eq("email", emailAuth)
+                .maybeSingle();
+
+            if (empresaEmailError) {
+              console.error(
+                "Erro ao buscar empresa pelo email:",
+                empresaEmailError,
+              );
+            }
+            empresa = empresaPorEmail || null;
           }
 
-          jovem = jovemPorEmail || null;
+          if (empresa) {
+            console.log("Usuário identificado como EMPRESA.");
+            console.log("ID Auth:", userId);
+            console.log("ID empresa:", empresa.id_em);
 
-          console.log(
-            "Jovem encontrado pelo email:",
-            jovem
-          );
-        }
-
-        // =========================================================
-        // 5. CRIAR JOVEM SE FOR LOGIN GOOGLE
-        // =========================================================
-
-        if (
-          !jovem &&
-          tipoEsperado === "jovem_aprendiz" &&
-          emailAuth
-        ) {
-          console.log(
-            "Jovem não encontrado. Tentando criar..."
-          );
-
-          const {
-            data: novoJovem,
-            error: insertError,
-          } = await supabase
+            if (mounted) {
+              setIsEmpresa(true);
+              setIsJovem(false);
+              setLoading(false);
+            }
+            return;
+          }
+        } else {
+          // --- FLUXO JOVEM APRENDIZ ---
+          const { data: jovemPorId, error: jovemIdError } = await supabase
             .from("jovem_aprendiz")
-            .upsert(
-              {
-                id_ja: userId,
-                email: emailAuth,
-                nome: nomeAuth,
-                email_confirmado: true,
-              },
-              {
-                onConflict: "id_ja",
-              }
-            )
-            .select()
-            .single();
+            .select("*")
+            .eq("id_ja", userId)
+            .maybeSingle();
 
-          if (insertError) {
-            console.error(
-              "Erro ao criar jovem:",
-              {
+          if (jovemIdError) {
+            console.error("Erro ao buscar jovem pelo ID:", jovemIdError);
+          }
+          jovem = jovemPorId || null;
+
+          if (!jovem && emailAuth) {
+            const { data: jovemPorEmail, error: jovemEmailError } =
+              await supabase
+                .from("jovem_aprendiz")
+                .select("*")
+                .eq("email", emailAuth)
+                .maybeSingle();
+
+            if (jovemEmailError) {
+              console.error(
+                "Erro ao buscar jovem pelo email:",
+                jovemEmailError,
+              );
+            }
+            jovem = jovemPorEmail || null;
+          }
+
+          if (!jovem && emailAuth) {
+            console.log("Jovem não encontrado. Tentando criar...");
+            const { data: novoJovem, error: insertError } = await supabase
+              .from("jovem_aprendiz")
+              .upsert(
+                {
+                  id_ja: userId,
+                  email: emailAuth,
+                  nome: nomeAuth,
+                  email_confirmado: true,
+                },
+                { onConflict: "id_ja" },
+              )
+              .select()
+              .single();
+
+            if (insertError) {
+              console.error("Erro ao criar jovem:", {
                 mensagem: insertError.message,
                 detalhes: insertError.details,
                 dica: insertError.hint,
                 codigo: insertError.code,
-              }
-            );
-          } else {
-            jovem = novoJovem;
+              });
+            } else {
+              jovem = novoJovem;
+              console.log("Novo jovem criado:", novoJovem);
+            }
+          }
 
-            console.log(
-              "Novo jovem criado:",
-              novoJovem
-            );
+          if (jovem) {
+            const verificado =
+              jovem.email_confirmado === true ||
+              String(jovem.email_confirmado).toLowerCase() === "true";
+
+            console.log("Usuário identificado como JOVEM.");
+            console.log("Email confirmado:", verificado);
+
+            if (mounted) {
+              setIsJovem(true);
+              setIsEmpresa(false);
+              setEmailConfirmado(verificado);
+              setLoading(false);
+            }
+            return;
           }
         }
 
         // =========================================================
-        // 6. SE É JOVEM
+        // FALLBACK / BUSCA CRUZADA (Caso o usuário esteja na rota errada)
         // =========================================================
-
-        if (jovem) {
-          const verificado =
-            jovem.email_confirmado === true ||
-            String(jovem.email_confirmado).toLowerCase() ===
-              "true";
-
-          console.log(
-            "Usuário identificado como JOVEM."
-          );
-
-          console.log(
-            "Email confirmado:",
-            verificado
-          );
-
-          if (mounted) {
-            setIsJovem(true);
-            setIsEmpresa(false);
-            setEmailConfirmado(verificado);
-            setLoading(false);
-          }
-
-          return;
-        }
-
-        // =========================================================
-        // 7. PROCURAR EMPRESA PELO ID DO AUTH
-        // =========================================================
-
-        let empresa: any = null;
-
-        const {
-          data: empresaPorId,
-          error: empresaIdError,
-        } = await supabase
-          .from("empresa")
-          .select("*")
-          .eq("id_em", userId)
-          .maybeSingle();
-
-        if (empresaIdError) {
-          console.error(
-            "Erro ao buscar empresa pelo ID:",
-            empresaIdError
-          );
-        }
-
-        empresa = empresaPorId || null;
-
-        console.log(
-          "Empresa encontrada pelo ID:",
-          empresa
-        );
-
-        // =========================================================
-        // 8. SE NÃO ACHOU EMPRESA PELO ID, BUSCAR PELO EMAIL
-        // =========================================================
-
-        if (!empresa && emailAuth) {
-          const {
-            data: empresaPorEmail,
-            error: empresaEmailError,
-          } = await supabase
-            .from("empresa")
+        if (tipoEsperado === "empresa") {
+          const { data: jovemAlt } = await supabase
+            .from("jovem_aprendiz")
             .select("*")
-            .eq("email", emailAuth)
+            .or(`id_ja.eq.${userId},email.eq.${emailAuth || ""}`)
             .maybeSingle();
 
-          if (empresaEmailError) {
-            console.error(
-              "Erro ao buscar empresa pelo email:",
-              empresaEmailError
-            );
+          if (jovemAlt) {
+            console.log("Usuário encontrado em jovem_aprendiz (tipo errado).");
+            if (mounted) {
+              setIsJovem(true);
+              setIsEmpresa(false);
+              setLoading(false);
+            }
+            return;
           }
+        } else {
+          const { data: empresaAlt } = await supabase
+            .from("empresa")
+            .select("*")
+            .or(`id_em.eq.${userId},email.eq.${emailAuth || ""}`)
+            .maybeSingle();
 
-          empresa = empresaPorEmail || null;
-
-          console.log(
-            "Empresa encontrada pelo email:",
-            empresa
-          );
+          if (empresaAlt) {
+            console.log("Usuário encontrado em empresa (tipo errado).");
+            if (mounted) {
+              setIsEmpresa(true);
+              setIsJovem(false);
+              setLoading(false);
+            }
+            return;
+          }
         }
 
         // =========================================================
-        // 9. SE É EMPRESA
+        // 5. NENHUM ENCONTRADO
         // =========================================================
-
-        if (empresa) {
-          console.log(
-            "Usuário identificado como EMPRESA."
-          );
-
-          console.log(
-            "ID Auth:",
-            userId
-          );
-
-          console.log(
-            "ID empresa:",
-            empresa.id_em
-          );
-
-          if (mounted) {
-            setIsEmpresa(true);
-            setIsJovem(false);
-            setLoading(false);
-          }
-
-          return;
-        }
-
-        // =========================================================
-        // 10. NÃO É JOVEM NEM EMPRESA
-        // =========================================================
-
         console.warn(
-          "Usuário autenticado, mas não encontrado em jovem_aprendiz ou empresa."
+          "Usuário autenticado, mas não encontrado em jovem_aprendiz ou empresa.",
         );
 
         if (mounted) {
@@ -338,11 +244,7 @@ export default function ProtectedRoute({
           setLoading(false);
         }
       } catch (err) {
-        console.error(
-          "Erro ao validar identidade:",
-          err
-        );
-
+        console.error("Erro ao validar identidade:", err);
         if (mounted) {
           setIsJovem(false);
           setIsEmpresa(false);
@@ -361,7 +263,6 @@ export default function ProtectedRoute({
   // =============================================================
   // VERIFICAÇÃO DE ACESSO
   // =============================================================
-
   const temAcesso =
     (tipoEsperado === "jovem_aprendiz" && isJovem) ||
     (tipoEsperado === "empresa" && isEmpresa);
@@ -369,34 +270,23 @@ export default function ProtectedRoute({
   // =============================================================
   // TIMER PARA ACESSO INCORRETO
   // =============================================================
-
   useEffect(() => {
-    if (
-      !loading &&
-      !temAcesso &&
-      (isJovem || isEmpresa)
-    ) {
+    if (!loading && !temAcesso && (isJovem || isEmpresa)) {
       setTimerConcluido(false);
 
       const timer = setTimeout(() => {
         setTimerConcluido(true);
-      }, 3000);
+      }, 3500);
 
       return () => clearTimeout(timer);
     }
 
     setTimerConcluido(false);
-  }, [
-    loading,
-    temAcesso,
-    isJovem,
-    isEmpresa,
-  ]);
+  }, [loading, temAcesso, isJovem, isEmpresa]);
 
   // =============================================================
-  // LOADING
+  // LOADING 
   // =============================================================
-
   if (loading) {
     return (
       <div
@@ -406,12 +296,10 @@ export default function ProtectedRoute({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background:
-            "radial-gradient(circle at top, #18052d 0%, #07010f 65%)",
+          background: "radial-gradient(circle at top, #18052d 0%, #07010f 65%)",
           position: "relative",
           overflow: "hidden",
-          fontFamily:
-            "'Poppins', system-ui, sans-serif",
+          fontFamily: "'Poppins', system-ui, sans-serif",
         }}
       >
         <div
@@ -422,8 +310,7 @@ export default function ProtectedRoute({
             maxWidth: 380,
             background:
               "linear-gradient(180deg, rgba(24,12,42,0.85) 0%, rgba(11,4,20,0.9) 100%)",
-            border:
-              "1px solid rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.08)",
             borderRadius: 28,
             padding: "44px 32px",
             backdropFilter: "blur(24px)",
@@ -442,8 +329,7 @@ export default function ProtectedRoute({
                 position: "absolute",
                 inset: 0,
                 borderRadius: "50%",
-                border:
-                  "3px solid rgba(255,255,255,0.08)",
+                border: "3px solid rgba(255,255,255,0.08)",
               }}
             />
 
@@ -455,8 +341,7 @@ export default function ProtectedRoute({
                 border: "3px solid transparent",
                 borderTopColor: "#a855f7",
                 borderRightColor: "#9333ea",
-                animation:
-                  "spin 0.85s linear infinite",
+                animation: "spin 0.85s linear infinite",
               }}
             />
 
@@ -465,10 +350,8 @@ export default function ProtectedRoute({
                 position: "absolute",
                 inset: 10,
                 borderRadius: "50%",
-                background:
-                  "rgba(168,85,247,0.1)",
-                animation:
-                  "pulse 2s ease-in-out infinite",
+                background: "rgba(168,85,247,0.1)",
+                animation: "pulse 2s ease-in-out infinite",
               }}
             />
           </div>
@@ -502,8 +385,7 @@ export default function ProtectedRoute({
             style={{
               marginTop: 28,
               height: 4,
-              background:
-                "rgba(255,255,255,0.06)",
+              background: "rgba(255,255,255,0.06)",
               borderRadius: 99,
               overflow: "hidden",
             }}
@@ -512,11 +394,9 @@ export default function ProtectedRoute({
               style={{
                 height: "100%",
                 width: "40%",
-                background:
-                  "linear-gradient(90deg, #9333ea, #c084fc)",
+                background: "linear-gradient(90deg, #9333ea, #c084fc)",
                 borderRadius: 99,
-                animation:
-                  "load 2.5s ease-in-out infinite",
+                animation: "load 4.0s ease-in-out infinite",
               }}
             />
           </div>
@@ -562,39 +442,20 @@ export default function ProtectedRoute({
   // =============================================================
   // USUÁRIO NÃO ENCONTRADO
   // =============================================================
-
   if (!isJovem && !isEmpresa) {
     return tipoEsperado === "empresa" ? (
-      <Navigate
-        to="/loginEmpresa"
-        replace
-      />
+      <Navigate to="/loginEmpresa" replace />
     ) : (
-      <Navigate
-        to="/"
-        replace
-      />
+      <Navigate to="/" replace />
     );
   }
 
   // =============================================================
   // EMAIL DO JOVEM NÃO CONFIRMADO
   // =============================================================
-
-  if (
-    isJovem &&
-    !emailConfirmado
-  ) {
-    if (
-      location.pathname !==
-      "/confirmar-email"
-    ) {
-      return (
-        <Navigate
-          to="/confirmar-email"
-          replace
-        />
-      );
+  if (isJovem && !emailConfirmado) {
+    if (location.pathname !== "/confirmar-email") {
+      return <Navigate to="/confirmar-email" replace />;
     }
 
     return <>{children}</>;
@@ -603,19 +464,12 @@ export default function ProtectedRoute({
   // =============================================================
   // USUÁRIO É DO TIPO ERRADO
   // =============================================================
-
   if (!temAcesso) {
     if (timerConcluido) {
       return tipoEsperado === "empresa" ? (
-        <Navigate
-          to="/loginEmpresa"
-          replace
-        />
+        <Navigate to="/loginEmpresa" replace />
       ) : (
-        <Navigate
-          to="/"
-          replace
-        />
+        <Navigate to="/" replace />
       );
     }
 
@@ -628,26 +482,21 @@ export default function ProtectedRoute({
           alignItems: "center",
           justifyContent: "center",
           background: "#07010f",
-          fontFamily:
-            "'Poppins', sans-serif",
+          fontFamily: "'Poppins', sans-serif",
           padding: 20,
         }}
       >
         <div
           style={{
-            background:
-              "rgba(24,12,42,0.9)",
+            background: "rgba(24,12,42,0.9)",
             padding: 40,
             borderRadius: 20,
-            boxShadow:
-              "0 20px 60px rgba(0,0,0,0.5)",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
             textAlign: "center",
             maxWidth: 420,
             width: "100%",
-            border:
-              "1px solid rgba(255,255,255,0.08)",
-            borderTop:
-              "4px solid #ef4444",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderTop: "4px solid #ef4444",
           }}
         >
           <h2
@@ -669,10 +518,7 @@ export default function ProtectedRoute({
             }}
           >
             Esta área é exclusiva para{" "}
-            {tipoEsperado === "empresa"
-              ? "Empresas"
-              : "Jovens Aprendizes"}
-            .
+            {tipoEsperado === "empresa" ? "Empresas" : "Jovens Aprendizes"}.
           </p>
 
           <div
@@ -691,6 +537,5 @@ export default function ProtectedRoute({
   // =============================================================
   // ACESSO LIBERADO
   // =============================================================
-
   return <>{children}</>;
 }

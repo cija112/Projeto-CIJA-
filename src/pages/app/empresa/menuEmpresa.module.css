@@ -1,6 +1,7 @@
 .container {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: #0b0712;
   width: 100%;
   overflow-x: hidden;
@@ -35,6 +36,7 @@
   letter-spacing: -0.5px;
   margin: 0 0 6px 0;
   line-height: 1.2;
+  word-break: break-word;
 }
 
 .header p {
@@ -42,6 +44,7 @@
   margin: 0;
   font-size: 15px;
   line-height: 1.5;
+  word-break: break-word;
 }
 
 .gridTopoPrincipal {
@@ -88,6 +91,7 @@
   color: #a855f7;
   line-height: 1;
   margin-bottom: 4px;
+  word-break: break-all;
 }
 
 .metaSub {
@@ -120,7 +124,9 @@
   min-width: 0;
   min-height: 140px;
   cursor: pointer;
-  transition: transform 0.2s, border-color 0.2s;
+  transition:
+    transform 0.2s,
+    border-color 0.2s;
 }
 
 .cardPerfilEmpresa:hover {
@@ -136,6 +142,7 @@
 
 .cardPerfilHeader svg {
   color: #94a3b8;
+  flex-shrink: 0;
 }
 
 .perfilEmpresaConteudo {
@@ -143,6 +150,7 @@
   flex-direction: row;
   gap: 16px;
   align-items: flex-start;
+  min-width: 0;
 }
 
 .perfilAvatar {
@@ -235,6 +243,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  gap: 12px;
 }
 
 .secaoTitulo {
@@ -245,12 +254,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  word-break: break-word;
 }
 
 .btnVerTodas {
   background: transparent;
   border: none;
-  width: 20%;
+  width: auto;
+  flex-shrink: 0;
   color: #a855f7;
   font-size: 14px;
   font-weight: 600;
@@ -258,9 +269,10 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
+  padding: 6px 12px;
   border-radius: 6px;
   transition: background 0.2s;
+  white-space: nowrap;
 }
 
 .btnVerTodas:hover {
@@ -272,6 +284,7 @@
   font-style: italic;
   margin-top: 15px;
   font-size: 14px;
+  line-height: 1.5;
 }
 
 .vagaItem {
@@ -280,7 +293,9 @@
   border-radius: 12px;
   padding: 20px;
   cursor: pointer;
-  transition: transform 0.2s, border-color 0.2s;
+  transition:
+    transform 0.2s,
+    border-color 0.2s;
 }
 
 .vagaItem:hover {
@@ -352,6 +367,7 @@
   background-color: #0b0712;
   padding: 10px 14px;
   border-radius: 8px;
+  gap: 10px;
 }
 
 .vagaTag {
@@ -374,6 +390,8 @@
   border-radius: 8px;
   font-size: 13px;
   cursor: pointer;
+  outline: none;
+  max-width: 150px;
 }
 
 .graficoPlaceholder {
@@ -408,6 +426,8 @@
   justify-content: space-between;
   font-size: 11px;
   color: #64748b;
+  gap: 4px;
+  overflow: hidden;
 }
 
 .metricasInferiores {
@@ -424,6 +444,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
 .metricaItem svg {
@@ -434,6 +455,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .metricaItem strong {
@@ -446,207 +468,121 @@
 .metricaItem span {
   font-size: 12px;
   color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.cardDica {
-  background: linear-gradient(135deg, #1a1529 0%, #161122 100%);
-  border: 1px solid rgba(168, 85, 247, 0.2);
-  border-radius: 16px;
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  box-sizing: border-box;
-  max-width: 1400px;
-}
-
-.dicaIcon {
-  width: 56px;
-  height: 56px;
-  background-color: rgba(168, 85, 247, 0.15);
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #a855f7;
-  flex-shrink: 0;
-}
-
-.dicaConteudo {
-  flex: 1;
-  min-width: 0;
-}
-
-.dicaConteudo h3 {
-  font-size: 16px;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 0 0 4px 0;
-}
-
-.dicaConteudo p {
-  font-size: 14px;
-  color: #94a3b8;
-  margin: 0;
-  line-height: 1.5;
-}
-
-.btnVerDicas {
-  background-color: #a855f7;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.btnVerDicas:hover {
-  background-color: #9333ea;
-}
-
+/* Responsividade Avançada */
 @media (max-width: 1200px) {
- .gridTopoPrincipal {
+  .gridTopoPrincipal {
     grid-template-columns: 1fr;
   }
 
- .gridMeio {
+  .gridMeio {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 1024px) {
- .content {
-    margin-left: 0;
+  .content {
+    margin-left: 0 !important;
     padding: 24px 20px;
   }
 
- .metricasInferiores {
+  .metricasInferiores {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 768px) {
- .header {
-    margin-top: 65px;
+  .header {
+    margin-top: 10px;
   }
 
- .header h1 {
-    font-size: 24px;
+  .header h1 {
+    font-size: 34px;
+    display: flex;
+    justify-content: center;
   }
 
- .gridTopoPrincipal {
+  .gridTopoPrincipal {
     grid-template-columns: 1fr;
     gap: 16px;
   }
 
- .cardMetrica,
- .cardPerfilEmpresa {
+  .cardMetrica,
+  .cardPerfilEmpresa {
     padding: 20px;
     min-height: auto;
   }
 
- .metaValor {
+  .metaValor {
     font-size: 36px;
   }
 
- .gridMeio {
+  .gridMeio {
     grid-template-columns: 1fr;
     gap: 16px;
-  }
-
- .cardDica {
-    flex-direction: column;
-    text-align: center;
-    padding: 20px;
-  }
-
- .dicaIcon {
-    margin: 0 auto;
-  }
-
- .btnVerDicas {
-    width: 100%;
-    justify-content: center;
   }
 }
 
 @media (max-width: 480px) {
- .content {
+  .content {
     padding: 16px 12px;
   }
 
- .header h1 {
-    font-size: 20px;
+  .header h1 {
+    font-size: 35px;
+    display: flex;
+    justify-content: center;
   }
 
- .header p {
+  .header p {
     font-size: 14px;
   }
 
- .secaoTitulo {
-    font-size: 18px;
+  .secaoTitulo {
+    font-size: 16px;
   }
 
- .cardMetrica,
- .cardPerfilEmpresa,
- .cardVagasAtivas,
- .cardDesempenho {
+  .cardMetrica,
+  .cardPerfilEmpresa,
+  .cardVagasAtivas,
+  .cardDesempenho {
     padding: 16px;
   }
 
- .metaValor {
+  .metaValor {
     font-size: 32px;
   }
 
- .metaLabel {
+  .metaLabel {
     font-size: 10px;
   }
 
- .perfilAvatar {
+  .perfilAvatar {
     width: 48px;
     height: 48px;
   }
 
- .perfilDados h3 {
+  .perfilDados h3 {
     font-size: 15px;
   }
 
- .vagaInfo h4 {
+  .vagaInfo h4 {
     font-size: 15px;
   }
 
- .vagaDescricao {
+  .vagaDescricao {
     font-size: 13px;
   }
 
- .metricasInferiores {
+  .metricasInferiores {
     grid-template-columns: 1fr;
   }
 
- .metricaItem strong {
+  .metricaItem strong {
     font-size: 18px;
   }
-
- .cardDica {
-    padding: 16px;
-  }
-
- .dicaIcon {
-    width: 48px;
-    height: 48px;
-  }
-
- .dicaConteudo h3 {
-    font-size: 15px;
-  }
-
- .dicaConteudo p {
-    font-size: 13px;
- }}
+}

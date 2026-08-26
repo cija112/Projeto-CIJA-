@@ -316,7 +316,7 @@ export default function ConfirmarEmail() {
           <h1>
             Confirme seu
             <br />
-            <span>e-mail</span>
+            <span>e-mail!</span>
           </h1>
 
           <p className={styles.subtitle}>
