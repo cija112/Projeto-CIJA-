@@ -697,7 +697,7 @@ body::before {
   align-items: center;
   gap: 10px;
   transition: opacity 0.2s ease;
-  box-shadow: 0 8px 25px rgba(147, 51, 234, 0.35);
+
 }
 
 .purpleBtn:hover {
